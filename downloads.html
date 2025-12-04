@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2D6A4F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Mis Descargas - RIO Devocionales</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/logo.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .downloads-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #E2E8F0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .downloads-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2D3748;
+        }
+
+        .storage-info {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .downloads-list {
+            padding: 15px;
+        }
+
+        .download-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .download-item.playing {
+            border: 2px solid #2D6A4F;
+            background: #F0FFF4;
+        }
+
+        .download-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #2D6A4F 0%, #40916C 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .download-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .download-date {
+            font-weight: 600;
+            color: #2D3748;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .download-meta {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .download-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .export-btn {
+            background: #EBF4FF;
+            color: #3182CE;
+        }
+
+        .share-btn {
+            background: #E9D8FD;
+            color: #6B46C1;
+        }
+
+        .storage-note {
+            background: #F0FFF4;
+            border: 1px solid #9AE6B4;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #276749;
+        }
+
+        .storage-note strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .play-btn {
+            background: #2D6A4F;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #FED7D7;
+            color: #C53030;
+        }
+
+        .empty-downloads {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-downloads-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-downloads h3 {
+            color: #2D3748;
+            margin-bottom: 10px;
+        }
+
+        .go-download-btn {
+            margin-top: 20px;
+            display: inline-block;
+            background: #2D6A4F;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Mini reproductor fijo abajo */
+        .mini-player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #E2E8F0;
+            padding: 10px 20px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .mini-player.active {
+            display: flex;
+        }
+
+        .mini-player-info {
+            flex: 1;
+        }
+
+        .mini-player-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #2D3748;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mini-player-time {
+            font-size: 12px;
+            color: #718096;
+            font-weight: 400;
+        }
+
+        .mini-player-progress {
+            width: 100%;
+            height: 8px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            margin-top: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mini-player-progress-bar {
+            height: 100%;
+            background: #2D6A4F;
+            width: 0%;
+            transition: width 0.1s linear;
+            pointer-events: none;
+        }
+
+        .mini-player-progress:hover {
+            height: 10px;
+        }
+
+        .mini-player-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: #2D6A4F;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Ajustar lista cuando hay mini player */
+        .downloads-list.has-player {
+            padding-bottom: 100px;
+        }
+
+        /* Modal de confirmación */
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-content {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .confirm-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .confirm-text {
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .confirm-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background: #E2E8F0;
+            color: #2D3748;
+        }
+
+        .confirm-delete-btn {
+            background: #E53E3E;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="downloads-header">
+            <button class="back-btn" onclick="window.location.href='index.html'">←</button>
+            <span class="downloads-title">Mis Descargas</span>
+            <span class="storage-info" id="storageInfo">0 MB</span>
+        </header>
+
+        <div class="downloads-list" id="downloadsList">
+            <!-- Lista de descargas -->
+        </div>
+
+        <!-- Mini reproductor -->
+        <div class="mini-player" id="miniPlayer">
+            <div class="mini-player-info">
+                <div class="mini-player-title">
+                    <span id="miniPlayerTitle">-</span>
+                    <span class="mini-player-time" id="miniPlayerTime">0:00 / 0:00</span>
+                </div>
+                <div class="mini-player-progress">
+                    <div class="mini-player-progress-bar" id="miniProgressBar"></div>
+                </div>
+            </div>
+            <button class="mini-player-btn" id="miniPlayBtn">▶</button>
+        </div>
+
+        <!-- Modal de confirmación -->
+        <div class="confirm-modal" id="confirmModal">
+            <div class="confirm-content">
+                <div class="confirm-title">¿Eliminar descarga?</div>
+                <div class="confirm-text" id="confirmText">Este audio se eliminará de tus descargas.</div>
+                <div class="confirm-buttons">
+                    <button class="cancel-btn" onclick="closeConfirmModal()">Cancelar</button>
+                    <button class="confirm-delete-btn" id="confirmDeleteBtn">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <audio id="audioPlayer"></audio>
+    </div>
+
+    <script src="js/offline-storage.js"></script>
+    <script>
+        let currentPlayingDate = null;
+        let deleteTargetDate = null;
+        const audioPlayer = document.getElementById('audioPlayer');
+        const miniPlayer = document.getElementById('miniPlayer');
+        const miniPlayBtn = document.getElementById('miniPlayBtn');
+        const miniProgressBar = document.getElementById('miniProgressBar');
+        const miniPlayerTitle = document.getElementById('miniPlayerTitle');
+        const downloadsList = document.getElementById('downloadsList');
+
+        // Formatear fecha
+        function formatDate(dateStr) {
+            const [year, month, day] = dateStr.split('-');
+            const date = new Date(year, month - 1, day);
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+
+        // Formatear tamaño
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Cargar lista de descargas
+        async function loadDownloads() {
+            try {
+                const audios = await OfflineStorage.getAllAudios();
+                const storageUsed = await OfflineStorage.getStorageUsed();
+                
+                document.getElementById('storageInfo').textContent = formatSize(storageUsed);
+
+                if (audios.length === 0) {
+                    downloadsList.innerHTML = `
+                        <div class="empty-downloads">
+                            <div class="empty-downloads-icon">📥</div>
+                            <h3>No tienes descargas</h3>
+                            <p>Descarga devocionales para escucharlos sin conexión</p>
+                            <a href="index.html" class="go-download-btn">Ir a Devocionales</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                downloadsList.innerHTML = `
+                    <div class="storage-note">
+                        <strong>📁 ¿Dónde están mis archivos?</strong>
+                        Los audios se guardan dentro de la app para reproducción offline. 
+                        Usa 💾 para guardar en tu dispositivo o 📤 para compartir por WhatsApp/correo.
+                    </div>
+                ` + audios.map(audio => `
+                    <div class="download-item ${currentPlayingDate === audio.date ? 'playing' : ''}" 
+                         id="item-${audio.date}">
+                        <div class="download-icon">🎵</div>
+                        <div class="download-info">
+                            <div class="download-date">${formatDate(audio.date)}</div>
+                            <div class="download-meta">${formatSize(audio.size)}</div>
+                        </div>
+                        <div class="download-actions">
+                            <button class="action-btn play-btn" onclick="playAudio('${audio.date}')">
+                                ${currentPlayingDate === audio.date && !audioPlayer.paused ? '⏸' : '▶'}
+                            </button>
+                            <button class="action-btn share-btn" onclick="shareAudio('${audio.date}')" title="Compartir">📤</button>
+                            <button class="action-btn export-btn" onclick="exportToDevice('${audio.date}')" title="Guardar en dispositivo">💾</button>
+                            <button class="action-btn delete-btn" onclick="confirmDelete('${audio.date}')">🗑</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Ajustar padding si hay mini player
+                if (currentPlayingDate) {
+                    downloadsList.classList.add('has-player');
+                }
+            } catch (error) {
+                console.error('Error al cargar descargas:', error);
+                downloadsList.innerHTML = '<p style="text-align:center; padding:20px; color:#E53E3E;">Error al cargar descargas</p>';
+            }
+        }
+
+        // Reproducir audio
+        async function playAudio(date) {
+            try {
+                if (currentPlayingDate === date && !audioPlayer.paused) {
+                    // Pausar
+                    audioPlayer.pause();
+                    updateUI();
+                    return;
+                }
+
+                const audioData = await OfflineStorage.getAudio(date);
+                if (!audioData) {
+                    alert('Audio no encontrado');
+                    return;
+                }
+
+                // Crear URL del blob
+                if (audioPlayer.currentSrc) {
+                    OfflineStorage.revokeObjectURL(audioPlayer.src);
+                }
+
+                const url = OfflineStorage.createObjectURL(audioData.blob);
+                audioPlayer.src = url;
+                audioPlayer.play();
+
+                currentPlayingDate = date;
+                miniPlayerTitle.textContent = formatDate(date);
+                miniPlayer.classList.add('active');
+                downloadsList.classList.add('has-player');
+
+                updateUI();
+            } catch (error) {
+                console.error('Error al reproducir:', error);
+                alert('Error al reproducir el audio');
+            }
+        }
+
+        // Actualizar UI
+        function updateUI() {
+            loadDownloads();
+            miniPlayBtn.textContent = audioPlayer.paused ? '▶' : '⏸';
+        }
+
+        // Exportar audio al dispositivo (carpeta Descargas)
+        async function exportToDevice(date) {
+            try {
+                const audioData = await OfflineStorage.getAudio(date);
+                if (!audioData) {
+                    alert('Audio no encontrado');
+                    return;
+                }
+
+                // Crear un enlace de descarga
+                const url = URL.createObjectURL(audioData.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `devocional-${date}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Limpiar URL
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+
+                // Mostrar mensaje de éxito
+                alert(`✅ El archivo "devocional-${date}.mp3" se está guardando en tu carpeta de Descargas.`);
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                alert('Error al exportar el audio');
+            }
+        }
+
+        // Compartir audio por WhatsApp, correo, etc.
+        async function shareAudio(date) {
+            try {
+                const audioData = await OfflineStorage.getAudio(date);
+                if (!audioData) {
+                    alert('Audio no encontrado');
+                    return;
+                }
+
+                const fileName = `devocional-${date}.mp3`;
+                
+                // Intentar crear el archivo
+                let file;
+                try {
+                    file = new File([audioData.blob], fileName, { type: 'audio/mpeg' });
+                } catch (e) {
+                    // Fallback para navegadores que no soportan File constructor
+                    console.log('File constructor no soportado, usando Blob');
+                    file = audioData.blob;
+                    file.name = fileName;
+                }
+
+                // Verificar si el navegador soporta Web Share API con archivos
+                if (navigator.share) {
+                    const shareData = {
+                        title: `Devocional ${formatDate(date)}`,
+                        text: `🎧 Devocional de RIO Iglesia - ${formatDate(date)}`
+                    };
+                    
+                    // Verificar si puede compartir archivos
+                    let canShareFiles = false;
+                    try {
+                        canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+                    } catch (e) {
+                        console.log('canShare check failed:', e);
+                    }
+                    
+                    if (canShareFiles) {
+                        shareData.files = [file];
+                    }
+                    
+                    try {
+                        await navigator.share(shareData);
+                    } catch (shareError) {
+                        if (shareError.name === 'AbortError') {
+                            // Usuario canceló, no mostrar error
+                            return;
+                        }
+                        throw shareError;
+                    }
+                } else {
+                    // Fallback: descargar el archivo para compartir manualmente
+                    if (confirm('Tu navegador no soporta compartir directamente.\n\n¿Deseas guardar el archivo para compartirlo manualmente?')) {
+                        exportToDevice(date);
+                    }
+                }
+            } catch (error) {
+                console.error('Error al compartir:', error);
+                // Ofrecer alternativa
+                if (confirm(`No se pudo compartir el archivo directamente.\n\n¿Deseas guardarlo en tu dispositivo para compartirlo manualmente?`)) {
+                    exportToDevice(date);
+                }
+            }
+        }
+
+        // Confirmar eliminación
+        function confirmDelete(date) {
+            deleteTargetDate = date;
+            document.getElementById('confirmText').textContent = 
+                `Se eliminará el devocional del ${formatDate(date)} de tus descargas.`;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            deleteTargetDate = null;
+        }
+
+        // Eliminar audio
+        async function deleteAudio() {
+            if (!deleteTargetDate) return;
+
+            try {
+                // Si está reproduciéndose, detener
+                if (currentPlayingDate === deleteTargetDate) {
+                    audioPlayer.pause();
+                    audioPlayer.src = '';
+                    currentPlayingDate = null;
+                    miniPlayer.classList.remove('active');
+                    downloadsList.classList.remove('has-player');
+                }
+
+                await OfflineStorage.deleteAudio(deleteTargetDate);
+                closeConfirmModal();
+                loadDownloads();
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+                alert('Error al eliminar el audio');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('confirmDeleteBtn').addEventListener('click', deleteAudio);
+
+        miniPlayBtn.addEventListener('click', () => {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+            } else {
+                audioPlayer.pause();
+            }
+            updateUI();
+        });
+
+        // Función para formatear tiempo en MM:SS
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        const miniPlayerTime = document.getElementById('miniPlayerTime');
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                miniProgressBar.style.width = percent + '%';
+                miniPlayerTime.textContent = formatTime(audioPlayer.currentTime) + ' / ' + formatTime(audioPlayer.duration);
+            }
+        });
+
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            miniPlayerTime.textContent = '0:00 / ' + formatTime(audioPlayer.duration);
+        });
+
+        // Click en barra de progreso para adelantar/atrasar
+        const progressContainer = document.querySelector('.mini-player-progress');
+        progressContainer.addEventListener('click', (e) => {
+            if (audioPlayer.duration) {
+                const rect = progressContainer.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const width = rect.width;
+                const percent = clickX / width;
+                audioPlayer.currentTime = percent * audioPlayer.duration;
+            }
+        });
+
+        // Arrastrar para adelantar/atrasar
+        let isDragging = false;
+        progressContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            updateProgress(e);
+        });
+        progressContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            updateProgress(e.touches[0]);
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) updateProgress(e);
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) updateProgress(e.touches[0]);
+        });
+        document.addEventListener('mouseup', () => isDragging = false);
+        document.addEventListener('touchend', () => isDragging = false);
+
+        function updateProgress(e) {
+            if (!audioPlayer.duration) return;
+            const rect = progressContainer.getBoundingClientRect();
+            let clickX = e.clientX - rect.left;
+            clickX = Math.max(0, Math.min(clickX, rect.width));
+            const percent = clickX / rect.width;
+            audioPlayer.currentTime = percent * audioPlayer.duration;
+        }
+
+        audioPlayer.addEventListener('ended', () => {
+            updateUI();
+        });
+
+        audioPlayer.addEventListener('play', updateUI);
+        audioPlayer.addEventListener('pause', updateUI);
+
+        // Inicializar
+        OfflineStorage.init().then(loadDownloads);
+    </script>
+</body>
+</html>

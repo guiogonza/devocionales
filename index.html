@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2D6A4F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RIO Devocionales">
+    <meta name="description" content="Meditación diaria - RIO Iglesia Cristiana">
+    <link rel="apple-touch-icon" href="icons/logo.png">
+    
+    <title>RIO - Meditación Diaria</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Banner de instalación iOS -->
+    <div class="ios-install-banner" id="iosInstallBanner" style="display: none;">
+        <div class="ios-install-content">
+            <img src="icons/logo.png" alt="RIO" class="ios-install-icon">
+            <div class="ios-install-text">
+                <strong>Instalar RIO Devocionales</strong>
+                <span>Toca <span class="ios-share-icon">⎙</span> y luego "Añadir a inicio"</span>
+            </div>
+            <button class="ios-install-close" id="iosInstallClose">×</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <header class="header">
+            <div class="header-images">
+                <img src="icons/logo.png" alt="RIO Iglesia Cristiana" class="logo">
+                <img src="icons/pastores.jpg" alt="Pastores" class="pastores-img" id="pastoresImg" onerror="this.style.display='none'">
+            </div>
+            <h1 class="title">Meditación diaria</h1>
+            <p class="date" id="currentDate"></p>
+            
+            <div class="calendar-section-header">
+                <button class="calendar-toggle-small" id="calendarToggle">
+                    📅 Seleccionar otra fecha
+                </button>
+                <div class="calendar-container" id="calendarContainer" style="display: none;">
+                    <input type="date" id="datePicker" class="date-picker">
+                    <div id="dateAvailability" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="devotional-card">
+                <h2 class="devotional-title" id="devotionalTitle">Encontrando Paz en la Incertidumbre</h2>
+                
+                <div class="verse-box">
+                    <p class="verse" id="verseReference">Filipenses 4:6-7</p>
+                </div>
+
+                <p class="devotional-text" id="devotionalText">
+                    En tiempos de duda y preocupación, podemos encontrar paz llevando nuestras preocupaciones a Dios en oración. Este devocional explora cómo la fe nos ancla en tiempos turbulentos.
+                </p>
+
+                <div class="audio-container">
+                    <div class="audio-error" id="audioError" style="display: none;">
+                        <span class="error-icon">⚠️</span>
+                        <span class="error-text">El audio no pudo cargar. Por favor, verifica tu conexión.</span>
+                    </div>
+
+                    <button class="play-button" id="playButton">
+                        <span class="play-icon" id="playIcon">▶</span>
+                        <span id="playText">Escuchar</span>
+                    </button>
+
+                    <div class="progress-container">
+                        <input type="range" class="progress-bar" id="progressBar" value="0" min="0" max="100">
+                        <div class="time-display">
+                            <span id="currentTime">0:00</span>
+                            <span id="duration">0:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-download" id="downloadButton">
+                    <span class="btn-icon" id="downloadIcon">📥</span>
+                    <span id="downloadText">Descargar</span>
+                </button>
+                
+                <button class="btn btn-share" id="shareButton">
+                    <span class="btn-icon">🔗</span>
+                    Compartir
+                </button>
+            </div>
+
+            <div class="secondary-buttons">
+                <a href="downloads.html" class="btn btn-downloads-link">
+                    <span class="btn-icon">📱</span>
+                    Mis Descargas
+                </a>
+                
+                <button class="btn btn-history" id="historyButton">
+                    <span class="btn-icon">📅</span>
+                    Historial
+                </button>
+            </div>
+        </main>
+
+        <!-- Modal de historial -->
+        <div class="modal" id="historyModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Historial de Devocionales</h3>
+                    <button class="close-btn" id="closeHistory">&times;</button>
+                </div>
+                <div class="modal-body" id="historyList">
+                    <!-- Lista de devocionales anteriores -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio element - playsinline y webkit-playsinline para iOS -->
+        <audio id="audioPlayer" preload="auto" playsinline webkit-playsinline></audio>
+    </div>
+
+    <script src="js/offline-storage.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/notifications.js"></script>
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

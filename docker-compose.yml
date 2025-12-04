@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  devocionales-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devocionales-pwa
+    ports:
+      - "3000:3000"
+    volumes:
+      # Montar carpeta de audios para persistir los archivos
+      - ./audios:/app/audios
+      # Montar carpeta de datos para persistir devocionales (versículos)
+      - ./data:/app/data
+      # Montar carpeta de iconos para persistir logo e imagen de pastores
+      - ./icons:/app/icons
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - devocionales-network
+
+networks:
+  devocionales-network:
+    driver: bridge

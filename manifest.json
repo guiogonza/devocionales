@@ -1,0 +1,28 @@
+{
+    "name": "RIO Iglesia Cristiana - Meditación Diaria",
+    "short_name": "RIO Devocionales",
+    "description": "Aplicación de meditaciones y devocionales diarios con audio - RIO Iglesia Cristiana",
+    "start_url": "/",
+    "id": "/",
+    "display": "standalone",
+    "background_color": "#F5F5DC",
+    "theme_color": "#2D6A4F",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "es",
+    "icons": [
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "categories": ["lifestyle", "education", "books"]
+}

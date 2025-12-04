@@ -1,0 +1,166 @@
+const CACHE_NAME = 'devocionales-v4';
+const AUDIO_CACHE_NAME = 'devocionales-audio-v1';
+
+// Instalación del Service Worker - sin cachear nada para evitar errores
+self.addEventListener('install', event => {
+    console.log('Service Worker: Instalando...');
+    self.skipWaiting();
+});
+
+// Activación del Service Worker
+self.addEventListener('activate', event => {
+    console.log('Service Worker: Activado');
+    event.waitUntil(clients.claim());
+});
+
+// Activación del Service Worker
+self.addEventListener('activate', event => {
+    console.log('Service Worker: Activado');
+    
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME && cache !== AUDIO_CACHE_NAME) {
+                        console.log('Service Worker: Limpiando cache antigua', cache);
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
+    );
+});
+
+// Estrategia de fetch
+self.addEventListener('fetch', event => {
+    const { request } = event;
+    const url = new URL(request.url);
+    
+    // Para archivos de audio, usar estrategia Cache First con Network Fallback
+    if (url.pathname.startsWith('/audios/') || request.url.includes('.mp3')) {
+        event.respondWith(handleAudioRequest(request));
+        return;
+    }
+    
+    // Para otros recursos, usar Network First con Cache Fallback
+    event.respondWith(handleStaticRequest(request));
+});
+
+// Manejar solicitudes de audio
+async function handleAudioRequest(request) {
+    const cache = await caches.open(AUDIO_CACHE_NAME);
+    
+    // Intentar obtener del cache primero
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+        console.log('Service Worker: Audio desde cache', request.url);
+        return cachedResponse;
+    }
+    
+    // Si no está en cache, obtener de la red y cachear
+    try {
+        const networkResponse = await fetch(request);
+        
+        // Solo cachear si la respuesta es exitosa
+        if (networkResponse.ok) {
+            // Clonar la respuesta antes de cachear
+            const responseClone = networkResponse.clone();
+            cache.put(request, responseClone);
+            console.log('Service Worker: Audio cacheado', request.url);
+        }
+        
+        return networkResponse;
+    } catch (error) {
+        console.error('Service Worker: Error al obtener audio', error);
+        // Retornar una respuesta de error
+        return new Response('Audio no disponible', { status: 503 });
+    }
+}
+
+// Manejar solicitudes estáticas
+async function handleStaticRequest(request) {
+    try {
+        // Intentar obtener de la red primero
+        const networkResponse = await fetch(request);
+        
+        // Cachear la respuesta exitosa
+        if (networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone());
+        }
+        
+        return networkResponse;
+    } catch (error) {
+        // Si falla la red, intentar desde cache
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+            console.log('Service Worker: Sirviendo desde cache', request.url);
+            return cachedResponse;
+        }
+        
+        // Si es una navegación, retornar el index.html cacheado
+        if (request.mode === 'navigate') {
+            const indexCache = await caches.match('/index.html');
+            if (indexCache) return indexCache;
+        }
+        
+        console.error('Service Worker: Recurso no disponible', request.url);
+        return new Response('Recurso no disponible offline', { status: 503 });
+    }
+}
+
+// Manejar mensajes del cliente
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    // Pre-cachear audio específico
+    if (event.data && event.data.type === 'CACHE_AUDIO') {
+        const audioUrl = event.data.url;
+        caches.open(AUDIO_CACHE_NAME).then(cache => {
+            fetch(audioUrl).then(response => {
+                if (response.ok) {
+                    cache.put(audioUrl, response);
+                }
+            });
+        });
+    }
+});
+
+// Sincronización en segundo plano (cuando vuelve la conexión)
+self.addEventListener('sync', event => {
+    if (event.tag === 'sync-audio') {
+        console.log('Service Worker: Sincronizando audio');
+        // Aquí se podría implementar lógica de sincronización
+    }
+});
+
+// Notificaciones push (para futuras funcionalidades)
+self.addEventListener('push', event => {
+    if (event.data) {
+        const data = event.data.json();
+        const options = {
+            body: data.body || 'Nuevo devocional disponible',
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-72.png',
+            vibrate: [100, 50, 100],
+            data: {
+                url: data.url || '/'
+            }
+        };
+        
+        event.waitUntil(
+            self.registration.showNotification(data.title || 'Meditación Diaria', options)
+        );
+    }
+});
+
+// Manejar click en notificación
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    
+    event.waitUntil(
+        clients.openWindow(event.notification.data.url || '/')
+    );
+});

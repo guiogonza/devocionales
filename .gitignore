@@ -1,0 +1,22 @@
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Archivos de desarrollo
+node_modules/
+.env
+.env.local
+
+# Archivos grandes de audio (se gestionan por separado)
+# audios/*.mp3
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos temporales
+*.tmp
+*.temp

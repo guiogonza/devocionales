@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Iconos PNG</title>
+    <script>
+        // Este script genera iconos PNG automáticamente
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Gradiente de fondo
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4A90D9');
+            gradient.addColorStop(1, '#8B5CF6');
+            
+            // Fondo redondeado
+            const radius = size * 0.2;
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Escala para adaptar el diseño
+            const s = size / 100;
+            
+            // Libro/Biblia simplificado
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            
+            // Página izquierda
+            ctx.beginPath();
+            ctx.moveTo(50*s, 20*s);
+            ctx.lineTo(20*s, 28*s);
+            ctx.lineTo(20*s, 70*s);
+            ctx.lineTo(50*s, 62*s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Página derecha
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath();
+            ctx.moveTo(50*s, 20*s);
+            ctx.lineTo(80*s, 28*s);
+            ctx.lineTo(80*s, 70*s);
+            ctx.lineTo(50*s, 62*s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Cruz
+            ctx.fillStyle = '#4A90D9';
+            ctx.fillRect(47*s, 30*s, 6*s, 25*s);
+            ctx.fillRect(40*s, 37*s, 20*s, 6*s);
+            
+            // Ondas de audio
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            const barWidth = 3*s;
+            const barHeights = [12, 18, 24, 15, 10];
+            const startX = 60*s;
+            const baseY = 80*s;
+            
+            barHeights.forEach((h, i) => {
+                const x = startX + i * 5*s;
+                const height = h*s;
+                ctx.beginPath();
+                ctx.roundRect(x, baseY - height/2, barWidth, height, barWidth/2);
+                ctx.fill();
+            });
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        window.onload = function() {
+            const container = document.getElementById('icons');
+            sizes.forEach(size => {
+                const dataUrl = createIcon(size);
+                const div = document.createElement('div');
+                div.style.display = 'inline-block';
+                div.style.margin = '10px';
+                div.style.textAlign = 'center';
+                
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.style.border = '1px solid #ccc';
+                
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'icon-' + size + '.png';
+                link.textContent = 'Descargar ' + size + 'x' + size;
+                link.style.display = 'block';
+                link.style.marginTop = '5px';
+                
+                div.appendChild(img);
+                div.appendChild(link);
+                container.appendChild(div);
+            });
+            
+            document.getElementById('status').textContent = 'Iconos generados. Haz clic en los enlaces para descargar.';
+        };
+    </script>
+</head>
+<body>
+    <h1>Generador de Iconos PWA</h1>
+    <p id="status">Generando iconos...</p>
+    <p><strong>Instrucciones:</strong> Descarga cada icono y guárdalo en la carpeta <code>icons/</code></p>
+    <div id="icons"></div>
+</body>
+</html>

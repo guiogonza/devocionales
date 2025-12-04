@@ -1,0 +1,19 @@
+{
+    "name": "devocionales-api",
+    "version": "1.0.0",
+    "description": "API para gestionar audios de devocionales",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.18.2",
+        "multer": "^1.4.5-lts.1",
+        "web-push": "^3.6.7"
+    },
+    "devDependencies": {
+        "sharp": "^0.34.5"
+    }
+}
