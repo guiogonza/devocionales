@@ -5,6 +5,27 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
+// Escuchar actualizaciones del Service Worker
+if ('serviceWorker' in navigator) {
+    // Escuchar mensajes del SW cuando hay actualización
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.type === 'SW_UPDATED') {
+            console.log('🔄 App actualizada a versión:', event.data.version);
+            // Recargar la página silenciosamente para aplicar cambios
+            window.location.reload();
+        }
+    });
+
+    // Verificar actualizaciones cada vez que la app se enfoca
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.update();
+            });
+        }
+    });
+}
+
 // Estado de la aplicación
 let currentDate = new Date();
 let isPlaying = false;
@@ -108,27 +129,48 @@ async function loadDevotional(date) {
         elements.devotionalText.textContent = data.text;
     }
     
-    // Configurar audio
+    // Configurar audio - primero verificar si está descargado offline
     console.log('🔄 Configurando reproductor de audio...');
-    elements.audioPlayer.src = audioPath;
     elements.audioError.style.display = 'none';
     resetPlayer();
     
-    // Verificar si el audio existe
-    fetch(audioPath, { method: 'HEAD' })
-        .then(response => {
-            if (response.ok) {
-                console.log('✅ Audio encontrado:', audioPath);
+    // Intentar cargar desde IndexedDB primero (offline)
+    let audioLoaded = false;
+    if (window.OfflineStorage) {
+        try {
+            const offlineAudio = await OfflineStorage.getAudio(dateStr);
+            if (offlineAudio && offlineAudio.blob) {
+                console.log('📦 Audio cargado desde almacenamiento offline');
+                const blobUrl = URL.createObjectURL(offlineAudio.blob);
+                elements.audioPlayer.src = blobUrl;
+                audioLoaded = true;
                 enablePlayButton();
-            } else {
-                console.warn('⚠️ Audio NO encontrado:', audioPath, 'Status:', response.status);
-                showAudioError();
             }
-        })
-        .catch(err => {
-            console.error('❌ Error verificando audio:', err);
-            showAudioError();
-        });
+        } catch (e) {
+            console.warn('⚠️ Error cargando audio offline:', e);
+        }
+    }
+    
+    // Si no está descargado, cargar desde servidor
+    if (!audioLoaded) {
+        elements.audioPlayer.src = audioPath;
+        
+        // Verificar si el audio existe en el servidor
+        fetch(audioPath, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Audio encontrado:', audioPath);
+                    enablePlayButton();
+                } else {
+                    console.warn('⚠️ Audio NO encontrado:', audioPath, 'Status:', response.status);
+                    showAudioError();
+                }
+            })
+            .catch(err => {
+                console.error('❌ Error verificando audio:', err);
+                showAudioError();
+            });
+    }
     
     // Guardar en historial
     saveToHistory(date, elements.devotionalTitle.textContent);
@@ -182,6 +224,8 @@ function togglePlay() {
                         elements.playIcon.textContent = '⏸';
                         elements.playText.textContent = 'Pausar';
                         elements.audioError.style.display = 'none';
+                        // Registrar reproducción en el servidor
+                        trackPlay();
                     })
                     .catch(error => {
                         console.error('Error al reproducir:', error);
@@ -212,6 +256,8 @@ function togglePlay() {
                 elements.playIcon.textContent = '⏸';
                 elements.playText.textContent = 'Pausar';
                 elements.audioError.style.display = 'none';
+                // Registrar reproducción en el servidor
+                trackPlay();
             })
             .catch(error => {
                 console.error('Error al reproducir:', error);
@@ -233,6 +279,28 @@ function showAudioError() {
     elements.playButton.classList.add('disabled');
     elements.playIcon.textContent = '▶';
     elements.playText.textContent = 'No disponible';
+}
+
+// Registrar reproducción en el servidor
+let lastTrackedDate = null;
+async function trackPlay() {
+    const dateStr = formatDateForFile(currentDate);
+    
+    // Evitar registrar múltiples veces la misma fecha en una sesión
+    if (lastTrackedDate === dateStr) return;
+    lastTrackedDate = dateStr;
+    
+    try {
+        const title = elements.devotionalTitle?.textContent || 'Sin título';
+        await fetch('/api/track-play', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: dateStr, title: title })
+        });
+        console.log('📊 Reproducción registrada:', dateStr);
+    } catch (error) {
+        console.error('Error registrando reproducción:', error);
+    }
 }
 
 // Habilitar botón de reproducción
@@ -825,9 +893,18 @@ async function requestNotificationPermission() {
         return;
     }
     
-    // Si ya tiene permiso, suscribir silenciosamente
+    // Si ya tiene permiso, verificar si la suscripción existe en el servidor
     if (Notification.permission === 'granted') {
-        await subscribeToNotifications();
+        const subscriptionExists = await checkSubscriptionOnServer();
+        if (subscriptionExists) {
+            // Suscripción existe, actualizar silenciosamente
+            await subscribeToNotifications();
+        } else {
+            // Suscripción fue eliminada del servidor, re-suscribir
+            console.log('🔔 Suscripción no encontrada en servidor, re-suscribiendo...');
+            localStorage.removeItem('notifBannerDismissed'); // Permitir mostrar banner de nuevo
+            await subscribeToNotifications();
+        }
         return;
     }
     
@@ -839,6 +916,30 @@ async function requestNotificationPermission() {
     
     // Mostrar banner personalizado para pedir permiso
     showNotificationBanner();
+}
+
+// Verificar si la suscripción existe en el servidor
+async function checkSubscriptionOnServer() {
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (!subscription) {
+            return false;
+        }
+        
+        const response = await fetch('/api/notifications/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: subscription.endpoint })
+        });
+        
+        const data = await response.json();
+        return data.exists === true;
+    } catch (error) {
+        console.error('Error verificando suscripción:', error);
+        return true; // Asumir que existe si hay error
+    }
 }
 
 // Mostrar banner para solicitar notificaciones

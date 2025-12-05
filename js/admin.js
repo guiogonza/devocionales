@@ -303,9 +303,17 @@ async function checkAuth() {
     }
 }
 
+// Variables para control de sesión
+let sessionInterval = null;
+let sessionExpiry = null;
+
 function showLoginScreen() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminPanel').style.display = 'none';
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+        sessionInterval = null;
+    }
 }
 
 function showAdminPanel() {
@@ -314,6 +322,61 @@ function showAdminPanel() {
     loadAudiosFromServer();
     loadSubscriberCount();
     loadDevicesList();
+    startSessionTimer(5 * 60 * 1000); // 5 minutos
+}
+
+// Timer de sesión con verificación periódica
+function startSessionTimer(ms) {
+    sessionExpiry = Date.now() + ms;
+    
+    if (sessionInterval) clearInterval(sessionInterval);
+    
+    // Crear o actualizar el elemento timer si no existe
+    let timerEl = document.getElementById('sessionTimer');
+    if (!timerEl) {
+        const header = document.querySelector('.header-actions') || document.querySelector('.header');
+        if (header) {
+            timerEl = document.createElement('div');
+            timerEl.id = 'sessionTimer';
+            timerEl.style.cssText = 'background: rgba(45,106,79,0.2); padding: 6px 12px; border-radius: 8px; font-size: 14px; color: #2D6A4F; font-weight: 500;';
+            header.prepend(timerEl);
+        }
+    }
+    
+    sessionInterval = setInterval(async () => {
+        const remaining = sessionExpiry - Date.now();
+        
+        if (remaining <= 0) {
+            clearInterval(sessionInterval);
+            alert('Sesión expirada. Por favor, inicie sesión de nuevo.');
+            logout();
+            return;
+        }
+        
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        if (timerEl) {
+            timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+            timerEl.style.color = remaining < 60000 ? '#E53E3E' : '#2D6A4F';
+        }
+    }, 1000);
+}
+
+// Refrescar sesión con cada acción
+async function refreshSession() {
+    try {
+        const response = await fetch('/api/admin/verify', {
+            headers: { 'X-Admin-Token': authToken }
+        });
+        const data = await response.json();
+        if (data.authenticated && data.expiresIn) {
+            startSessionTimer(data.expiresIn);
+        } else if (!data.authenticated) {
+            logout();
+        }
+    } catch (error) {
+        console.error('Error refrescando sesión:', error);
+    }
 }
 
 async function login(username, password) {
@@ -363,6 +426,10 @@ async function logout() {
     
     localStorage.removeItem('adminToken');
     authToken = null;
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+        sessionInterval = null;
+    }
     showLoginScreen();
 }
 
@@ -1064,37 +1131,45 @@ async function loadDevicesList() {
         
         if (result.success && result.devices && result.devices.length > 0) {
             container.innerHTML = result.devices.map((device, index) => {
-                // Detectar tipo de dispositivo desde userAgent
-                const ua = device.userAgent || '';
+                // Usar el tipo de dispositivo del servidor si está disponible
                 let deviceIcon = '📱';
-                let deviceName = 'Dispositivo';
+                let deviceName = device.deviceType || 'Dispositivo';
                 
-                if (ua.includes('Windows')) {
-                    deviceIcon = '💻';
-                    deviceName = 'Windows';
-                } else if (ua.includes('Macintosh') || ua.includes('Mac OS')) {
-                    deviceIcon = '🖥️';
-                    deviceName = 'macOS';
-                } else if (ua.includes('iPhone')) {
-                    deviceIcon = '📱';
-                    deviceName = 'iPhone';
-                } else if (ua.includes('iPad')) {
-                    deviceIcon = '📱';
-                    deviceName = 'iPad';
-                } else if (ua.includes('Android')) {
-                    deviceIcon = '📱';
-                    deviceName = 'Android';
-                } else if (ua.includes('Linux')) {
-                    deviceIcon = '🐧';
-                    deviceName = 'Linux';
+                // Si no viene del servidor, detectar desde userAgent
+                if (!device.deviceType) {
+                    const ua = device.userAgent || '';
+                    if (ua.includes('Windows')) {
+                        deviceIcon = '💻';
+                        deviceName = 'Windows';
+                    } else if (ua.includes('Macintosh') || ua.includes('Mac OS')) {
+                        deviceIcon = '🖥️';
+                        deviceName = 'macOS';
+                    } else if (ua.includes('iPhone')) {
+                        deviceIcon = '📱';
+                        deviceName = 'iPhone';
+                    } else if (ua.includes('iPad')) {
+                        deviceIcon = '📱';
+                        deviceName = 'iPad';
+                    } else if (ua.includes('Android')) {
+                        deviceIcon = '📱';
+                        deviceName = 'Android';
+                    } else if (ua.includes('Linux')) {
+                        deviceIcon = '🐧';
+                        deviceName = 'Linux';
+                    }
+                } else {
+                    deviceIcon = ''; // Ya viene con emoji
                 }
                 
                 // Información de ubicación
-                const location = device.location || {};
-                const locationText = location.country ? 
-                    `${location.city ? location.city + ', ' : ''}${location.country}` : 
-                    '';
-                const flagEmoji = getCountryFlag(location.countryCode);
+                const country = device.country || device.location?.country || '';
+                const city = device.city || device.location?.city || '';
+                const countryCode = device.countryCode || device.location?.countryCode || '';
+                const ip = device.ip || '';
+                const lastSeen = device.lastSeen || device.createdAt;
+                
+                const locationText = country ? `${city ? city + ', ' : ''}${country}` : '';
+                const flagEmoji = getCountryFlag(countryCode);
                 
                 return `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--background); border-radius: 8px; margin-bottom: 6px;">
@@ -1103,7 +1178,11 @@ async function loadDevicesList() {
                             ${deviceIcon} ${deviceName}
                             ${locationText ? `<span style="margin-left: 8px; font-weight: normal; color: var(--text-secondary);">${flagEmoji} ${locationText}</span>` : ''}
                         </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            ${ip ? `IP: ${ip} • ` : ''}
+                            Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}
+                            ${lastSeen !== device.createdAt ? ` • Última vez: ${new Date(lastSeen).toLocaleString('es-ES')}` : ''}
+                        </div>
                     </div>
                     <button onclick="removeDevice('${device.id}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 18px;" title="Eliminar">🗑️</button>
                 </div>

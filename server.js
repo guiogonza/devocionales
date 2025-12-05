@@ -117,12 +117,278 @@ function saveConfig(config) {
 
 let appConfig = loadConfig();
 
-// ============ Configuración de Admin ============
-// En producción, usar variables de entorno y hash seguro
-const ADMIN_CREDENTIALS = {
-    username: process.env.ADMIN_USER || 'admin',
-    password: process.env.ADMIN_PASS || 'rio2024'
-};
+// ============ Sistema de Logs de Auditoría ============
+const AUDIT_LOG_FILE = path.join(__dirname, 'data', 'audit_log.json');
+
+function loadAuditLog() {
+    try {
+        if (fs.existsSync(AUDIT_LOG_FILE)) {
+            const data = fs.readFileSync(AUDIT_LOG_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error('Error al cargar logs de auditoría:', error);
+    }
+    return [];
+}
+
+function saveAuditLog(logs) {
+    try {
+        // Mantener solo los últimos 1000 registros
+        const trimmedLogs = logs.slice(-1000);
+        fs.writeFileSync(AUDIT_LOG_FILE, JSON.stringify(trimmedLogs, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error al guardar logs de auditoría:', error);
+    }
+}
+
+let auditLogs = loadAuditLog();
+
+// Función para registrar acciones de auditoría (admin)
+function logAudit(action, details, req = null) {
+    const entry = {
+        timestamp: new Date().toISOString(),
+        action,
+        details,
+        ip: req ? (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress || 'unknown') : 'system',
+        userAgent: req ? req.headers['user-agent'] : 'system'
+    };
+    auditLogs.push(entry);
+    saveAuditLog(auditLogs);
+    console.log(`📋 AUDIT: ${action} - ${JSON.stringify(details)}`);
+}
+
+// ============ Sistema de Logs de Actividad de Usuarios ============
+const ACTIVITY_LOG_FILE = path.join(__dirname, 'data', 'activity_log.json');
+
+function loadActivityLog() {
+    try {
+        if (fs.existsSync(ACTIVITY_LOG_FILE)) {
+            const data = fs.readFileSync(ACTIVITY_LOG_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error('Error al cargar logs de actividad:', error);
+    }
+    return [];
+}
+
+function saveActivityLog(logs) {
+    try {
+        // Mantener solo los últimos 5000 registros
+        const trimmedLogs = logs.slice(-5000);
+        fs.writeFileSync(ACTIVITY_LOG_FILE, JSON.stringify(trimmedLogs, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error al guardar logs de actividad:', error);
+    }
+}
+
+let activityLogs = loadActivityLog();
+
+// Función para registrar actividad de usuarios (con geolocalización)
+// Función para detectar sistema operativo desde User Agent
+function detectOS(userAgent) {
+    if (!userAgent) return { os: 'Desconocido', icon: '❓' };
+    
+    const ua = userAgent.toLowerCase();
+    
+    if (ua.includes('iphone')) return { os: 'iOS (iPhone)', icon: '📱' };
+    if (ua.includes('ipad')) return { os: 'iOS (iPad)', icon: '📱' };
+    if (ua.includes('ipod')) return { os: 'iOS (iPod)', icon: '📱' };
+    if (ua.includes('mac os') || ua.includes('macintosh')) return { os: 'macOS', icon: '🖥️' };
+    if (ua.includes('android')) {
+        if (ua.includes('mobile')) return { os: 'Android (Móvil)', icon: '📱' };
+        return { os: 'Android (Tablet)', icon: '📱' };
+    }
+    if (ua.includes('windows phone')) return { os: 'Windows Phone', icon: '📱' };
+    if (ua.includes('windows')) return { os: 'Windows', icon: '💻' };
+    if (ua.includes('linux')) return { os: 'Linux', icon: '🐧' };
+    if (ua.includes('cros')) return { os: 'Chrome OS', icon: '💻' };
+    
+    return { os: 'Desconocido', icon: '❓' };
+}
+
+// Función para registrar actividad de usuarios (con geolocalización)
+async function logActivity(action, details, req) {
+    const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress || 'unknown';
+    const cleanIP = ip.split(',')[0].trim();
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    
+    // Obtener geolocalización
+    let geoInfo = { country: 'Desconocido', city: '', countryCode: '' };
+    try {
+        geoInfo = await getGeoInfo(cleanIP);
+    } catch (e) {
+        console.error('Error obteniendo geo para actividad:', e);
+    }
+    
+    // Detectar sistema operativo
+    const osInfo = detectOS(userAgent);
+    
+    const entry = {
+        timestamp: new Date().toISOString(),
+        action,
+        details,
+        ip: cleanIP,
+        country: geoInfo.country,
+        countryCode: geoInfo.countryCode || '',
+        city: geoInfo.city || '',
+        os: osInfo.os,
+        osIcon: osInfo.icon,
+        userAgent: userAgent,
+        referer: req.headers['referer'] || 'direct'
+    };
+    activityLogs.push(entry);
+    saveActivityLog(activityLogs);
+    console.log(`👤 ACTIVITY: ${action} - ${osInfo.icon} ${osInfo.os} - IP: ${cleanIP} - ${geoInfo.country} - ${JSON.stringify(details)}`);
+}
+
+// ============ Rate Limiting para Login ============
+const loginAttempts = new Map(); // IP -> { count, lastAttempt, blockedUntil }
+const MAX_LOGIN_ATTEMPTS = 5;
+const BLOCK_DURATION = 15 * 60 * 1000; // 15 minutos de bloqueo
+const ATTEMPT_WINDOW = 5 * 60 * 1000; // Ventana de 5 minutos para contar intentos
+
+function checkRateLimit(ip) {
+    const now = Date.now();
+    const attempts = loginAttempts.get(ip);
+    
+    if (!attempts) return { allowed: true };
+    
+    // Si está bloqueado
+    if (attempts.blockedUntil && now < attempts.blockedUntil) {
+        const remainingMs = attempts.blockedUntil - now;
+        const remainingMins = Math.ceil(remainingMs / 60000);
+        return { 
+            allowed: false, 
+            reason: `Demasiados intentos. Intenta de nuevo en ${remainingMins} minutos.`
+        };
+    }
+    
+    // Limpiar intentos antiguos
+    if (now - attempts.lastAttempt > ATTEMPT_WINDOW) {
+        loginAttempts.delete(ip);
+        return { allowed: true };
+    }
+    
+    return { allowed: true };
+}
+
+function recordLoginAttempt(ip, success) {
+    const now = Date.now();
+    let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: now };
+    
+    if (success) {
+        // Login exitoso - limpiar intentos
+        loginAttempts.delete(ip);
+        return;
+    }
+    
+    // Incrementar contador de intentos fallidos
+    attempts.count++;
+    attempts.lastAttempt = now;
+    
+    if (attempts.count >= MAX_LOGIN_ATTEMPTS) {
+        attempts.blockedUntil = now + BLOCK_DURATION;
+        console.log(`🚫 IP ${ip} bloqueada por ${BLOCK_DURATION/60000} minutos`);
+    }
+    
+    loginAttempts.set(ip, attempts);
+}
+
+// ============ Configuración de Admin (persistente con múltiples usuarios) ============
+const ADMIN_FILE = path.join(__dirname, 'data', 'admin.json');
+const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutos en milisegundos
+
+function loadAdminConfig() {
+    try {
+        if (fs.existsSync(ADMIN_FILE)) {
+            const data = fs.readFileSync(ADMIN_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error('Error al cargar config admin:', error);
+    }
+    // Valores por defecto - primer usuario admin
+    return {
+        users: [
+            {
+                id: '1',
+                username: process.env.ADMIN_USER || 'admin',
+                password: process.env.ADMIN_PASS || 'rio2024',
+                role: 'superadmin',
+                createdAt: new Date().toISOString()
+            }
+        ]
+    };
+}
+
+function saveAdminConfig(config) {
+    try {
+        fs.writeFileSync(ADMIN_FILE, JSON.stringify(config, null, 2), 'utf8');
+        return true;
+    } catch (error) {
+        console.error('Error al guardar config admin:', error);
+        return false;
+    }
+}
+
+let adminConfig = loadAdminConfig();
+
+// Función para validar credenciales
+function validateCredentials(username, password) {
+    const user = adminConfig.users.find(u => u.username === username && u.password === password);
+    return user || null;
+}
+
+// ============ Dispositivos Registrados (mejorado) ============
+const DEVICES_FILE = path.join(__dirname, 'data', 'devices.json');
+
+function loadDevices() {
+    try {
+        if (fs.existsSync(DEVICES_FILE)) {
+            const data = fs.readFileSync(DEVICES_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (error) {
+        console.error('Error al cargar dispositivos:', error);
+    }
+    return [];
+}
+
+function saveDevices(devices) {
+    try {
+        fs.writeFileSync(DEVICES_FILE, JSON.stringify(devices, null, 2), 'utf8');
+    } catch (error) {
+        console.error('Error al guardar dispositivos:', error);
+    }
+}
+
+let registeredDevices = loadDevices();
+
+// Función para obtener info de geolocalización por IP (usando servicio gratuito)
+async function getGeoFromIP(ip) {
+    try {
+        // Limpiar IP
+        const cleanIP = ip.replace('::ffff:', '').split(',')[0].trim();
+        if (cleanIP === '127.0.0.1' || cleanIP === '::1' || cleanIP.startsWith('192.168.') || cleanIP.startsWith('10.')) {
+            return { country: 'Local', city: 'Local Network' };
+        }
+        
+        const response = await fetch(`http://ip-api.com/json/${cleanIP}?fields=country,city,countryCode`);
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                country: data.country || 'Desconocido',
+                countryCode: data.countryCode || '??',
+                city: data.city || 'Desconocida'
+            };
+        }
+    } catch (error) {
+        console.error('Error obteniendo geolocalización:', error);
+    }
+    return { country: 'Desconocido', city: 'Desconocida' };
+}
 
 // Archivo para persistir sesiones
 const SESSIONS_FILE = path.join(__dirname, 'data', 'sessions.json');
@@ -133,11 +399,11 @@ function loadSessions() {
         if (fs.existsSync(SESSIONS_FILE)) {
             const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
             const sessions = JSON.parse(data);
-            // Filtrar sesiones expiradas (24 horas)
+            // Filtrar sesiones expiradas (5 minutos)
             const validSessions = {};
             const now = Date.now();
             for (const [token, session] of Object.entries(sessions)) {
-                if (now - session.createdAt < 24 * 60 * 60 * 1000) {
+                if (now - session.createdAt < SESSION_TIMEOUT) {
                     validSessions[token] = session;
                 }
             }
@@ -170,12 +436,15 @@ function validateToken(token) {
     if (!token) return false;
     const session = activeSessions.get(token);
     if (!session) return false;
-    // Token válido por 24 horas
-    if (Date.now() - session.createdAt > 24 * 60 * 60 * 1000) {
+    // Token válido por 5 minutos
+    if (Date.now() - session.createdAt > SESSION_TIMEOUT) {
         activeSessions.delete(token);
         saveSessions();
         return false;
     }
+    // Extender sesión en cada uso (sliding expiration)
+    session.createdAt = Date.now();
+    saveSessions();
     return true;
 }
 
@@ -196,6 +465,26 @@ if (!fs.existsSync(AUDIOS_DIR)) {
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// ============ Headers de Seguridad ============
+app.use((req, res, next) => {
+    // Ocultar información del servidor
+    res.removeHeader('X-Powered-By');
+    
+    // Headers de seguridad
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Solo en rutas admin, headers más estrictos
+    if (req.url.startsWith('/admin')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.setHeader('Pragma', 'no-cache');
+    }
+    
+    next();
+});
 
 // Logger de todas las peticiones
 app.use((req, res, next) => {
@@ -232,9 +521,21 @@ app.get('/audios/:filename', (req, res) => {
         return res.status(404).json({ error: 'Audio no encontrado' });
     }
     
+    // Registrar reproducción (solo en la primera solicitud, no en chunks)
+    const range = req.headers.range;
+    if (!range || range.startsWith('bytes=0-')) {
+        const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2})/);
+        const devotionalDate = dateMatch ? dateMatch[1] : filename;
+        const devotionalInfo = devotionalsDB[devotionalDate] || {};
+        logActivity('PLAY_DEVOTIONAL', {
+            date: devotionalDate,
+            title: devotionalInfo.title || 'Sin título',
+            filename: filename
+        }, req);
+    }
+    
     const stat = fs.statSync(filePath);
     const fileSize = stat.size;
-    const range = req.headers.range;
     
     // Headers comunes para iOS
     res.setHeader('Accept-Ranges', 'bytes');
@@ -379,15 +680,29 @@ function getAudiosList() {
 // POST /api/admin/login - Iniciar sesión admin
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
+    const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress || 'unknown';
+    const cleanIP = ip.split(',')[0].trim();
     
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    // Verificar rate limiting
+    const rateCheck = checkRateLimit(cleanIP);
+    if (!rateCheck.allowed) {
+        logAudit('LOGIN_BLOCKED', { username, reason: 'rate_limit' }, req);
+        return res.status(429).json({ success: false, error: rateCheck.reason });
+    }
+    
+    const user = validateCredentials(username, password);
+    if (user) {
+        recordLoginAttempt(cleanIP, true); // Limpiar intentos fallidos
         const token = generateToken();
-        activeSessions.set(token, { createdAt: Date.now() });
-        saveSessions();  // Persistir sesión
-        console.log('🔐 Admin autenticado correctamente');
-        res.json({ success: true, token });
+        activeSessions.set(token, { createdAt: Date.now(), ip, username: user.username, userId: user.id });
+        saveSessions();
+        logAudit('LOGIN_SUCCESS', { username: user.username, role: user.role }, req);
+        console.log('🔐 Admin autenticado:', user.username);
+        res.json({ success: true, token, user: { username: user.username, role: user.role } });
     } else {
-        console.log('❌ Intento de login fallido');
+        recordLoginAttempt(cleanIP, false); // Registrar intento fallido
+        logAudit('LOGIN_FAILED', { username, attemptedPassword: '***' }, req);
+        console.log('❌ Intento de login fallido para:', username);
         res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
 });
@@ -396,8 +711,10 @@ app.post('/api/admin/login', (req, res) => {
 app.post('/api/admin/logout', (req, res) => {
     const token = req.headers['x-admin-token'];
     if (token) {
+        const session = activeSessions.get(token);
+        logAudit('LOGOUT', { username: session?.username || 'unknown' }, req);
         activeSessions.delete(token);
-        saveSessions();  // Persistir cambio
+        saveSessions();
     }
     res.json({ success: true });
 });
@@ -405,7 +722,247 @@ app.post('/api/admin/logout', (req, res) => {
 // GET /api/admin/verify - Verificar si está autenticado
 app.get('/api/admin/verify', (req, res) => {
     const token = req.headers['x-admin-token'];
-    res.json({ success: true, authenticated: validateToken(token) });
+    const isValid = validateToken(token);
+    const session = activeSessions.get(token);
+    res.json({ 
+        success: true, 
+        authenticated: isValid,
+        user: isValid && session ? { username: session.username } : null,
+        expiresIn: isValid && session ? Math.max(0, SESSION_TIMEOUT - (Date.now() - session.createdAt)) : 0
+    });
+});
+
+// ============ API de Gestión de Usuarios ============
+
+// GET /api/admin/users - Listar usuarios (requiere autenticación)
+app.get('/api/admin/users', requireAuth, (req, res) => {
+    const users = adminConfig.users.map(u => ({
+        id: u.id,
+        username: u.username,
+        role: u.role,
+        createdAt: u.createdAt
+    }));
+    res.json({ success: true, users });
+});
+
+// POST /api/admin/users - Crear usuario (requiere autenticación)
+app.post('/api/admin/users', requireAuth, (req, res) => {
+    const { username, password, role } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ success: false, error: 'Usuario y contraseña son requeridos' });
+    }
+    
+    if (password.length < 6) {
+        return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    
+    // Verificar si el usuario ya existe
+    if (adminConfig.users.find(u => u.username === username)) {
+        return res.status(400).json({ success: false, error: 'El usuario ya existe' });
+    }
+    
+    const newUser = {
+        id: Date.now().toString(),
+        username,
+        password,
+        role: role || 'admin',
+        createdAt: new Date().toISOString()
+    };
+    
+    adminConfig.users.push(newUser);
+    saveAdminConfig(adminConfig);
+    
+    logAudit('USER_CREATED', { newUsername: username, role: newUser.role }, req);
+    console.log('👤 Nuevo usuario creado:', username);
+    
+    res.json({ success: true, message: 'Usuario creado correctamente', user: { id: newUser.id, username, role: newUser.role } });
+});
+
+// PUT /api/admin/users/:id - Editar usuario (requiere autenticación)
+app.put('/api/admin/users/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    const { username, password, role } = req.body;
+    
+    const userIndex = adminConfig.users.findIndex(u => u.id === id);
+    if (userIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+    }
+    
+    const user = adminConfig.users[userIndex];
+    const changes = [];
+    
+    if (username && username !== user.username) {
+        // Verificar que no exista otro usuario con ese nombre
+        if (adminConfig.users.find(u => u.username === username && u.id !== id)) {
+            return res.status(400).json({ success: false, error: 'El nombre de usuario ya existe' });
+        }
+        changes.push(`username: ${user.username} → ${username}`);
+        user.username = username;
+    }
+    
+    if (password) {
+        if (password.length < 6) {
+            return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 6 caracteres' });
+        }
+        changes.push('password changed');
+        user.password = password;
+    }
+    
+    if (role && role !== user.role) {
+        changes.push(`role: ${user.role} → ${role}`);
+        user.role = role;
+    }
+    
+    saveAdminConfig(adminConfig);
+    logAudit('USER_UPDATED', { userId: id, username: user.username, changes: changes.join(', ') }, req);
+    
+    res.json({ success: true, message: 'Usuario actualizado correctamente' });
+});
+
+// DELETE /api/admin/users/:id - Eliminar usuario (requiere autenticación)
+app.delete('/api/admin/users/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    
+    const userIndex = adminConfig.users.findIndex(u => u.id === id);
+    if (userIndex === -1) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+    }
+    
+    // No permitir eliminar el último usuario
+    if (adminConfig.users.length === 1) {
+        return res.status(400).json({ success: false, error: 'No se puede eliminar el último usuario' });
+    }
+    
+    const deletedUser = adminConfig.users[userIndex];
+    adminConfig.users.splice(userIndex, 1);
+    saveAdminConfig(adminConfig);
+    
+    // Invalidar sesiones del usuario eliminado
+    for (const [token, session] of activeSessions.entries()) {
+        if (session.userId === id) {
+            activeSessions.delete(token);
+        }
+    }
+    saveSessions();
+    
+    logAudit('USER_DELETED', { deletedUsername: deletedUser.username }, req);
+    console.log('🗑️ Usuario eliminado:', deletedUser.username);
+    
+    res.json({ success: true, message: 'Usuario eliminado correctamente' });
+});
+
+// POST /api/admin/change-password - Cambiar contraseña propia (requiere autenticación)
+app.post('/api/admin/change-password', requireAuth, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const token = req.headers['x-admin-token'];
+    const session = activeSessions.get(token);
+    
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, error: 'Faltan campos requeridos' });
+    }
+    
+    const user = adminConfig.users.find(u => u.id === session?.userId);
+    if (!user) {
+        return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+    }
+    
+    if (currentPassword !== user.password) {
+        logAudit('PASSWORD_CHANGE_FAILED', { username: user.username, reason: 'Contraseña actual incorrecta' }, req);
+        return res.status(401).json({ success: false, error: 'Contraseña actual incorrecta' });
+    }
+    
+    if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+    
+    user.password = newPassword;
+    saveAdminConfig(adminConfig);
+    
+    logAudit('PASSWORD_CHANGED', { username: user.username }, req);
+    console.log('🔑 Contraseña cambiada para:', user.username);
+    
+    res.json({ success: true, message: 'Contraseña cambiada correctamente' });
+});
+
+// GET /api/admin/audit-logs - Obtener logs de auditoría ADMIN (requiere autenticación)
+app.get('/api/admin/audit-logs', requireAuth, (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const action = req.query.action; // Filtro por acción
+    const ip = req.query.ip; // Filtro por IP
+    const startDate = req.query.startDate; // Filtro por fecha inicio
+    const endDate = req.query.endDate; // Filtro por fecha fin
+    
+    let filteredLogs = [...auditLogs];
+    
+    // Aplicar filtros
+    if (action) {
+        filteredLogs = filteredLogs.filter(log => log.action.toLowerCase().includes(action.toLowerCase()));
+    }
+    if (ip) {
+        filteredLogs = filteredLogs.filter(log => log.ip && log.ip.includes(ip));
+    }
+    if (startDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp >= startDate);
+    }
+    if (endDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp <= endDate + 'T23:59:59');
+    }
+    
+    const logs = filteredLogs.slice(-limit).reverse();
+    
+    // Obtener lista de acciones únicas para el filtro
+    const actions = [...new Set(auditLogs.map(log => log.action))];
+    
+    res.json({ success: true, logs, total: filteredLogs.length, actions });
+});
+
+// GET /api/admin/activity-logs - Obtener logs de actividad de USUARIOS (requiere autenticación)
+app.get('/api/admin/activity-logs', requireAuth, (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const action = req.query.action; // Filtro por acción
+    const ip = req.query.ip; // Filtro por IP
+    const startDate = req.query.startDate; // Filtro por fecha inicio
+    const endDate = req.query.endDate; // Filtro por fecha fin
+    
+    let filteredLogs = [...activityLogs];
+    
+    // Aplicar filtros
+    if (action) {
+        filteredLogs = filteredLogs.filter(log => log.action.toLowerCase().includes(action.toLowerCase()));
+    }
+    if (ip) {
+        filteredLogs = filteredLogs.filter(log => log.ip && log.ip.includes(ip));
+    }
+    if (startDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp >= startDate);
+    }
+    if (endDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp <= endDate + 'T23:59:59');
+    }
+    
+    const logs = filteredLogs.slice(-limit).reverse();
+    
+    // Obtener lista de acciones únicas para el filtro
+    const actions = [...new Set(activityLogs.map(log => log.action))];
+    
+    res.json({ success: true, logs, total: filteredLogs.length, actions });
+});
+
+// POST /api/track-play - Registrar reproducción de audio (llamado desde el cliente)
+app.post('/api/track-play', async (req, res) => {
+    const { date, title } = req.body;
+    
+    if (!date) {
+        return res.json({ success: false, error: 'Fecha requerida' });
+    }
+    
+    await logActivity('PLAY_DEVOTIONAL', {
+        date: date,
+        title: title || 'Sin título'
+    }, req);
+    
+    res.json({ success: true });
 });
 
 // GET /api/audios - Listar todos los audios (público)
@@ -545,6 +1102,9 @@ app.post('/api/audios', requireAuth, (req, res) => {
             
             const stats = fs.statSync(finalPath);
             
+            // Registrar en auditoría
+            logAudit('AUDIO_UPLOADED', { date, filename: `${date}.mp3`, size: stats.size }, req);
+            
             res.status(201).json({
                 success: true,
                 message: 'Audio subido correctamente',
@@ -599,6 +1159,9 @@ app.delete('/api/audios/:date', requireAuth, (req, res) => {
             saveDevotionals(devotionalsDB);
             console.log('🗑️ Devocional eliminado para:', date);
         }
+        
+        // Registrar en auditoría
+        logAudit('AUDIO_DELETED', { date }, req);
         
         res.json({
             success: true,
@@ -1090,6 +1653,18 @@ app.post('/api/notifications/subscribe', async (req, res) => {
     res.json({ success: true, message: 'Suscrito correctamente' });
 });
 
+// POST /api/notifications/check - Verificar si una suscripción existe
+app.post('/api/notifications/check', (req, res) => {
+    const { endpoint } = req.body;
+    
+    if (!endpoint) {
+        return res.json({ success: false, exists: false });
+    }
+    
+    const exists = pushSubscriptions.some(sub => sub.endpoint === endpoint);
+    res.json({ success: true, exists });
+});
+
 // POST /api/notifications/schedule - Programar recordatorio
 app.post('/api/notifications/schedule', (req, res) => {
     const { hour, minute } = req.body;
@@ -1166,24 +1741,30 @@ app.get('/api/notifications/count', (req, res) => {
 app.get('/api/notifications/devices', (req, res) => {
     const devices = pushSubscriptions.map((sub, index) => {
         // Extraer info del user agent si existe
-        let userAgent = 'Dispositivo desconocido';
+        let deviceType = 'Dispositivo desconocido';
+        let deviceIcon = '🌐';
         if (sub.userAgent) {
-            if (sub.userAgent.includes('Android')) userAgent = '📱 Android';
-            else if (sub.userAgent.includes('iPhone') || sub.userAgent.includes('iPad')) userAgent = '🍎 iOS';
-            else if (sub.userAgent.includes('Windows')) userAgent = '💻 Windows';
-            else if (sub.userAgent.includes('Mac')) userAgent = '💻 macOS';
-            else if (sub.userAgent.includes('Linux')) userAgent = '🐧 Linux';
-            else userAgent = '🌐 Navegador';
+            if (sub.userAgent.includes('Android')) { deviceType = 'Android'; deviceIcon = '📱'; }
+            else if (sub.userAgent.includes('iPhone') || sub.userAgent.includes('iPad')) { deviceType = 'iOS'; deviceIcon = '🍎'; }
+            else if (sub.userAgent.includes('Windows')) { deviceType = 'Windows'; deviceIcon = '💻'; }
+            else if (sub.userAgent.includes('Mac')) { deviceType = 'macOS'; deviceIcon = '💻'; }
+            else if (sub.userAgent.includes('Linux')) { deviceType = 'Linux'; deviceIcon = '🐧'; }
+            else { deviceType = 'Navegador'; deviceIcon = '🌐'; }
         }
         
         return {
             id: sub.id || index.toString(),
-            userAgent: userAgent,
-            createdAt: sub.createdAt || new Date().toISOString()
+            deviceType: `${deviceIcon} ${deviceType}`,
+            ip: sub.ip || 'Desconocida',
+            country: sub.location?.country || 'Desconocido',
+            countryCode: sub.location?.countryCode || '??',
+            city: sub.location?.city || '',
+            createdAt: sub.createdAt || new Date().toISOString(),
+            lastSeen: sub.lastSeen || sub.createdAt || new Date().toISOString()
         };
     });
     
-    res.json({ success: true, devices });
+    res.json({ success: true, devices, total: devices.length });
 });
 
 // DELETE /api/notifications/device/:id - Eliminar dispositivo
@@ -1197,6 +1778,128 @@ app.delete('/api/notifications/device/:id', (req, res) => {
         res.json({ success: true, message: 'Dispositivo eliminado' });
     } else {
         res.status(404).json({ success: false, error: 'Dispositivo no encontrado' });
+    }
+});
+
+// ============ Sistema de Notificación Automática ============
+
+// Función para enviar notificación del devocional diario
+async function sendDailyDevotionalNotification() {
+    // Obtener fecha actual según la zona horaria configurada
+    const gmtOffset = appConfig.gmtOffset || 0;
+    const now = new Date();
+    const localTime = new Date(now.getTime() + (gmtOffset * 60 * 60 * 1000));
+    const dateStr = localTime.toISOString().split('T')[0];
+    
+    // Verificar si hay un audio para hoy
+    const audioPath = path.join(AUDIOS_DIR, `${dateStr}.mp3`);
+    if (!fs.existsSync(audioPath)) {
+        console.log(`📭 No hay devocional para hoy (${dateStr}), no se envía notificación`);
+        return;
+    }
+    
+    // Obtener el título del devocional
+    const devotional = devotionalsDB[dateStr];
+    const title = devotional?.title || '🙏 Devocional del día';
+    const body = 'Escucha el devocional de hoy';
+    
+    if (pushSubscriptions.length === 0) {
+        console.log('📭 No hay suscriptores para enviar notificación');
+        return;
+    }
+    
+    console.log(`📤 Enviando notificación automática: "${title}" a ${pushSubscriptions.length} suscriptores`);
+    
+    const payload = JSON.stringify({
+        title: title,
+        body: body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-96.png',
+        data: {
+            url: `/?date=${dateStr}`
+        }
+    });
+    
+    let successCount = 0;
+    let failCount = 0;
+    const failedSubscriptions = [];
+    
+    for (const subscription of pushSubscriptions) {
+        try {
+            await webpush.sendNotification(subscription, payload);
+            successCount++;
+        } catch (error) {
+            failCount++;
+            if (error.statusCode === 410 || error.statusCode === 404) {
+                failedSubscriptions.push(subscription.endpoint);
+            }
+        }
+    }
+    
+    // Limpiar suscripciones inválidas
+    if (failedSubscriptions.length > 0) {
+        pushSubscriptions = pushSubscriptions.filter(
+            sub => !failedSubscriptions.includes(sub.endpoint)
+        );
+        saveSubscriptions();
+        console.log(`🧹 Eliminadas ${failedSubscriptions.length} suscripciones inválidas`);
+    }
+    
+    console.log(`✅ Notificación automática enviada: ${successCount} exitosas, ${failCount} fallidas`);
+    
+    // Registrar en auditoría
+    auditLogs.push({
+        timestamp: new Date().toISOString(),
+        action: 'AUTO_NOTIFICATION_SENT',
+        details: { title, successCount, failCount, date: dateStr },
+        ip: 'system'
+    });
+    saveAuditLog(auditLogs);
+}
+
+// Variable para rastrear la última fecha notificada
+let lastNotifiedDate = null;
+
+// Verificar cada minuto si hay un nuevo devocional disponible
+function checkForNewDevotional() {
+    const gmtOffset = appConfig.gmtOffset || 0;
+    const now = new Date();
+    const localTime = new Date(now.getTime() + (gmtOffset * 60 * 60 * 1000));
+    const todayStr = localTime.toISOString().split('T')[0];
+    const currentHour = localTime.getUTCHours();
+    const currentMinute = localTime.getUTCMinutes();
+    
+    // Verificar si es medianoche (00:00-00:05) según la zona horaria configurada
+    // y si no hemos notificado hoy
+    if (currentHour === 0 && currentMinute < 5 && lastNotifiedDate !== todayStr) {
+        const audioPath = path.join(AUDIOS_DIR, `${todayStr}.mp3`);
+        if (fs.existsSync(audioPath)) {
+            console.log(`🔔 Nuevo devocional detectado para ${todayStr}, enviando notificación...`);
+            lastNotifiedDate = todayStr;
+            sendDailyDevotionalNotification();
+        }
+    }
+}
+
+// Iniciar verificación periódica (cada minuto)
+setInterval(checkForNewDevotional, 60 * 1000);
+
+// También verificar al iniciar el servidor (por si se reinicia durante la medianoche)
+setTimeout(() => {
+    const gmtOffset = appConfig.gmtOffset || 0;
+    const now = new Date();
+    const localTime = new Date(now.getTime() + (gmtOffset * 60 * 60 * 1000));
+    const todayStr = localTime.toISOString().split('T')[0];
+    console.log(`📅 Servidor iniciado. Fecha local (GMT${gmtOffset >= 0 ? '+' : ''}${gmtOffset}): ${todayStr}`);
+}, 1000);
+
+// Endpoint para enviar notificación manual (prueba)
+app.post('/api/admin/send-daily-notification', requireAuth, async (req, res) => {
+    try {
+        await sendDailyDevotionalNotification();
+        res.json({ success: true, message: 'Notificación enviada' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

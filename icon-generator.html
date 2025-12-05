@@ -210,28 +210,9 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, size, size);
                 
-                // Calcular el tamaño para centrar la imagen
-                const imgAspect = loadedImage.width / loadedImage.height;
-                let drawWidth, drawHeight, drawX, drawY;
-                
-                // La imagen es cuadrada o casi cuadrada (es un círculo)
-                // Hacemos que ocupe casi todo el canvas con un pequeño padding
-                const padding = size * 0.05; // 5% de padding
-                const availableSize = size - (padding * 2);
-                
-                if (imgAspect > 1) {
-                    drawWidth = availableSize;
-                    drawHeight = availableSize / imgAspect;
-                } else {
-                    drawHeight = availableSize;
-                    drawWidth = availableSize * imgAspect;
-                }
-                
-                drawX = (size - drawWidth) / 2;
-                drawY = (size - drawHeight) / 2;
-                
-                // Dibujar la imagen
-                ctx.drawImage(loadedImage, drawX, drawY, drawWidth, drawHeight);
+                // Dibujar la imagen ocupando TODO el canvas (sin padding)
+                // La imagen se estira para llenar completamente el ícono
+                ctx.drawImage(loadedImage, 0, 0, size, size);
             });
         }
 

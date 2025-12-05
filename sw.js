@@ -1,33 +1,40 @@
-const CACHE_NAME = 'devocionales-v5';
+const CACHE_NAME = 'devocionales-v6';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
-// Instalación del Service Worker - sin cachear nada para evitar errores
+// Instalación del Service Worker - activar inmediatamente
 self.addEventListener('install', event => {
-    console.log('Service Worker: Instalando...');
+    console.log('Service Worker: Instalando nueva versión...');
+    // Forzar activación inmediata sin esperar
     self.skipWaiting();
 });
 
-// Activación del Service Worker
+// Activación del Service Worker - tomar control inmediato
 self.addEventListener('activate', event => {
-    console.log('Service Worker: Activado');
-    event.waitUntil(clients.claim());
-});
-
-// Activación del Service Worker
-self.addEventListener('activate', event => {
-    console.log('Service Worker: Activado');
+    console.log('Service Worker: Activado - Limpiando caches antiguas...');
     
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cache => {
+                    // Eliminar caches antiguas
                     if (cache !== CACHE_NAME && cache !== AUDIO_CACHE_NAME) {
-                        console.log('Service Worker: Limpiando cache antigua', cache);
+                        console.log('Service Worker: Eliminando cache antigua:', cache);
                         return caches.delete(cache);
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        }).then(() => {
+            console.log('Service Worker: Tomando control de todos los clientes');
+            // Tomar control inmediato de todas las pestañas abiertas
+            return self.clients.claim();
+        }).then(() => {
+            // Notificar a todos los clientes que hay una actualización
+            return self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
+                });
+            });
+        })
     );
 });
 
