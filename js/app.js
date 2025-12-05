@@ -422,14 +422,38 @@ function closeHistoryModal() {
 }
 
 // Cambiar fecha desde el calendario
-function onDateChange(e) {
+async function onDateChange(e) {
     const selectedDateStr = e.target.value;
+    const previousValue = formatDateForFile(currentDate);
     
     // Validar que no sea una fecha futura (según servidor)
     if (serverToday && selectedDateStr > serverToday) {
-        alert('No puedes seleccionar una fecha futura');
-        e.target.value = serverToday;
+        showToast('No puedes seleccionar una fecha futura');
+        e.target.value = previousValue;
         return;
+    }
+    
+    // Validar que la fecha tenga devocional disponible
+    if (availableDates.length > 0 && !availableDates.includes(selectedDateStr)) {
+        showToast('No hay devocional para esta fecha');
+        e.target.value = previousValue;
+        checkDateAvailability(previousValue);
+        return;
+    }
+    
+    // Verificar con el servidor si hay devocional
+    try {
+        const response = await fetch(`/api/devotionals/${selectedDateStr}`);
+        const result = await response.json();
+        
+        if (!result.success || !result.exists) {
+            showToast('No hay devocional para esta fecha');
+            e.target.value = previousValue;
+            checkDateAvailability(previousValue);
+            return;
+        }
+    } catch (error) {
+        console.warn('Error verificando devocional:', error);
     }
     
     const selectedDate = new Date(selectedDateStr + 'T12:00:00');
@@ -577,10 +601,39 @@ async function loadAvailableDates() {
         if (data.success) {
             availableDates = data.dates;
             console.log('📅 Fechas disponibles:', availableDates.length);
+            
+            // Establecer fecha mínima como el primer devocional disponible
+            if (availableDates.length > 0) {
+                const sortedDates = [...availableDates].sort();
+                elements.datePicker.min = sortedDates[0];
+                console.log('📅 Fecha mínima:', sortedDates[0]);
+            }
+            
+            // Actualizar indicador de disponibilidad
+            updateAvailabilityHint();
         }
     } catch (error) {
         console.warn('⚠️ Error cargando fechas disponibles:', error);
     }
+}
+
+// Actualizar indicador de fechas disponibles
+function updateAvailabilityHint() {
+    const availabilityDiv = document.getElementById('dateAvailability');
+    if (!availabilityDiv) return;
+    
+    if (availableDates.length > 0) {
+        const sortedDates = [...availableDates].sort();
+        const firstDate = sortedDates[0];
+        const lastDate = sortedDates[sortedDates.length - 1];
+        availabilityDiv.innerHTML = `<span style="color: #718096; font-size: 11px;">📅 Disponibles: ${formatDateShort(firstDate)} - ${formatDateShort(lastDate)} (${availableDates.length} días)</span>`;
+    }
+}
+
+// Formatear fecha corta
+function formatDateShort(dateStr) {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}`;
 }
 
 // Inicializar aplicación
