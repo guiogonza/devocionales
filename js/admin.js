@@ -496,6 +496,15 @@ function handleFileSelect(file) {
         return;
     }
     
+    // Validar nombre del archivo
+    const fileNameValidation = validateFileName(file.name);
+    if (!fileNameValidation.valid) {
+        elements.uploadZone.classList.add('error');
+        showToast(fileNameValidation.error, 'error');
+        setTimeout(() => elements.uploadZone.classList.remove('error'), 2000);
+        return;
+    }
+    
     selectedFile = file;
     elements.uploadZone.classList.remove('error');
     
@@ -503,11 +512,42 @@ function handleFileSelect(file) {
     elements.fileSize.textContent = formatFileSize(file.size);
     elements.filePreview.classList.add('show');
     
+    // Si el archivo tiene fecha válida, auto-seleccionar esa fecha
+    if (fileNameValidation.date) {
+        elements.audioDate.value = fileNameValidation.date;
+        validateDateField();
+    }
+    
     // Verificar si el nombre del archivo tiene una fecha diferente
     checkFileDateMismatch(file.name);
     
     // Validar estado completo del formulario
     validateUploadForm();
+}
+
+// Validar que el nombre del archivo tenga formato YYYY-MM-DD
+function validateFileName(fileName) {
+    // Extraer fecha del nombre del archivo
+    const dateMatch = fileName.match(/(\d{4}-\d{2}-\d{2})/);
+    
+    if (!dateMatch) {
+        return { 
+            valid: false, 
+            error: 'El archivo debe tener formato YYYY-MM-DD.mp3 (ej: 2025-12-05.mp3)' 
+        };
+    }
+    
+    const fileDate = dateMatch[1];
+    
+    // Verificar que sea una fecha válida
+    if (!isValidDateFormat(fileDate)) {
+        return { 
+            valid: false, 
+            error: 'La fecha en el nombre del archivo no es válida' 
+        };
+    }
+    
+    return { valid: true, date: fileDate };
 }
 
 // Verificar si el nombre del archivo tiene una fecha diferente a la seleccionada
@@ -523,17 +563,23 @@ function checkFileDateMismatch(fileName) {
     if (!warningDiv) {
         warningDiv = document.createElement('div');
         warningDiv.id = 'fileDateWarning';
-        warningDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13px; color: #92400E;';
         elements.filePreview.appendChild(warningDiv);
     }
     
     if (dateMatch && dateMatch[1] !== selectedDate) {
         const fileDate = dateMatch[1];
         warningDiv.innerHTML = `
-            <strong>⚠️ Atención:</strong> El archivo tiene fecha <strong>${fileDate}</strong> pero vas a subirlo para <strong>${selectedDate}</strong>.<br>
-            <small>El archivo será renombrado automáticamente a ${selectedDate}.mp3</small>
+            <strong>❌ Error:</strong> El archivo es para <strong>${fileDate}</strong> pero la fecha seleccionada es <strong>${selectedDate}</strong>.<br>
+            <small>La fecha del archivo debe coincidir con la fecha seleccionada. Cambia la fecha o selecciona otro archivo.</small>
         `;
-        warningDiv.style.display = 'block';
+        warningDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #FEE2E2; border: 1px solid #EF4444; border-radius: 8px; font-size: 13px; color: #B91C1C; display: block;';
+        elements.uploadBtn.disabled = true;
+    } else if (dateMatch && dateMatch[1] === selectedDate) {
+        warningDiv.innerHTML = `
+            <strong>✅ Correcto:</strong> La fecha del archivo coincide con la fecha seleccionada.
+        `;
+        warningDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #D1FAE5; border: 1px solid #10B981; border-radius: 8px; font-size: 13px; color: #065F46; display: block;';
+        // No deshabilitar aquí, dejar que validateUploadForm lo maneje
     } else {
         warningDiv.style.display = 'none';
     }
@@ -639,12 +685,23 @@ function resetUploadForm() {
     if (verseWarning) verseWarning.classList.remove('hidden');
 }
 
-// Validar formulario completo (fecha + versículo + archivo)
+// Validar formulario completo (fecha + versículo + archivo + coincidencia de fechas)
 function validateUploadForm() {
     const date = elements.audioDate.value;
     const dateValidation = validateDate(date);
     const hasVerse = selectedVerse !== null;
     const hasFile = selectedFile !== null;
+    const title = document.getElementById('devotionalTitle').value.trim();
+    const hasTitle = title.length > 0;
+    
+    // Verificar que la fecha del archivo coincida con la fecha seleccionada
+    let datesMatch = true;
+    if (hasFile && date) {
+        const dateMatch = selectedFile.name.match(/(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch && dateMatch[1] !== date) {
+            datesMatch = false;
+        }
+    }
     
     // Actualizar UI de fecha
     updateValidationUI(dateValidation);
@@ -659,8 +716,8 @@ function validateUploadForm() {
         }
     }
     
-    // Habilitar botón solo si todo está completo
-    const canUpload = dateValidation.valid && hasVerse && hasFile;
+    // Habilitar botón solo si todo está completo y las fechas coinciden
+    const canUpload = dateValidation.valid && hasVerse && hasFile && hasTitle && datesMatch;
     elements.uploadBtn.disabled = !canUpload;
     
     return canUpload;

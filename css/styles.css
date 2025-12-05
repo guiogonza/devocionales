@@ -160,6 +160,156 @@ body {
     color: white;
 }
 
+/* Calendario personalizado */
+.custom-calendar {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-month {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.calendar-nav {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.calendar-nav:hover {
+    background: var(--verse-bg);
+}
+
+.calendar-nav:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.calendar-weekdays span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 5px 0;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+}
+
+.calendar-day:hover:not(.disabled):not(.empty) {
+    background: var(--verse-bg);
+}
+
+.calendar-day.available {
+    color: var(--primary-color);
+    font-weight: 600;
+    background: #E8F5E9;
+}
+
+.calendar-day.available:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.calendar-day.selected {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary-color);
+}
+
+.calendar-day.disabled {
+    color: #ddd;
+    cursor: not-allowed;
+}
+
+.calendar-day.empty {
+    cursor: default;
+}
+
+.calendar-day.future {
+    color: #ccc;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Leyenda del calendario */
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.available {
+    background: #E8F5E9;
+    border: 2px solid var(--primary-color);
+}
+
+.legend-dot.unavailable {
+    background: #f5f5f5;
+    border: 2px solid #ddd;
+}
+
 .title {
     font-size: 28px;
     font-weight: 700;
@@ -267,6 +417,19 @@ body {
 
 .play-button.playing {
     background: var(--secondary-color);
+}
+
+.play-button.disabled,
+.play-button:disabled {
+    background: #9CA3AF;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.play-button.disabled:hover,
+.play-button:disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .play-icon {

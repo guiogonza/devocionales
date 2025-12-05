@@ -1,5 +1,5 @@
-const CACHE_NAME = 'devocionales-v4';
-const AUDIO_CACHE_NAME = 'devocionales-audio-v1';
+const CACHE_NAME = 'devocionales-v5';
+const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
 // Instalación del Service Worker - sin cachear nada para evitar errores
 self.addEventListener('install', event => {
@@ -35,6 +35,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
+    
+    // NUNCA cachear respuestas de API - siempre ir a la red
+    if (url.pathname.startsWith('/api/')) {
+        event.respondWith(fetch(request));
+        return;
+    }
     
     // Para archivos de audio, usar estrategia Cache First con Network Fallback
     if (url.pathname.startsWith('/audios/') || request.url.includes('.mp3')) {

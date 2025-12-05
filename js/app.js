@@ -119,11 +119,16 @@ async function loadDevotional(date) {
         .then(response => {
             if (response.ok) {
                 console.log('✅ Audio encontrado:', audioPath);
+                enablePlayButton();
             } else {
                 console.warn('⚠️ Audio NO encontrado:', audioPath, 'Status:', response.status);
+                showAudioError();
             }
         })
-        .catch(err => console.error('❌ Error verificando audio:', err));
+        .catch(err => {
+            console.error('❌ Error verificando audio:', err);
+            showAudioError();
+        });
     
     // Guardar en historial
     saveToHistory(date, elements.devotionalTitle.textContent);
@@ -221,9 +226,22 @@ function togglePlay() {
     }
 }
 
-// Mostrar error de audio
+// Mostrar error de audio y deshabilitar botón
 function showAudioError() {
     elements.audioError.style.display = 'flex';
+    elements.playButton.disabled = true;
+    elements.playButton.classList.add('disabled');
+    elements.playIcon.textContent = '▶';
+    elements.playText.textContent = 'No disponible';
+}
+
+// Habilitar botón de reproducción
+function enablePlayButton() {
+    elements.audioError.style.display = 'none';
+    elements.playButton.disabled = false;
+    elements.playButton.classList.remove('disabled');
+    elements.playIcon.textContent = '▶';
+    elements.playText.textContent = 'Escuchar';
 }
 
 // Actualizar barra de progreso
@@ -407,7 +425,6 @@ function showHistory() {
                 const [year, month, day] = dateStr.split('-').map(Number);
                 const date = new Date(year, month - 1, day);
                 loadDevotional(date);
-                elements.datePicker.value = dateStr;
                 closeHistoryModal();
             });
         });
@@ -489,13 +506,144 @@ async function checkDateAvailability(dateStr) {
     }
 }
 
-// Al abrir el calendario, verificar la fecha actual
+// ============ Calendario Personalizado ============
+let calendarCurrentMonth = new Date();
+
+function initCustomCalendar() {
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            calendarCurrentMonth.setMonth(calendarCurrentMonth.getMonth() - 1);
+            renderCalendar();
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            calendarCurrentMonth.setMonth(calendarCurrentMonth.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+    
+    // Establecer mes actual basado en la fecha seleccionada
+    calendarCurrentMonth = new Date(currentDate);
+}
+
+function renderCalendar() {
+    const monthLabel = document.getElementById('calendarMonth');
+    const daysContainer = document.getElementById('calendarDays');
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    
+    if (!monthLabel || !daysContainer) return;
+    
+    const year = calendarCurrentMonth.getFullYear();
+    const month = calendarCurrentMonth.getMonth();
+    
+    // Nombre del mes
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    monthLabel.textContent = `${monthNames[month]} ${year}`;
+    
+    // Primer día del mes y cantidad de días
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Fecha actual seleccionada
+    const selectedDateStr = formatDateForFile(currentDate);
+    
+    // Fecha de hoy según servidor
+    const todayStr = serverToday || formatDateForFile(new Date());
+    const todayDate = new Date(todayStr + 'T12:00:00');
+    
+    // Generar días
+    let html = '';
+    
+    // Espacios vacíos antes del primer día
+    for (let i = 0; i < firstDay; i++) {
+        html += '<button class="calendar-day empty"></button>';
+    }
+    
+    // Días del mes
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateObj = new Date(year, month, day);
+        
+        let classes = ['calendar-day'];
+        let disabled = false;
+        
+        // Es fecha futura?
+        if (dateStr > todayStr) {
+            classes.push('future', 'disabled');
+            disabled = true;
+        }
+        // Tiene devocional disponible?
+        else if (availableDates.includes(dateStr)) {
+            classes.push('available');
+        }
+        // No tiene devocional (pasado sin audio)
+        else {
+            classes.push('disabled');
+            disabled = true;
+        }
+        
+        // Es la fecha seleccionada?
+        if (dateStr === selectedDateStr) {
+            classes.push('selected');
+        }
+        
+        // Es hoy?
+        if (dateStr === todayStr) {
+            classes.push('today');
+        }
+        
+        html += `<button class="${classes.join(' ')}" data-date="${dateStr}" ${disabled ? 'disabled' : ''}>${day}</button>`;
+    }
+    
+    daysContainer.innerHTML = html;
+    
+    // Event listeners para los días
+    daysContainer.querySelectorAll('.calendar-day:not(.disabled):not(.empty)').forEach(btn => {
+        btn.addEventListener('click', () => selectCalendarDate(btn.dataset.date));
+    });
+    
+    // Navegación: siempre permitir ir hacia atrás, no permitir ir al futuro
+    if (prevBtn) {
+        prevBtn.disabled = false; // Siempre permitir navegar hacia atrás
+    }
+    
+    if (nextBtn) {
+        const nextMonth = new Date(year, month + 1, 1);
+        nextBtn.disabled = nextMonth > todayDate;
+    }
+}
+
+function selectCalendarDate(dateStr) {
+    // Verificar si hay devocional
+    if (!availableDates.includes(dateStr)) {
+        showToast('No hay devocional para esta fecha');
+        return;
+    }
+    
+    const selectedDate = new Date(dateStr + 'T12:00:00');
+    loadDevotional(selectedDate);
+    elements.calendarContainer.style.display = 'none';
+    
+    // Actualizar calendario
+    calendarCurrentMonth = new Date(selectedDate);
+    renderCalendar();
+}
+
+// Al abrir el calendario
 function toggleCalendar() {
     const isVisible = elements.calendarContainer.style.display === 'block';
     elements.calendarContainer.style.display = isVisible ? 'none' : 'block';
     
     if (!isVisible) {
-        checkDateAvailability(elements.datePicker.value);
+        calendarCurrentMonth = new Date(currentDate);
+        renderCalendar();
     }
 }
 
@@ -542,12 +690,14 @@ function initializeEvents() {
     });
     elements.audioPlayer.addEventListener('canplay', () => {
         console.log('▶️ Audio listo para reproducir');
+        enablePlayButton();
     });
     
     // Calendario
     elements.calendarToggle.addEventListener('click', toggleCalendar);
-    elements.datePicker.addEventListener('change', onDateChange);
-    elements.datePicker.addEventListener('input', (e) => checkDateAvailability(e.target.value));
+    
+    // Inicializar calendario personalizado
+    initCustomCalendar();
     
     // Compartir
     elements.shareButton.addEventListener('click', shareDevotional);
@@ -584,10 +734,6 @@ async function setupDatePicker() {
         serverToday = formatDateForFile(new Date());
     }
     
-    // Establecer máximo como hoy según el servidor
-    elements.datePicker.max = serverToday;
-    elements.datePicker.value = serverToday;
-    
     // Cargar fechas disponibles
     await loadAvailableDates();
 }
@@ -601,13 +747,6 @@ async function loadAvailableDates() {
         if (data.success) {
             availableDates = data.dates;
             console.log('📅 Fechas disponibles:', availableDates.length);
-            
-            // Establecer fecha mínima como el primer devocional disponible
-            if (availableDates.length > 0) {
-                const sortedDates = [...availableDates].sort();
-                elements.datePicker.min = sortedDates[0];
-                console.log('📅 Fecha mínima:', sortedDates[0]);
-            }
             
             // Actualizar indicador de disponibilidad
             updateAvailabilityHint();
@@ -650,16 +789,27 @@ async function initApp() {
     
     // Cargar devocional (desde URL o fecha actual basada en servidor)
     let initialDate = getDateFromURL();
-    const initialDateStr = formatDateForFile(initialDate);
+    let initialDateStr = formatDateForFile(initialDate);
     
     // Si la fecha de la URL es futura, usar la fecha del servidor
     if (serverToday && initialDateStr > serverToday) {
         console.log('⚠️ Fecha de URL es futura, usando fecha del servidor');
         initialDate = new Date(serverToday + 'T12:00:00');
+        initialDateStr = formatDateForFile(initialDate);
+    }
+    
+    // Si la fecha no tiene audio disponible, usar la más reciente disponible
+    if (availableDates.length > 0 && !availableDates.includes(initialDateStr)) {
+        console.log('⚠️ Fecha de URL no tiene audio, usando fecha más reciente disponible');
+        const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
+        initialDate = new Date(latestAvailable + 'T12:00:00');
+        // Actualizar URL
+        const url = new URL(window.location);
+        url.searchParams.set('date', latestAvailable);
+        window.history.replaceState({}, '', url);
     }
     
     loadDevotional(initialDate);
-    elements.datePicker.value = formatDateForFile(initialDate);
     
     // Solicitar permiso de notificaciones después de 2 segundos
     setTimeout(() => {

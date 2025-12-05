@@ -806,10 +806,20 @@ app.put('/api/config', requireAuth, (req, res) => {
 app.get('/api/available-dates', (req, res) => {
     try {
         const today = getTodayGMT();
-        // Filtrar solo fechas que no sean futuras Y que tengan audio
-        const availableDates = Object.keys(devotionalsDB)
-            .filter(date => date <= today)
+        
+        // Obtener lista de archivos de audio existentes
+        const audioFiles = fs.readdirSync(AUDIOS_DIR)
+            .filter(file => file.endsWith('.mp3'))
+            .map(file => file.replace('.mp3', ''));
+        
+        // Filtrar solo fechas que:
+        // 1. No sean futuras
+        // 2. Tengan archivo de audio existente
+        const availableDates = audioFiles
+            .filter(date => date <= today && isValidDate(date))
             .sort((a, b) => b.localeCompare(a)); // Más reciente primero
+        
+        console.log('📅 Fechas disponibles:', availableDates);
         
         res.json({
             success: true,
@@ -818,6 +828,7 @@ app.get('/api/available-dates', (req, res) => {
             count: availableDates.length
         });
     } catch (error) {
+        console.error('Error obteniendo fechas disponibles:', error);
         res.status(500).json({ success: false, error: 'Error al obtener fechas' });
     }
 });

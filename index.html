@@ -44,8 +44,23 @@
                     📅 Seleccionar otra fecha
                 </button>
                 <div class="calendar-container" id="calendarContainer" style="display: none;">
-                    <input type="date" id="datePicker" class="date-picker">
-                    <div id="dateAvailability" style="font-size: 12px; margin-top: 5px; text-align: center;"></div>
+                    <!-- Calendario personalizado -->
+                    <div class="custom-calendar" id="customCalendar">
+                        <div class="calendar-header">
+                            <button class="calendar-nav" id="prevMonth">‹</button>
+                            <span class="calendar-month" id="calendarMonth"></span>
+                            <button class="calendar-nav" id="nextMonth">›</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+                        </div>
+                        <div class="calendar-days" id="calendarDays"></div>
+                        <div class="calendar-legend">
+                            <span class="legend-item"><span class="legend-dot available"></span> Con devocional</span>
+                            <span class="legend-item"><span class="legend-dot unavailable"></span> Sin devocional</span>
+                        </div>
+                    </div>
+                    <!-- input type="date" eliminado - usando calendario personalizado -->
                 </div>
             </div>
         </header>
