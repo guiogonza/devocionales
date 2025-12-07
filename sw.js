@@ -1,39 +1,28 @@
-const CACHE_NAME = 'devocionales-v6';
+const CACHE_NAME = 'devocionales-v7';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
-// Instalación del Service Worker - activar inmediatamente
+// Instalación del Service Worker
 self.addEventListener('install', event => {
-    console.log('Service Worker: Instalando nueva versión...');
-    // Forzar activación inmediata sin esperar
+    console.log('Service Worker: Instalado');
     self.skipWaiting();
 });
 
-// Activación del Service Worker - tomar control inmediato
+// Activación del Service Worker
 self.addEventListener('activate', event => {
-    console.log('Service Worker: Activado - Limpiando caches antiguas...');
+    console.log('Service Worker: Activado');
     
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
-                cacheNames.map(cache => {
-                    // Eliminar caches antiguas
-                    if (cache !== CACHE_NAME && cache !== AUDIO_CACHE_NAME) {
-                        console.log('Service Worker: Eliminando cache antigua:', cache);
+                cacheNames
+                    .filter(cache => cache !== CACHE_NAME && cache !== AUDIO_CACHE_NAME)
+                    .map(cache => {
+                        console.log('SW: Eliminando cache:', cache);
                         return caches.delete(cache);
-                    }
-                })
+                    })
             );
         }).then(() => {
-            console.log('Service Worker: Tomando control de todos los clientes');
-            // Tomar control inmediato de todas las pestañas abiertas
             return self.clients.claim();
-        }).then(() => {
-            // Notificar a todos los clientes que hay una actualización
-            return self.clients.matchAll().then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
-                });
-            });
         })
     );
 });
