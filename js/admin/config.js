@@ -23,3 +23,4 @@ let selectedImageFile = null;
 let selectedImageType = 'logo';
 let sessionExpiry = null;
 let sessionInterval = null;
+let sessionTimeoutMs = 20 * 60 * 1000; // Default 20 minutos

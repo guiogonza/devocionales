@@ -79,8 +79,28 @@ function showAdminPanel() {
     loadTimezone();
     loadBibleBooks();
     updateHeaderUsername();
-    startSessionTimer(20 * 60 * 1000);
+    loadAndStartSessionTimer();
     initActivityListeners();
+}
+
+// Cargar tiempo de sesión del servidor y arrancar timer
+async function loadAndStartSessionTimer() {
+    let timeoutMinutes = 20; // Default
+    try {
+        const response = await fetch('/api/config/session', {
+            headers: { 'x-admin-token': getAuthToken() }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.sessionTimeoutMinutes) {
+                timeoutMinutes = data.sessionTimeoutMinutes;
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando config sesión:', error);
+    }
+    sessionTimeoutMs = timeoutMinutes * 60 * 1000;
+    startSessionTimer(sessionTimeoutMs);
 }
 
 // Reiniciar timer con actividad del usuario
@@ -94,7 +114,7 @@ function initActivityListeners() {
 function resetSessionTimer() {
     // Solo reiniciar si hay una sesión activa
     if (sessionInterval && authToken) {
-        startSessionTimer(20 * 60 * 1000);
+        startSessionTimer(sessionTimeoutMs);
     }
 }
 

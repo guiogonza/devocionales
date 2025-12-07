@@ -57,6 +57,9 @@ async function saveSessionTimeout() {
 
         if (data.success) {
             showToast('Tiempo de sesión guardado: ' + sessionTimeoutMinutes + ' minutos', 'success');
+            // Actualizar el timer con el nuevo valor
+            sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
+            startSessionTimer(sessionTimeoutMs);
         } else {
             showToast(data.error || 'Error al guardar', 'error');
         }
