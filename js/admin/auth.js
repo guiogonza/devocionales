@@ -80,6 +80,22 @@ function showAdminPanel() {
     loadBibleBooks();
     updateHeaderUsername();
     startSessionTimer(20 * 60 * 1000);
+    initActivityListeners();
+}
+
+// Reiniciar timer con actividad del usuario
+function initActivityListeners() {
+    const events = ['click', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => {
+        document.addEventListener(event, resetSessionTimer, { passive: true });
+    });
+}
+
+function resetSessionTimer() {
+    // Solo reiniciar si hay una sesión activa
+    if (sessionInterval && authToken) {
+        startSessionTimer(20 * 60 * 1000);
+    }
 }
 
 function startSessionTimer(ms) {
