@@ -131,8 +131,11 @@
         .top-header {
             background: linear-gradient(135deg, var(--sidebar-bg) 0%, #1e2a3a 100%);
             padding: 15px 30px;
-            border-radius: 16px;
-            margin-bottom: 20px;
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            z-index: 150;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
@@ -738,7 +741,8 @@
             .mobile-toggle { display: flex; align-items: center; justify-content: center; }
             .sidebar { transform: translateX(-100%); top: 0; height: 100vh; z-index: 250; }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; padding: 20px; }
+            .main-content { margin-left: 0; padding: 20px; margin-top: 80px; }
+            .top-header { left: 0; }
             .top-header-title { font-size: 16px; }
             .top-header-content { padding: 0 10px; }
         }
@@ -1244,29 +1248,30 @@
             </div>
         </aside>
 
+        <!-- Top Header Bar (fijo arriba) -->
+        <header class="top-header" id="topHeader">
+            <div class="top-header-content">
+                <div class="top-header-left">
+                    <button class="mobile-toggle" id="mobileToggle">&#9776;</button>
+                    <span class="top-header-icon">&#128737;</span>
+                    <h1 class="top-header-title">Panel de Administracion</h1>
+                </div>
+                <div class="top-header-right">
+                    <div class="top-header-user">
+                        <span>Usuario:</span>
+                        <strong id="headerUsername">-</strong>
+                    </div>
+                    <div class="top-header-time" id="headerTime">
+                        <span>&#128336;</span>
+                        <span id="headerClock">--:--</span>
+                    </div>
+                    <button class="top-header-logout" onclick="logout()">Cerrar Sesion</button>
+                </div>
+            </div>
+        </header>
+
         <!-- Main Content -->
         <main class="main-content">
-            <header class="top-header" id="topHeader">
-                <div class="top-header-content">
-                    <div class="top-header-left">
-                        <button class="mobile-toggle" id="mobileToggle">&#9776;</button>
-                        <span class="top-header-icon">&#128737;</span>
-                        <h1 class="top-header-title">Panel de Administracion</h1>
-                    </div>
-                    <div class="top-header-right">
-                        <div class="top-header-user">
-                            <span>Usuario:</span>
-                            <strong id="headerUsername">-</strong>
-                        </div>
-                        <div class="top-header-time" id="headerTime">
-                            <span>&#128336;</span>
-                            <span id="headerClock">--:--</span>
-                        </div>
-                        <button class="top-header-logout" onclick="logout()">Cerrar Sesion</button>
-                    </div>
-                </div>
-            </header>
-
             <!-- Audios Section -->
             <section class="content-section active" id="section-audios">
                 <div class="content-header">
