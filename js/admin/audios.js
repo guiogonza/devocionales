@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Gestión de Audios - Admin Panel
  */
 
@@ -775,7 +775,7 @@ async function saveEdit() {
             formData.append('verseText', verseText);
             formData.append('replaceExisting', 'true');
 
-            const uploadResponse = await fetch('/api/audios/upload', {
+            const uploadResponse = await fetch('/api/audios', {
                 method: 'POST',
                 headers: {
                     'x-admin-token': token
