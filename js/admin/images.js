@@ -79,7 +79,7 @@ async function uploadImage() {
             
             // Recargar preview
             if (selectedImageType === 'logo') {
-                document.getElementById('currentLogoPreview').src = 'icons/icon-192.png?' + Date.now();
+                document.getElementById('currentLogoPreview').src = 'icons/logo.png?' + Date.now();
             } else {
                 document.getElementById('currentPastoresPreview').src = 'icons/pastores.jpg?' + Date.now();
             }
