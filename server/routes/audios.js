@@ -112,7 +112,7 @@ router.get('/:date', (req, res) => {
     const { date } = req.params;
     
     if (!isValidDate(date)) {
-        return res.status(400).json({ success: false, error: 'Formato de fecha invÃ¡lido' });
+        return res.status(400).json({ success: false, error: 'Formato de fecha invalido' });
     }
     
     const filename = `${date}.mp3`;
@@ -142,9 +142,9 @@ router.get('/:date', (req, res) => {
 });
 
 // POST /api/audios
-router.post('/', requireAuth, upload.single('audio'), (req, res) => {
+router.post('/', requireAuth, uploadMiddleware, (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No se recibiÃ³ ningÃºn archivo' });
+        return res.status(400).json({ success: false, error: 'No se recibio ningun archivo' });
     }
     
     const { title, verseReference, verseText, replaceExisting } = req.body;
@@ -160,17 +160,17 @@ router.post('/', requireAuth, upload.single('audio'), (req, res) => {
     
     if (!isValidDate(date)) {
         fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, error: 'Fecha invÃ¡lida en el nombre del archivo' });
+        return res.status(400).json({ success: false, error: 'Fecha invalida en el nombre del archivo' });
     }
     
-    // Validar que no sea mÃ¡s de 30 dÃ­as en el futuro
+    // Validar que no sea mas de 30 dias en el futuro
     const today = new Date();
     const audioDate = new Date(date);
     const diffDays = Math.ceil((audioDate - today) / (1000 * 60 * 60 * 24));
     
     if (diffDays > 30) {
         fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, error: 'No se pueden subir audios para mÃ¡s de 30 dÃ­as en el futuro' });
+        return res.status(400).json({ success: false, error: 'No se pueden subir audios para mas de 30 dias en el futuro' });
     }
     
     const finalPath = path.join(AUDIOS_DIR, `${date}.mp3`);
@@ -201,7 +201,7 @@ router.post('/', requireAuth, upload.single('audio'), (req, res) => {
     saveDevotionals(devotionalsDB);
     
     logAudit('AUDIO_UPLOADED', { date, title, verseReference }, req);
-    console.log('âœ… Audio subido:', date);
+    console.log('Audio subido:', date);
     
     res.json({
         success: true,
@@ -215,7 +215,7 @@ router.delete('/:date', requireAuth, (req, res) => {
     const { date } = req.params;
     
     if (!isValidDate(date)) {
-        return res.status(400).json({ success: false, error: 'Formato de fecha invÃ¡lido' });
+        return res.status(400).json({ success: false, error: 'Formato de fecha invalido' });
     }
     
     const filePath = path.join(AUDIOS_DIR, `${date}.mp3`);
@@ -234,7 +234,7 @@ router.delete('/:date', requireAuth, (req, res) => {
     }
     
     logAudit('AUDIO_DELETED', { date }, req);
-    console.log('ðŸ—‘ï¸ Audio eliminado:', date);
+    console.log('Audio eliminado:', date);
     
     res.json({ success: true, message: 'Audio eliminado correctamente' });
 });
@@ -247,7 +247,7 @@ router.post('/track-play', async (req, res) => {
         return res.json({ success: false, error: 'Fecha requerida' });
     }
     
-    await logActivity('PLAY_DEVOTIONAL', { date, title: title || 'Sin tÃ­tulo' }, req);
+    await logActivity('PLAY_DEVOTIONAL', { date, title: title || 'Sin titulo' }, req);
     res.json({ success: true });
 });
 
