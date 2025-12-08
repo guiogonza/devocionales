@@ -1177,10 +1177,11 @@
                     details = log.details;
                 }
                 
-                // País con bandera
+                // País con bandera (imagen igual que logs admin)
                 const country = log.country || 'Desconocido';
                 const countryCode = log.countryCode || '';
-                const flag = countryCode ? getFlagEmoji(countryCode) : '🌍';
+                const countryFlag = countryCode && countryCode !== '??' ? 
+                    `<img src="https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png" alt="${country}" style="vertical-align: middle; margin-right: 5px;">` : '';
                 
                 // Sistema operativo
                 const osIcon = log.osIcon || '❔';
@@ -1194,7 +1195,7 @@
                         <td style="max-width: 200px;">${details || '-'}</td>
                         <td title="${os}">${osIcon} ${os}</td>
                         <td>${log.ip || '-'}</td>
-                        <td>${flag} ${country}</td>
+                        <td>${countryFlag}${country}</td>
                     </tr>
                 `;
             }).join('');
