@@ -4,6 +4,7 @@
 
 let isEditMode = false;
 let editingDate = null;
+let audioSearchInitialized = false;
 
 async function loadAudiosFromServer() {
     try {
@@ -14,9 +15,15 @@ async function loadAudiosFromServer() {
         if (response.ok) {
             const result = await response.json();
             audioFiles = result.data || result || [];
-            renderAudioList();
+            renderAudioList(currentSearchFilter);
             document.getElementById('audioCountBadge').textContent = audioFiles.length;
             calculateStorageFromAudios();
+            
+            // Inicializar búsqueda solo una vez
+            if (!audioSearchInitialized) {
+                initAudioSearch();
+                audioSearchInitialized = true;
+            }
         }
     } catch (error) {
         console.error('Error cargando audios:', error);
@@ -24,7 +31,9 @@ async function loadAudiosFromServer() {
     }
 }
 
-function renderAudioList() {
+let currentSearchFilter = '';
+
+function renderAudioList(filterText = '') {
     const container = document.getElementById('audioList');
     
     if (!audioFiles || audioFiles.length === 0) {
@@ -32,7 +41,22 @@ function renderAudioList() {
         return;
     }
 
-    const sorted = [...audioFiles].sort((a, b) => new Date(b.date) - new Date(a.date));
+    let sorted = [...audioFiles].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    // Filtrar si hay texto de búsqueda
+    if (filterText) {
+        const searchLower = filterText.toLowerCase();
+        sorted = sorted.filter(audio => 
+            (audio.title && audio.title.toLowerCase().includes(searchLower)) ||
+            (audio.date && audio.date.includes(searchLower)) ||
+            (audio.verseReference && audio.verseReference.toLowerCase().includes(searchLower))
+        );
+    }
+
+    if (sorted.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No se encontraron audios para "${filterText}"</p>`;
+        return;
+    }
 
     container.innerHTML = sorted.map(audio => {
         const verseText = audio.verseText ? audio.verseText.substring(0, 120) + (audio.verseText.length > 120 ? '...' : '') : '';
@@ -51,6 +75,89 @@ function renderAudioList() {
             </div>
         </div>
     `}).join('');
+}
+
+// Búsqueda de audios con autocompletado
+function initAudioSearch() {
+    const searchInput = document.getElementById('audioSearchInput');
+    const suggestionsContainer = document.getElementById('audioSearchSuggestions');
+    
+    if (!searchInput || !suggestionsContainer) return;
+    
+    searchInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        currentSearchFilter = value;
+        
+        if (value.length === 0) {
+            suggestionsContainer.style.display = 'none';
+            renderAudioList();
+            return;
+        }
+        
+        // Mostrar sugerencias
+        const searchLower = value.toLowerCase();
+        const matches = audioFiles.filter(audio => 
+            (audio.title && audio.title.toLowerCase().includes(searchLower)) ||
+            (audio.date && audio.date.includes(searchLower))
+        ).slice(0, 8);
+        
+        if (matches.length > 0) {
+            suggestionsContainer.innerHTML = matches.map(audio => `
+                <div class="search-suggestion-item" onclick="selectAudioSuggestion('${audio.date}')">
+                    <div class="search-suggestion-title">${audio.title || 'Sin título'}</div>
+                    <div class="search-suggestion-date">${formatDate(audio.date)}</div>
+                </div>
+            `).join('');
+            suggestionsContainer.style.display = 'block';
+        } else {
+            suggestionsContainer.style.display = 'none';
+        }
+        
+        // También filtrar la lista
+        renderAudioList(value);
+    });
+    
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.audio-search-container')) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+    
+    // Tecla Enter para buscar
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            suggestionsContainer.style.display = 'none';
+            renderAudioList(searchInput.value.trim());
+        }
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            currentSearchFilter = '';
+            suggestionsContainer.style.display = 'none';
+            renderAudioList();
+        }
+    });
+}
+
+function selectAudioSuggestion(date) {
+    const searchInput = document.getElementById('audioSearchInput');
+    const suggestionsContainer = document.getElementById('audioSearchSuggestions');
+    const audio = audioFiles.find(a => a.date === date);
+    
+    if (audio) {
+        searchInput.value = audio.title || date;
+        currentSearchFilter = audio.title || date;
+        suggestionsContainer.style.display = 'none';
+        renderAudioList(audio.title);
+        // Scroll al audio en la lista
+        setTimeout(() => {
+            const audioItem = document.querySelector(`.audio-item[data-date="${date}"]`);
+            if (audioItem) {
+                audioItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                audioItem.style.animation = 'pulse 0.5s ease';
+            }
+        }, 100);
+    }
 }
 
 // Cargar audio para editar en el formulario principal

@@ -594,6 +594,63 @@
             color: white;
         }
 
+        /* Search Suggestions */
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .search-suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .search-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-suggestion-item:hover {
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .search-suggestion-title {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .search-suggestion-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .audio-search-container {
+            position: relative;
+        }
+
         /* Modal */
         .modal-overlay {
             position: fixed;
@@ -1332,6 +1389,15 @@
 
                 <div class="card">
                     <h3 class="card-title">&#128203; Audios Cargados</h3>
+                    <div class="audio-search-container" style="margin-bottom: 15px; position: relative;">
+                        <input type="text" 
+                               id="audioSearchInput" 
+                               class="form-input" 
+                               placeholder="&#128269; Buscar por título..." 
+                               autocomplete="off"
+                               style="width: 100%;">
+                        <div id="audioSearchSuggestions" class="search-suggestions" style="display: none;"></div>
+                    </div>
                     <div class="audio-list" id="audioList">
                         <p style="color: var(--text-secondary);">Cargando audios...</p>
                     </div>

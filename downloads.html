@@ -645,7 +645,9 @@
                 return;
             }
 
-            const filename = `${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}.mp3`;
+            // Formatear fecha para el nombre del archivo
+            const dateFormatted = formatDate(date);
+            const filename = `RIO_${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}_${date}.mp3`;
             const file = new File([audio.blob], filename, { type: 'audio/mpeg' });
 
             // Verificar si el navegador soporta compartir archivos
@@ -653,7 +655,7 @@
                 try {
                     await navigator.share({
                         title: `🙏 ${title}`,
-                        text: `📖 ${verse}\n\nMeditación diaria - RIO Iglesia`,
+                        text: `📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Meditación diaria - RIO Iglesia Cristiana`,
                         files: [file]
                     });
                 } catch (error) {
@@ -671,11 +673,12 @@
         // Compartir alternativo con enlace
         function fallbackShareLink(date, title, verse) {
             const shareUrl = `${window.location.origin}/?date=${date}`;
+            const dateFormatted = formatDate(date);
             
             if (navigator.share) {
                 navigator.share({
                     title: 'Meditación Diaria - RIO Iglesia',
-                    text: `🙏 ${title}\n📖 ${verse}\n\nEscucha el devocional:`,
+                    text: `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`,
                     url: shareUrl
                 }).catch(() => copyToClipboard(shareUrl));
             } else {
