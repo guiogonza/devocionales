@@ -532,6 +532,10 @@
                     <label>&nbsp;</label>
                     <button class="btn btn-secondary btn-small" onclick="clearFilters()">🗑️ Limpiar</button>
                 </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('admin')">⚠️ Eliminar Logs</button>
+                </div>
             </div>
             
             <div class="table-container">
@@ -596,6 +600,10 @@
                 <div class="filter-group">
                     <label>&nbsp;</label>
                     <button class="btn btn-secondary btn-small" onclick="clearActivityFilters()">🗑️ Limpiar</button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('activity')">⚠️ Eliminar Logs</button>
                 </div>
             </div>
             
@@ -1185,6 +1193,50 @@
             document.getElementById('filterActivityStartDate').value = '';
             document.getElementById('filterActivityEndDate').value = '';
             loadActivityLogs();
+        }
+        
+        // ============ ELIMINAR LOGS ============
+        function confirmDeleteLogs(type) {
+            const typeName = type === 'admin' ? 'auditoría (admin)' : 'actividad de usuarios';
+            const confirmed = confirm(`⚠️ ¿Estás seguro de eliminar TODOS los logs de ${typeName}?\n\nEsta acción no se puede deshacer.`);
+            
+            if (confirmed) {
+                const password = prompt('Por seguridad, ingresa tu contraseña para confirmar:');
+                if (password) {
+                    deleteLogs(type, password);
+                }
+            }
+        }
+        
+        async function deleteLogs(type, password) {
+            const endpoint = type === 'admin' ? '/api/admin/audit-logs' : '/api/admin/activity-logs';
+            
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': authToken
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ ${data.message}`);
+                    if (type === 'admin') {
+                        loadLogs();
+                    } else {
+                        loadActivityLogs();
+                    }
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error eliminando logs:', error);
+                alert('❌ Error de conexión al eliminar logs');
+            }
         }
         
         // Cargar usuarios

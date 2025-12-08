@@ -1119,7 +1119,71 @@ app.get('/api/admin/activity-logs', requireAuth, (req, res) => {
     res.json({ success: true, logs, total: filteredLogs.length, actions });
 });
 
-// POST /api/track-play - Registrar reproducci├│n de audio (llamado desde el cliente)
+// DELETE /api/admin/audit-logs - Eliminar todos los logs de auditoría (requiere auth + password)
+app.delete('/api/admin/audit-logs', requireAuth, async (req, res) => {
+    const { password } = req.body;
+    const session = sessions[req.headers['x-admin-token']];
+    
+    if (!session) {
+        return res.status(401).json({ success: false, error: 'Sesión no válida' });
+    }
+    
+    // Verificar contraseña del usuario
+    const users = loadAdminUsers();
+    const user = users.find(u => u.id === session.userId);
+    
+    if (!user) {
+        return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
+    }
+    
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    if (user.password !== hashedPassword) {
+        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+    }
+    
+    const count = auditLogs.length;
+    auditLogs = [];
+    saveAuditLog(auditLogs);
+    
+    // Registrar la acción (esto creará un nuevo log)
+    await logAudit('AUDIT_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
+    
+    res.json({ success: true, message: `${count} logs de auditoría eliminados` });
+});
+
+// DELETE /api/admin/activity-logs - Eliminar todos los logs de actividad (requiere auth + password)
+app.delete('/api/admin/activity-logs', requireAuth, async (req, res) => {
+    const { password } = req.body;
+    const session = sessions[req.headers['x-admin-token']];
+    
+    if (!session) {
+        return res.status(401).json({ success: false, error: 'Sesión no válida' });
+    }
+    
+    // Verificar contraseña del usuario
+    const users = loadAdminUsers();
+    const user = users.find(u => u.id === session.userId);
+    
+    if (!user) {
+        return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
+    }
+    
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    if (user.password !== hashedPassword) {
+        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+    }
+    
+    const count = activityLogs.length;
+    activityLogs = [];
+    saveActivityLog(activityLogs);
+    
+    // Registrar la acción en logs de auditoría
+    await logAudit('ACTIVITY_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
+    
+    res.json({ success: true, message: `${count} logs de actividad eliminados` });
+});
+
+// POST /api/track-play - Registrar reproducción de audio (llamado desde el cliente)
 app.post('/api/track-play', async (req, res) => {
     const { date, title } = req.body;
     
