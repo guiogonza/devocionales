@@ -29,7 +29,9 @@ async function loadDevicesList() {
             allDevices = data.devices || [];
             renderDevicesList(allDevices, data.online || 0, data.total || 0);
             renderCountrySummary(allDevices);
+            renderOSSummary(allDevices);
             populateCountrySelect(allDevices);
+            populateOSSelect(allDevices);
             populateDeviceSelect(allDevices);
         }
     } catch (error) {
@@ -101,6 +103,76 @@ function populateCountrySelect(devices) {
         ).join('');
 }
 
+function renderOSSummary(devices) {
+    const container = document.getElementById('osSummary');
+    if (!container) return;
+    
+    // Agrupar por SO
+    const byOS = {};
+    devices.forEach(d => {
+        const os = d.os || 'Desconocido';
+        if (!byOS[os]) {
+            byOS[os] = { count: 0, online: 0, icon: getOSIcon(os) };
+        }
+        byOS[os].count++;
+        if (d.isOnline) byOS[os].online++;
+    });
+    
+    const sorted = Object.entries(byOS).sort((a, b) => b[1].count - a[1].count);
+    
+    if (sorted.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary);">No hay dispositivos registrados</p>';
+        return;
+    }
+    
+    container.innerHTML = sorted.map(([os, data]) => {
+        return `
+            <div style="background: var(--bg-color); padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; gap: 10px; min-width: 140px;">
+                <span style="font-size: 24px;">${data.icon}</span>
+                <div>
+                    <div style="font-weight: 600; color: var(--text-color);">${os}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        ${data.count} dispositivo${data.count !== 1 ? 's' : ''} 
+                        <span style="color: #22c55e;">(${data.online} online)</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getOSIcon(os) {
+    const osLower = os.toLowerCase();
+    if (osLower.includes('android')) return '🤖';
+    if (osLower.includes('ios') || osLower.includes('iphone') || osLower.includes('ipad')) return '🍎';
+    if (osLower.includes('windows')) return '🪟';
+    if (osLower.includes('mac')) return '🍏';
+    if (osLower.includes('linux')) return '🐧';
+    if (osLower.includes('chrome')) return '🌐';
+    return '📱';
+}
+
+function populateOSSelect(devices) {
+    const select = document.getElementById('osSelect');
+    if (!select) return;
+    
+    const byOS = {};
+    devices.forEach(d => {
+        const os = d.os || 'Desconocido';
+        if (!byOS[os]) {
+            byOS[os] = { count: 0, icon: getOSIcon(os) };
+        }
+        byOS[os].count++;
+    });
+    
+    const sorted = Object.entries(byOS).sort((a, b) => b[1].count - a[1].count);
+    
+    select.innerHTML = '<option value="">-- Seleccionar sistema --</option>' + 
+        sorted.map(([os, data]) => 
+            `<option value="${os}">${data.icon} ${os} (${data.count} dispositivos)</option>`
+        ).join('');
+}
+
 function populateDeviceSelect(devices) {
     const select = document.getElementById('deviceSelect');
     if (!select) return;
@@ -117,6 +189,7 @@ function updateSendTarget() {
     const target = document.querySelector('input[name="sendTarget"]:checked').value;
     
     document.getElementById('countrySelector').style.display = target === 'country' ? 'block' : 'none';
+    document.getElementById('osSelector').style.display = target === 'os' ? 'block' : 'none';
     document.getElementById('deviceSelector').style.display = target === 'device' ? 'block' : 'none';
     
     // Actualizar estilos de opciones
@@ -135,17 +208,29 @@ function updateSendTarget() {
     updateSubscriberCountDisplay();
 }
 
-function updateCountryCount() {
-    const country = document.getElementById('countrySelect').value;
-    const countSpan = document.getElementById('countryDeviceCount');
+function updateFilterCount() {
+    const target = document.querySelector('input[name="sendTarget"]:checked').value;
     
-    if (!country) {
-        countSpan.textContent = '';
-        return;
+    if (target === 'country') {
+        const country = document.getElementById('countrySelect').value;
+        const countSpan = document.getElementById('countryDeviceCount');
+        if (!country) {
+            countSpan.textContent = '';
+        } else {
+            const count = allDevices.filter(d => d.country === country).length;
+            countSpan.textContent = `${count} dispositivo${count !== 1 ? 's' : ''} en ${country}`;
+        }
+    } else if (target === 'os') {
+        const os = document.getElementById('osSelect').value;
+        const countSpan = document.getElementById('osDeviceCount');
+        if (!os) {
+            countSpan.textContent = '';
+        } else {
+            const count = allDevices.filter(d => d.os === os).length;
+            countSpan.textContent = `${count} dispositivo${count !== 1 ? 's' : ''} con ${os}`;
+        }
     }
     
-    const count = allDevices.filter(d => d.country === country).length;
-    countSpan.textContent = `${count} dispositivo${count !== 1 ? 's' : ''} en ${country}`;
     updateSubscriberCountDisplay();
 }
 
@@ -162,6 +247,14 @@ function updateSubscriberCountDisplay() {
             countSpan.textContent = `${count} en ${country}`;
         } else {
             countSpan.textContent = 'Selecciona un pais';
+        }
+    } else if (target === 'os') {
+        const os = document.getElementById('osSelect').value;
+        if (os) {
+            const count = allDevices.filter(d => d.os === os).length;
+            countSpan.textContent = `${count} con ${os}`;
+        } else {
+            countSpan.textContent = 'Selecciona un sistema';
         }
     } else if (target === 'device') {
         const deviceId = document.getElementById('deviceSelect').value;
@@ -275,6 +368,12 @@ async function sendNotification() {
         targetValue = document.getElementById('countrySelect').value;
         if (!targetValue) {
             showToast('Selecciona un pais', 'error');
+            return;
+        }
+    } else if (target === 'os') {
+        targetValue = document.getElementById('osSelect').value;
+        if (!targetValue) {
+            showToast('Selecciona un sistema operativo', 'error');
             return;
         }
     } else if (target === 'device') {

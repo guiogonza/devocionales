@@ -161,6 +161,11 @@ router.post('/send', async (req, res) => {
             sub.location && sub.location.country === targetValue
         );
         console.log(`Filtrando por pais: ${targetValue} - ${targetSubscriptions.length} dispositivos`);
+    } else if (target === 'os' && targetValue) {
+        targetSubscriptions = pushSubscriptions.filter(sub => 
+            sub.device && sub.device.os === targetValue
+        );
+        console.log(`Filtrando por SO: ${targetValue} - ${targetSubscriptions.length} dispositivos`);
     } else if (target === 'device' && targetValue) {
         targetSubscriptions = pushSubscriptions.filter(sub => sub.id === targetValue);
         console.log(`Enviando a dispositivo especifico: ${targetValue}`);
