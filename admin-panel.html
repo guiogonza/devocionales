@@ -463,7 +463,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
             </form>
-            <a href="/admin.html" class="back-link">ÔåÉ Volver al panel de contenido</a>
+            <a href="/admin.html" class="back-link">⬅️ Volver al panel de contenido</a>
         </div>
     </div>
     
@@ -473,7 +473,7 @@
             <h1>🛠️ Panel de Administración</h1>
             <div class="header-info">
                 <span id="currentUser">Usuario: admin</span>
-                <div class="session-timer" id="sessionTimer">ÔÅ▒´©Å 5:00</div>
+                <div class="session-timer" id="sessionTimer">⏱️ 5:00</div>
                 <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
             </div>
         </div>
@@ -530,7 +530,7 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-secondary btn-small" onclick="clearFilters()">Ô£û Limpiar</button>
+                    <button class="btn btn-secondary btn-small" onclick="clearFilters()">🗑️ Limpiar</button>
                 </div>
             </div>
             
@@ -541,6 +541,7 @@
                             <th class="sortable" data-sort="timestamp" data-table="logs">Fecha/Hora</th>
                             <th class="sortable" data-sort="action" data-table="logs">Acción</th>
                             <th>Detalles</th>
+                            <th class="sortable" data-sort="country" data-table="logs">País</th>
                             <th class="sortable" data-sort="ip" data-table="logs">IP</th>
                         </tr>
                     </thead>
@@ -594,7 +595,7 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-secondary btn-small" onclick="clearActivityFilters()">Ô£û Limpiar</button>
+                    <button class="btn btn-secondary btn-small" onclick="clearActivityFilters()">🗑️ Limpiar</button>
                 </div>
             </div>
             
@@ -689,7 +690,7 @@
             </div>
         </div>
         
-        <a href="/admin.html" class="back-link">ÔåÉ Volver al panel de contenido</a>
+        <a href="/admin.html" class="back-link">⬅️ Volver al panel de contenido</a>
     </div>
     
     <!-- Modal: Crear/Editar Usuario -->
@@ -889,7 +890,7 @@
                 
                 const mins = Math.floor(remaining / 60000);
                 const secs = Math.floor((remaining % 60000) / 1000);
-                timerEl.textContent = `ÔÅ▒´©Å ${mins}:${secs.toString().padStart(2, '0')}`;
+                timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
                 
                 if (remaining < 60000) {
                     timerEl.classList.add('warning');
@@ -1004,12 +1005,16 @@
                 const date = new Date(log.timestamp);
                 const badge = getActionBadge(log.action);
                 const details = typeof log.details === 'object' ? JSON.stringify(log.details) : log.details;
+                const countryCode = log.countryCode || '';
+                const countryFlag = countryCode && countryCode !== '??' ? 
+                    `<img src="https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png" alt="${log.country}" style="vertical-align: middle; margin-right: 5px;">` : '';
                 
                 return `
                     <tr>
                         <td>${date.toLocaleString('es-ES')}</td>
                         <td><span class="badge ${badge.class}">${badge.icon} ${log.action}</span></td>
                         <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${details || '-'}</td>
+                        <td>${countryFlag}${log.country || '-'}</td>
                         <td>${log.ip || '-'}</td>
                     </tr>
                 `;
@@ -1018,18 +1023,18 @@
         
         function getActionBadge(action) {
             const badges = {
-                'LOGIN_SUCCESS': { class: 'badge-success', icon: 'Ô£à' },
-                'LOGIN_FAILED': { class: 'badge-danger', icon: 'ÔØî' },
+                'LOGIN_SUCCESS': { class: 'badge-success', icon: '✅' },
+                'LOGIN_FAILED': { class: 'badge-danger', icon: '❌' },
                 'LOGOUT': { class: 'badge-info', icon: '🚪' },
                 'PASSWORD_CHANGED': { class: 'badge-warning', icon: '🔐' },
                 'PASSWORD_CHANGE_FAILED': { class: 'badge-danger', icon: '🔒' },
                 'USER_CREATED': { class: 'badge-success', icon: '👑' },
-                'USER_UPDATED': { class: 'badge-info', icon: 'Ô£Å´©Å' },
-                'USER_DELETED': { class: 'badge-danger', icon: '🖊️' },
-                'AUDIO_UPLOADED': { class: 'badge-success', icon: '🎁' },
-                'AUDIO_DELETED': { class: 'badge-danger', icon: '🖊️' }
+                'USER_UPDATED': { class: 'badge-info', icon: '✏️' },
+                'USER_DELETED': { class: 'badge-danger', icon: '🗑️' },
+                'AUDIO_UPLOADED': { class: 'badge-success', icon: '🎵' },
+                'AUDIO_DELETED': { class: 'badge-danger', icon: '🗑️' }
             };
-            return badges[action] || { class: 'badge-info', icon: '­ƒôØ' };
+            return badges[action] || { class: 'badge-info', icon: '📝' };
         }
         
         function updateLogStats(data) {
@@ -1117,7 +1122,7 @@
                 const flag = countryCode ? getFlagEmoji(countryCode) : '­ƒîÉ';
                 
                 // Sistema operativo
-                const osIcon = log.osIcon || 'ÔØô';
+                const osIcon = log.osIcon || '❔';
                 const os = log.os || 'Desconocido';
                 
                 return `
@@ -1145,12 +1150,12 @@
         
         function getActivityBadge(action) {
             const badges = {
-                'PLAY_DEVOTIONAL': { class: 'badge-success', icon: 'ÔûÂ´©Å' },
-                'SUBSCRIBE_PUSH': { class: 'badge-info', icon: '­ƒöö' },
-                'UNSUBSCRIBE_PUSH': { class: 'badge-warning', icon: '­ƒöò' },
+                'PLAY_DEVOTIONAL': { class: 'badge-success', icon: '▶️' },
+                'SUBSCRIBE_PUSH': { class: 'badge-info', icon: '🔔' },
+                'UNSUBSCRIBE_PUSH': { class: 'badge-warning', icon: '🔕' },
                 'PAGE_VIEW': { class: 'badge-info', icon: '👁️' }
             };
-            return badges[action] || { class: 'badge-info', icon: '­ƒôØ' };
+            return badges[action] || { class: 'badge-info', icon: '📝' };
         }
         
         function updateActivityStats(data) {
@@ -1212,7 +1217,7 @@
                         <td>${date.toLocaleDateString('es-ES')}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-icon btn-edit" onclick="editUser('${user.id}', '${user.username}', '${user.role}')">Ô£Å´©Å</button>
+                                <button class="btn-icon btn-edit" onclick="editUser('${user.id}', '${user.username}', '${user.role}')">✏️</button>
                                 <button class="btn-icon btn-delete" onclick="deleteUser('${user.id}', '${user.username}')">🖊️</button>
                             </div>
                         </td>

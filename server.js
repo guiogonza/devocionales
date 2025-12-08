@@ -147,14 +147,14 @@ let auditLogs = loadAuditLog();
 // Cache de geolocalizacion para no hacer muchas peticiones
 const geoCache = new Map();
 
-// Funcion para obtener pais de una IP
-async function getCountryFromIP(ip) {
+// Funcion para obtener pais de una IP (devuelve objeto con country y countryCode)
+async function getGeoFromIP(ip) {
     // Limpiar IP (remover puerto si existe)
     const cleanIP = ip.split(',')[0].trim().replace('::ffff:', '');
     
     // IPs locales
     if (cleanIP === '127.0.0.1' || cleanIP === 'localhost' || cleanIP === '::1' || cleanIP.startsWith('192.168.') || cleanIP.startsWith('10.')) {
-        return 'Local';
+        return { country: 'Local', countryCode: 'XX' };
     }
     
     // Verificar cache
@@ -165,8 +165,11 @@ async function getCountryFromIP(ip) {
     try {
         const response = await fetch(`http://ip-api.com/json/${cleanIP}?fields=country,countryCode`);
         const data = await response.json();
-        const country = data.country || 'Desconocido';
-        geoCache.set(cleanIP, country);
+        const geoInfo = {
+            country: data.country || 'Desconocido',
+            countryCode: data.countryCode || '??'
+        };
+        geoCache.set(cleanIP, geoInfo);
         
         // Limpiar cache si es muy grande
         if (geoCache.size > 1000) {
@@ -174,29 +177,30 @@ async function getCountryFromIP(ip) {
             geoCache.delete(firstKey);
         }
         
-        return country;
+        return geoInfo;
     } catch (error) {
         console.error('Error obteniendo geolocalizacion:', error.message);
-        return 'Desconocido';
+        return { country: 'Desconocido', countryCode: '??' };
     }
 }
 
 // Funcion para registrar acciones de auditoria (admin)
 async function logAudit(action, details, req = null) {
     const ip = req ? (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress || 'unknown') : 'system';
-    const country = ip !== 'system' ? await getCountryFromIP(ip) : 'System';
+    const geoInfo = ip !== 'system' ? await getGeoFromIP(ip) : { country: 'System', countryCode: 'XX' };
     
     const entry = {
         timestamp: new Date().toISOString(),
         action,
         details,
         ip,
-        country,
+        country: geoInfo.country,
+        countryCode: geoInfo.countryCode,
         userAgent: req ? req.headers['user-agent'] : 'system'
     };
     auditLogs.push(entry);
     saveAuditLog(auditLogs);
-    console.log(`AUDIT: ${action} - ${JSON.stringify(details)} - ${country}`);
+    console.log(`AUDIT: ${action} - ${JSON.stringify(details)} - ${geoInfo.country}`);
 }
 
 // ============ Sistema de Logs de Actividad de Usuarios ============
