@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Autenticación del Admin Panel
  */
 
@@ -43,7 +43,14 @@ async function checkAuth() {
         });
 
         if (response.ok) {
-            showAdminPanel();
+            const data = await response.json();
+            if (data.authenticated) {
+                showAdminPanel();
+            } else {
+                localStorage.removeItem('adminToken');
+                authToken = null;
+                showLoginScreen();
+            }
         } else {
             localStorage.removeItem('adminToken');
             authToken = null;
