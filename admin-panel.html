@@ -509,10 +509,11 @@
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('logs')">📋 Logs Admin</button>
-            <button class="tab" onclick="showTab('activity')">👁️ Actividad Usuarios</button>
-            <button class="tab" onclick="showTab('users')">👤 Usuarios</button>
-            <button class="tab" onclick="showTab('devices')">📱 Dispositivos</button>
+            <button class="tab active" onclick="showTab('logs')">&#128203; Logs Admin</button>
+            <button class="tab" onclick="showTab('activity')">&#128065; Actividad Usuarios</button>
+            <button class="tab" onclick="showTab('users')">&#128100; Usuarios</button>
+            <button class="tab" onclick="showTab('devices')">&#128241; Dispositivos</button>
+            <button class="tab" onclick="showTab('security')">&#128274; Seguridad</button>
         </div>
         
         <!-- Tab: Logs Admin -->
@@ -716,7 +717,89 @@
             </div>
         </div>
         
-        <a href="/admin.html" class="back-link">⬅️ Volver al panel de contenido</a>
+        <!-- Tab: Seguridad -->
+        <div class="tab-content" id="tab-security">
+            <h2 style="margin-bottom: 20px;">&#128274; Logs de Seguridad</h2>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="totalSecurityLogs">0</h3>
+                    <p>Total eventos</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f44336, #c62828);">
+                    <h3 id="blockedIPsCount">0</h3>
+                    <p>IPs bloqueadas</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #ff9800, #e65100);">
+                    <h3 id="failedLoginCount">0</h3>
+                    <p>Logins fallidos</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #9c27b0, #6a1b9a);">
+                    <h3 id="tempBlocksCount">0</h3>
+                    <p>Bloqueos temporales</p>
+                </div>
+            </div>
+            
+            <!-- IPs Bloqueadas -->
+            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #f44336; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: #f44336; margin-bottom: 15px;">&#128683; IPs Bloqueadas Permanentemente</h3>
+                <div id="blockedIPsList" style="max-height: 200px; overflow-y: auto;">
+                    <p style="color: rgba(255,255,255,0.5);">No hay IPs bloqueadas</p>
+                </div>
+            </div>
+            
+            <!-- Intentos de Login Activos -->
+            <div style="background: rgba(255, 152, 0, 0.1); border: 1px solid #ff9800; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="color: #ff9800; margin-bottom: 15px;">&#9888; Intentos de Login Activos (en memoria)</h3>
+                <div id="activeLoginAttempts" style="max-height: 200px; overflow-y: auto;">
+                    <p style="color: rgba(255,255,255,0.5);">No hay intentos activos</p>
+                </div>
+            </div>
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Tipo de evento</label>
+                    <select id="filterSecurityType">
+                        <option value="">Todos</option>
+                        <option value="LOGIN_FAILED">Login fallido</option>
+                        <option value="IP_TEMP_BLOCKED">Bloqueo temporal</option>
+                        <option value="IP_PERMANENT_BLOCKED">Bloqueo permanente</option>
+                        <option value="BLOCKED_IP_ATTEMPT">Intento de IP bloqueada</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>IP</label>
+                    <input type="text" id="filterSecurityIP" placeholder="Filtrar por IP">
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary btn-small" onclick="loadSecurityLogs()">&#128269; Filtrar</button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-danger btn-small" onclick="confirmClearSecurityLogs()">&#128465; Limpiar logs</button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="securityTableMain">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="timestamp" data-table="security">Fecha/Hora</th>
+                            <th class="sortable" data-sort="type" data-table="security">Tipo</th>
+                            <th class="sortable" data-sort="ip" data-table="security">IP</th>
+                            <th>Usuario intentado</th>
+                            <th>Mensaje</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="securityTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <a href="/admin.html" class="back-link">&#11013; Volver al panel de contenido</a>
     </div>
     
     <!-- Modal: Crear/Editar Usuario -->
@@ -975,6 +1058,8 @@
             // Cargar datos de la pestaña
             if (tabName === 'activity') {
                 loadActivityLogs();
+            } else if (tabName === 'security') {
+                loadSecurityLogs();
             }
             
             refreshSession();
@@ -1523,7 +1608,7 @@
         }
         
         async function deleteDevice(id) {
-            if (!confirm('┬┐Eliminar este dispositivo?')) return;
+            if (!confirm('Eliminar este dispositivo?')) return;
             
             try {
                 const response = await fetch(`/api/notifications/device/${id}`, {
@@ -1540,6 +1625,246 @@
                 }
             } catch (error) {
                 alert('Error al eliminar dispositivo');
+            }
+            
+            refreshSession();
+        }
+        
+        // ============ SEGURIDAD ============
+        let securityData = [];
+        
+        async function loadSecurityLogs() {
+            try {
+                const response = await fetch('/api/admin/security/logs', {
+                    headers: { 'X-Admin-Token': authToken }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    securityData = data.logs || [];
+                    
+                    // Aplicar filtros
+                    const typeFilter = document.getElementById('filterSecurityType').value;
+                    const ipFilter = document.getElementById('filterSecurityIP').value.toLowerCase();
+                    
+                    let filtered = securityData;
+                    if (typeFilter) {
+                        filtered = filtered.filter(log => log.type === typeFilter);
+                    }
+                    if (ipFilter) {
+                        filtered = filtered.filter(log => log.ip && log.ip.toLowerCase().includes(ipFilter));
+                    }
+                    
+                    renderSecurityLogs(filtered);
+                    updateSecurityStats();
+                }
+                
+                // Cargar IPs bloqueadas
+                loadBlockedIPs();
+                
+                // Cargar intentos activos
+                loadActiveAttempts();
+                
+            } catch (error) {
+                console.error('Error cargando logs de seguridad:', error);
+            }
+            
+            refreshSession();
+        }
+        
+        function renderSecurityLogs(logs) {
+            const tbody = document.getElementById('securityTable');
+            
+            const typeColors = {
+                'LOGIN_FAILED': '#ff9800',
+                'IP_TEMP_BLOCKED': '#f44336',
+                'IP_PERMANENT_BLOCKED': '#9c27b0',
+                'BLOCKED_IP_ATTEMPT': '#e91e63'
+            };
+            
+            const typeLabels = {
+                'LOGIN_FAILED': 'Login fallido',
+                'IP_TEMP_BLOCKED': 'Bloqueo temporal',
+                'IP_PERMANENT_BLOCKED': 'Bloqueo permanente',
+                'BLOCKED_IP_ATTEMPT': 'IP bloqueada intento'
+            };
+            
+            tbody.innerHTML = logs.slice(0, 200).map(log => {
+                const timestamp = new Date(log.timestamp);
+                const color = typeColors[log.type] || '#888';
+                const label = typeLabels[log.type] || log.type;
+                
+                return `
+                    <tr>
+                        <td>${timestamp.toLocaleString('es-ES')}</td>
+                        <td><span style="background: ${color}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">${label}</span></td>
+                        <td><code>${log.ip || 'N/A'}</code></td>
+                        <td>${log.username || '-'}</td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${log.message || '-'}</td>
+                        <td>
+                            ${log.ip && !isIPBlocked(log.ip) ? `<button class="btn btn-danger btn-small" onclick="blockIP('${log.ip}')">Bloquear IP</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;">No hay eventos de seguridad registrados</td></tr>';
+            }
+        }
+        
+        function updateSecurityStats() {
+            document.getElementById('totalSecurityLogs').textContent = securityData.length;
+            document.getElementById('failedLoginCount').textContent = securityData.filter(l => l.type === 'LOGIN_FAILED').length;
+            document.getElementById('tempBlocksCount').textContent = securityData.filter(l => l.type === 'IP_TEMP_BLOCKED').length;
+        }
+        
+        let blockedIPsData = [];
+        
+        async function loadBlockedIPs() {
+            try {
+                const response = await fetch('/api/admin/security/blocked-ips', {
+                    headers: { 'X-Admin-Token': authToken }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    blockedIPsData = data.blockedIps || [];
+                    document.getElementById('blockedIPsCount').textContent = blockedIPsData.length;
+                    
+                    const container = document.getElementById('blockedIPsList');
+                    if (blockedIPsData.length === 0) {
+                        container.innerHTML = '<p style="color: rgba(255,255,255,0.5);">No hay IPs bloqueadas</p>';
+                    } else {
+                        container.innerHTML = blockedIPsData.map(ip => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">
+                                <div>
+                                    <strong style="color: #f44336;">${ip.ip}</strong>
+                                    <br><small style="color: rgba(255,255,255,0.6);">${ip.reason || 'Sin razon'}</small>
+                                    <br><small style="color: rgba(255,255,255,0.4);">Bloqueada: ${new Date(ip.blockedAt).toLocaleString('es-ES')}</small>
+                                    ${ip.attemptedUsernames ? `<br><small>Usuarios intentados: ${ip.attemptedUsernames.join(', ')}</small>` : ''}
+                                </div>
+                                <button class="btn btn-secondary btn-small" onclick="unblockIP('${ip.ip}')">Desbloquear</button>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando IPs bloqueadas:', error);
+            }
+        }
+        
+        async function loadActiveAttempts() {
+            try {
+                const response = await fetch('/api/admin/security/logs', {
+                    headers: { 'X-Admin-Token': authToken }
+                });
+                const data = await response.json();
+                
+                if (data.success && data.activeAttempts) {
+                    const container = document.getElementById('activeLoginAttempts');
+                    const attempts = data.activeAttempts;
+                    
+                    if (attempts.length === 0) {
+                        container.innerHTML = '<p style="color: rgba(255,255,255,0.5);">No hay intentos activos</p>';
+                    } else {
+                        container.innerHTML = attempts.map(a => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">
+                                <div>
+                                    <strong style="color: #ff9800;">${a.ip}</strong>
+                                    <br><small>Intentos: ${a.count} | Usuarios: ${a.usernames.join(', ') || 'N/A'}</small>
+                                    ${a.blockedUntil ? `<br><small style="color: #f44336;">Bloqueado hasta: ${new Date(a.blockedUntil).toLocaleString('es-ES')}</small>` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando intentos activos:', error);
+            }
+        }
+        
+        function isIPBlocked(ip) {
+            return blockedIPsData.some(b => b.ip === ip);
+        }
+        
+        async function blockIP(ip) {
+            const reason = prompt('Razon del bloqueo:', 'Bloqueo manual desde panel de administracion');
+            if (!reason) return;
+            
+            try {
+                const response = await fetch('/api/admin/security/block-ip', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': authToken 
+                    },
+                    body: JSON.stringify({ ip, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('IP bloqueada correctamente');
+                    loadSecurityLogs();
+                } else {
+                    alert(data.error || 'Error al bloquear IP');
+                }
+            } catch (error) {
+                alert('Error al bloquear IP');
+            }
+            
+            refreshSession();
+        }
+        
+        async function unblockIP(ip) {
+            if (!confirm('Desbloquear IP ' + ip + '?')) return;
+            
+            try {
+                const response = await fetch('/api/admin/security/unblock-ip', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': authToken 
+                    },
+                    body: JSON.stringify({ ip })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('IP desbloqueada correctamente');
+                    loadSecurityLogs();
+                } else {
+                    alert(data.error || 'Error al desbloquear IP');
+                }
+            } catch (error) {
+                alert('Error al desbloquear IP');
+            }
+            
+            refreshSession();
+        }
+        
+        async function confirmClearSecurityLogs() {
+            if (!confirm('Estas seguro de eliminar todos los logs de seguridad?')) return;
+            if (!confirm('Esta accion no se puede deshacer. Continuar?')) return;
+            
+            try {
+                const response = await fetch('/api/admin/security/logs', {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Token': authToken }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Logs de seguridad eliminados');
+                    loadSecurityLogs();
+                } else {
+                    alert(data.error || 'Error al eliminar logs');
+                }
+            } catch (error) {
+                alert('Error al eliminar logs');
             }
             
             refreshSession();
