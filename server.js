@@ -20,10 +20,16 @@ const imagesRoutes = require('./server/routes/images');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware basico - Limite 20MB
+// Leer limite de subida desde configuracion (default 20MB, max 50MB)
+const config = getConfig();
+const maxUploadMB = Math.min(Math.max(config.maxUploadMB || 20, 20), 50);
+const uploadLimit = maxUploadMB + 'mb';
+console.log('Limite de subida configurado: ' + maxUploadMB + 'MB');
+
+// Middleware basico
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(express.json({ limit: uploadLimit }));
+app.use(express.urlencoded({ limit: uploadLimit, extended: true }));
 app.use(cookieParser());
 
 // ============ Headers de Seguridad ============

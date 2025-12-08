@@ -1593,13 +1593,12 @@
                         <div class="config-card-title">
                             <span>&#128190;</span> Limite de Subida
                         </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 15px;">Tamano maximo permitido para subir archivos de audio (en MB).</p>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">Tamano maximo para archivos de audio. Requiere reinicio del servidor.</p>
                         <select id="maxUploadSelect" class="config-select">
-                            <option value="10">10 MB</option>
-                            <option value="15">15 MB</option>
                             <option value="20" selected>20 MB (recomendado)</option>
                             <option value="30">30 MB</option>
-                            <option value="50">50 MB</option>
+                            <option value="40">40 MB</option>
+                            <option value="50">50 MB (maximo)</option>
                         </select>
                         <button class="save-config-btn" onclick="saveMaxUpload()">&#128190; Guardar Limite</button>
                     </div>

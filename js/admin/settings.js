@@ -44,9 +44,7 @@ async function saveSessionTimeout() {
 
 async function loadTimezone() {
     try {
-        const response = await fetch('/api/server-time', {
-            credentials: 'include'
-        });
+        const response = await fetch('/api/server-time', { credentials: 'include' });
         if (response.ok) {
             const data = await response.json();
             document.getElementById('gmtSelect').value = data.gmtOffset || '0';
@@ -98,7 +96,7 @@ async function saveMaxUpload() {
         const data = await response.json();
 
         if (data.success) {
-            showToast('Limite de subida guardado: ' + maxUploadMB + ' MB', 'success');
+            showToast('Limite guardado: ' + maxUploadMB + 'MB. Reinicia el servidor para aplicar.', 'warning');
             const hint = document.querySelector('.upload-hint');
             if (hint) hint.textContent = 'Maximo ' + maxUploadMB + 'MB por archivo';
         } else {
@@ -112,9 +110,7 @@ async function saveMaxUpload() {
 
 async function loadMaxUpload() {
     try {
-        const response = await fetch('/api/config/upload', {
-            credentials: 'include'
-        });
+        const response = await fetch('/api/config/upload', { credentials: 'include' });
         if (response.ok) {
             const data = await response.json();
             const uploadSelect = document.getElementById('maxUploadSelect');
