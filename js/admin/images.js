@@ -45,8 +45,13 @@ function handleImageSelect(type, file, fileNameId, previewContainerId, previewIm
     // Guardar archivo seleccionado
     selectedFiles[type] = file;
 
-    // Mostrar nombre del archivo
-    document.getElementById(fileNameId).textContent = file.name;
+    // Mostrar nombre final al que será guardado
+    const finalNames = {
+        logo: 'logo.png',
+        icon: 'icon-192.png / icon-512.png',
+        pastores: 'pastores.jpg'
+    };
+    document.getElementById(fileNameId).textContent = `${file.name} → ${finalNames[type]}`;
 
     // Mostrar preview
     const reader = new FileReader();
