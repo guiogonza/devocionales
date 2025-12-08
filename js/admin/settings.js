@@ -15,31 +15,7 @@ function initTimezoneConfig() {
 }
 
 async function loadSessionTimeout() {
-    const token = getAuthToken();
-    if (!token) return;
-
-    try {
-        const response = await fetch('/api/config/session', {
-            headers: { 'x-admin-token': getAuthToken() }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            const select = document.getElementById('sessionTimeoutSelect');
-            if (select && data.sessionTimeoutMinutes) {
-                select.value = data.sessionTimeoutMinutes.toString();
-            }
-        }
-    } catch (error) {
-        console.error('Error cargando configuración de sesión:', error);
-    }
-}
-
-async function saveSessionTimeout() {
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado', 'error');
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const select = document.getElementById('sessionTimeoutSelect');
     if (!select) return;
@@ -49,9 +25,10 @@ async function saveSessionTimeout() {
     try {
         const response = await fetch('/api/config/session', {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'x-admin-token': token
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ sessionTimeoutMinutes })
         });
@@ -75,7 +52,7 @@ async function saveSessionTimeout() {
 async function loadTimezone() {
     try {
         const response = await fetch('/api/server-time', {
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
         if (response.ok) {
             const data = await response.json();
@@ -87,20 +64,17 @@ async function loadTimezone() {
 }
 
 async function saveTimezone() {
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado', 'error');
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const gmtOffset = document.getElementById('gmtSelect').value;
     
     try {
         const response = await fetch('/api/config', {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'x-admin-token': token
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ gmtOffset: parseFloat(gmtOffset) })
         });
@@ -140,3 +114,4 @@ function updateServerTimeDisplay() {
         });
     }
 }
+

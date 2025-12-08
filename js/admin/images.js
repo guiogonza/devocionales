@@ -1,5 +1,5 @@
-/**
- * Gestión de Imágenes - Admin Panel
+﻿/**
+ * GestiÃ³n de ImÃ¡genes - Admin Panel
  */
 
 function initImageUpload() {
@@ -52,12 +52,7 @@ function handleImageSelect(file) {
 async function uploadImage() {
     if (!selectedImageFile) return;
 
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado', 'error');
-        logout();
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); logout(); return; }
 
     const formData = new FormData();
     formData.append('image', selectedImageFile);
@@ -70,7 +65,7 @@ async function uploadImage() {
     try {
         const response = await fetch('/api/images', {
             method: 'POST',
-            headers: { 'x-admin-token': token },
+            credentials: 'include',
             body: formData
         });
 

@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Notificaciones Push - Admin Panel
  */
 
 async function loadSubscriberCount() {
     try {
         const response = await fetch('/api/notifications/count', {
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
         if (response.ok) {
             const data = await response.json();
@@ -19,7 +19,7 @@ async function loadSubscriberCount() {
 async function loadDevicesList() {
     try {
         const response = await fetch('/api/notifications/devices', {
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
         if (response.ok) {
             const data = await response.json();
@@ -39,14 +39,14 @@ function renderDevicesList(devices, online, total) {
         return;
     }
 
-    // Header con estadísticas
+    // Header con estadÃ­sticas
     let html = `
         <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
             <div style="background: var(--primary-color); padding: 10px 15px; border-radius: 8px; color: white;">
                 <strong>${total}</strong> dispositivos
             </div>
             <div style="background: #22c55e; padding: 10px 15px; border-radius: 8px; color: white;">
-                <strong>${online}</strong> en línea
+                <strong>${online}</strong> en lÃ­nea
             </div>
         </div>
     `;
@@ -71,11 +71,11 @@ function renderDevicesList(devices, online, total) {
                         ${countryFlag}${device.country}${device.city ? ', ' + device.city : ''}
                     </div>
                     <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
-                        ${device.lastSeenText} · Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}
+                        ${device.lastSeenText} Â· Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}
                     </div>
                 </div>
                 <button onclick="deleteDevice('${device.id}')" style="background: #ef4444; border: none; padding: 6px 10px; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">
-                    🗑️
+                    ðŸ—‘ï¸
                 </button>
             </div>
         `;
@@ -85,12 +85,12 @@ function renderDevicesList(devices, online, total) {
 }
 
 async function deleteDevice(deviceId) {
-    if (!confirm('¿Eliminar este dispositivo?')) return;
+    if (!confirm('Â¿Eliminar este dispositivo?')) return;
     
     try {
         const response = await fetch(`/api/notifications/device/${deviceId}`, {
             method: 'DELETE',
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
         
         if (response.ok) {
@@ -106,11 +106,7 @@ async function deleteDevice(deviceId) {
 }
 
 async function sendNotification() {
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado', 'error');
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const title = document.getElementById('notifTitle').value;
     const body = document.getElementById('notifBody').value;
@@ -123,9 +119,10 @@ async function sendNotification() {
     try {
         const response = await fetch('/api/notifications/send', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'x-admin-token': token
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ title, body })
         });
@@ -133,7 +130,7 @@ async function sendNotification() {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`Notificación enviada a ${data.sent || 0} dispositivos`, 'success');
+            showToast(`NotificaciÃ³n enviada a ${data.sent || 0} dispositivos`, 'success');
             document.getElementById('notifTitle').value = '';
             document.getElementById('notifBody').value = '';
         } else {
@@ -141,6 +138,7 @@ async function sendNotification() {
         }
     } catch (error) {
         console.error('Error:', error);
-        showToast('Error al enviar notificación', 'error');
+        showToast('Error al enviar notificaciÃ³n', 'error');
     }
 }
+

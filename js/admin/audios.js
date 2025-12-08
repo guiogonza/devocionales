@@ -9,7 +9,7 @@ let audioSearchInitialized = false;
 async function loadAudiosFromServer() {
     try {
         const response = await fetch(CONFIG.apiEndpoint, {
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -396,12 +396,7 @@ async function checkDateAvailability(date) {
 }
 
 async function uploadFile() {
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado. Inicia sesión de nuevo.', 'error');
-        logout();
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const date = document.getElementById('audioDate').value;
     const title = document.getElementById('devotionalTitle').value;
@@ -421,9 +416,10 @@ async function uploadFile() {
         try {
             const response = await fetch(`/api/devotionals/${editingDate}`, {
                 method: 'PUT',
-                headers: {
+            credentials: 'include',
+            headers: {
                     'Content-Type': 'application/json',
-                    'x-admin-token': token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
                     title, 
@@ -472,7 +468,8 @@ async function uploadFile() {
     try {
         const response = await fetch(CONFIG.apiEndpoint, {
             method: 'POST',
-            headers: { 'x-admin-token': token },
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
             body: formData
         });
 
@@ -550,19 +547,15 @@ function hideDeleteModal() {
 async function deleteAudio() {
     if (!fileToDelete) return;
 
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado. Inicia sesión de nuevo.', 'error');
-        logout();
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     console.log('Eliminando audio:', fileToDelete);
 
     try {
         const response = await fetch(`${CONFIG.apiEndpoint}/${fileToDelete}`, {
             method: 'DELETE',
-            headers: { 'x-admin-token': token }
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
         });
 
         console.log('Response status:', response.status);
@@ -735,12 +728,7 @@ function hideEditModal() {
 async function saveEdit() {
     if (!fileToEdit) return;
 
-    const token = getAuthToken();
-    if (!token) {
-        showToast('No autorizado', 'error');
-        logout();
-        return;
-    }
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const title = document.getElementById('editTitle').value.trim();
     const verseInput = document.getElementById('editVerseInput');
@@ -781,8 +769,9 @@ async function saveEdit() {
 
             const uploadResponse = await fetch('/api/audios', {
                 method: 'POST',
-                headers: {
-                    'x-admin-token': token
+            credentials: 'include',
+            headers: {
+                    'Content-Type': 'application/json'
                 },
                 body: formData
             });
@@ -799,9 +788,10 @@ async function saveEdit() {
             // Solo actualizar metadatos, sin nuevo archivo
             const response = await fetch(`/api/devotionals/${fileToEdit}`, {
                 method: 'PUT',
-                headers: {
+            credentials: 'include',
+            headers: {
                     'Content-Type': 'application/json',
-                    'x-admin-token': token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
                     title, 
@@ -901,3 +891,4 @@ function updateStorageDisplay(usedMB, limitMB) {
         fill.style.background = 'var(--primary-light)';
     }
 }
+
