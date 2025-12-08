@@ -106,6 +106,36 @@
             color: white;
         }
         
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 152, 0, 0.4);
+        }
+        
+        .btn-warning:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Checkboxes para logs */
+        .log-checkbox-admin, .log-checkbox-activity {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4CAF50;
+        }
+        
+        .selected-count {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-left: 10px;
+        }
+        
         .error-message {
             background: rgba(244, 67, 54, 0.2);
             border: 1px solid #f44336;
@@ -534,7 +564,11 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('admin')">⚠️ Eliminar Logs</button>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('admin', false)">⚠️ Eliminar Todos</button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('admin', true)" id="btnDeleteSelectedAdmin" disabled>🗑️ Eliminar Seleccionados (<span id="selectedCountAdmin">0</span>)</button>
                 </div>
             </div>
             
@@ -542,6 +576,7 @@
                 <table id="logsTableMain">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAllAdmin" onchange="toggleSelectAll('admin')"></th>
                             <th class="sortable" data-sort="timestamp" data-table="logs">Fecha/Hora</th>
                             <th class="sortable" data-sort="action" data-table="logs">Acción</th>
                             <th>Detalles</th>
@@ -603,7 +638,11 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('activity')">⚠️ Eliminar Logs</button>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('activity', false)">⚠️ Eliminar Todos</button>
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('activity', true)" id="btnDeleteSelectedActivity" disabled>🗑️ Eliminar Seleccionados (<span id="selectedCountActivity">0</span>)</button>
                 </div>
             </div>
             
@@ -611,6 +650,7 @@
                 <table id="activityTableMain">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAllActivity" onchange="toggleSelectAll('activity')"></th>
                             <th class="sortable" data-sort="timestamp" data-table="activity">Fecha/Hora</th>
                             <th class="sortable" data-sort="action" data-table="activity">Acción</th>
                             <th>Detalles</th>
@@ -1007,8 +1047,15 @@
             });
         }
         
+        // Variables para almacenar selección
+        let selectedAdminLogs = new Set();
+        let selectedActivityLogs = new Set();
+        
         function renderLogs(logs) {
             const tbody = document.getElementById('logsTable');
+            selectedAdminLogs.clear();
+            updateSelectedCount('admin');
+            
             tbody.innerHTML = logs.map(log => {
                 const date = new Date(log.timestamp);
                 const badge = getActionBadge(log.action);
@@ -1019,6 +1066,7 @@
                 
                 return `
                     <tr>
+                        <td><input type="checkbox" class="log-checkbox-admin" data-timestamp="${log.timestamp}" onchange="toggleLogSelection('admin', '${log.timestamp}')"></td>
                         <td>${date.toLocaleString('es-ES')}</td>
                         <td><span class="badge ${badge.class}">${badge.icon} ${log.action}</span></td>
                         <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${details || '-'}</td>
@@ -1027,6 +1075,8 @@
                     </tr>
                 `;
             }).join('');
+            
+            document.getElementById('selectAllAdmin').checked = false;
         }
         
         function getActionBadge(action) {
@@ -1109,6 +1159,9 @@
         
         function renderActivityLogs(logs) {
             const tbody = document.getElementById('activityTable');
+            selectedActivityLogs.clear();
+            updateSelectedCount('activity');
+            
             tbody.innerHTML = logs.map(log => {
                 const date = new Date(log.timestamp);
                 const badge = getActivityBadge(log.action);
@@ -1116,7 +1169,7 @@
                 
                 if (typeof log.details === 'object') {
                     if (log.action === 'PLAY_DEVOTIONAL') {
-                        details = `­ƒôà ${log.details.date} - "${log.details.title || 'Sin título'}"`;
+                        details = `📅 ${log.details.date} - "${log.details.title || 'Sin título'}"`;
                     } else {
                         details = JSON.stringify(log.details);
                     }
@@ -1127,7 +1180,7 @@
                 // País con bandera
                 const country = log.country || 'Desconocido';
                 const countryCode = log.countryCode || '';
-                const flag = countryCode ? getFlagEmoji(countryCode) : '­ƒîÉ';
+                const flag = countryCode ? getFlagEmoji(countryCode) : '🌍';
                 
                 // Sistema operativo
                 const osIcon = log.osIcon || '❔';
@@ -1135,6 +1188,7 @@
                 
                 return `
                     <tr>
+                        <td><input type="checkbox" class="log-checkbox-activity" data-timestamp="${log.timestamp}" onchange="toggleLogSelection('activity', '${log.timestamp}')"></td>
                         <td>${date.toLocaleString('es-ES')}</td>
                         <td><span class="badge ${badge.class}">${badge.icon} ${log.action}</span></td>
                         <td style="max-width: 200px;">${details || '-'}</td>
@@ -1144,6 +1198,8 @@
                     </tr>
                 `;
             }).join('');
+            
+            document.getElementById('selectAllActivity').checked = false;
         }
         
         // Función para obtener emoji de bandera por código de país
@@ -1195,20 +1251,73 @@
             loadActivityLogs();
         }
         
+        // ============ SELECCIÓN DE LOGS ============
+        function toggleLogSelection(type, timestamp) {
+            const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
+            
+            if (selectedSet.has(timestamp)) {
+                selectedSet.delete(timestamp);
+            } else {
+                selectedSet.add(timestamp);
+            }
+            
+            updateSelectedCount(type);
+        }
+        
+        function toggleSelectAll(type) {
+            const selectAll = document.getElementById(`selectAll${type === 'admin' ? 'Admin' : 'Activity'}`);
+            const checkboxes = document.querySelectorAll(`.log-checkbox-${type}`);
+            const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
+            
+            selectedSet.clear();
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedSet.add(cb.dataset.timestamp);
+                }
+            });
+            
+            updateSelectedCount(type);
+        }
+        
+        function updateSelectedCount(type) {
+            const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
+            const count = selectedSet.size;
+            const countEl = document.getElementById(`selectedCount${type === 'admin' ? 'Admin' : 'Activity'}`);
+            const btnEl = document.getElementById(`btnDeleteSelected${type === 'admin' ? 'Admin' : 'Activity'}`);
+            
+            if (countEl) countEl.textContent = count;
+            if (btnEl) btnEl.disabled = count === 0;
+        }
+        
         // ============ ELIMINAR LOGS ============
-        function confirmDeleteLogs(type) {
+        function confirmDeleteLogs(type, selectedOnly) {
+            const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
             const typeName = type === 'admin' ? 'auditoría (admin)' : 'actividad de usuarios';
-            const confirmed = confirm(`⚠️ ¿Estás seguro de eliminar TODOS los logs de ${typeName}?\n\nEsta acción no se puede deshacer.`);
+            
+            let message;
+            if (selectedOnly) {
+                if (selectedSet.size === 0) {
+                    alert('⚠️ No hay logs seleccionados');
+                    return;
+                }
+                message = `⚠️ ¿Eliminar ${selectedSet.size} logs seleccionados de ${typeName}?`;
+            } else {
+                message = `⚠️ ¿Estás seguro de eliminar TODOS los logs de ${typeName}?\n\nEsta acción no se puede deshacer.`;
+            }
+            
+            const confirmed = confirm(message);
             
             if (confirmed) {
                 const password = prompt('Por seguridad, ingresa tu contraseña para confirmar:');
                 if (password) {
-                    deleteLogs(type, password);
+                    deleteLogs(type, password, selectedOnly ? Array.from(selectedSet) : null);
                 }
             }
         }
         
-        async function deleteLogs(type, password) {
+        async function deleteLogs(type, password, timestamps) {
             const endpoint = type === 'admin' ? '/api/admin/audit-logs' : '/api/admin/activity-logs';
             
             try {
@@ -1218,18 +1327,22 @@
                         'Content-Type': 'application/json',
                         'X-Admin-Token': authToken
                     },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password, timestamps })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
                     alert(`✅ ${data.message}`);
+                    // Limpiar selecciones
                     if (type === 'admin') {
+                        selectedAdminLogs.clear();
                         loadLogs();
                     } else {
+                        selectedActivityLogs.clear();
                         loadActivityLogs();
                     }
+                    updateSelectedCount(type);
                 } else {
                     alert(`❌ Error: ${data.error}`);
                 }

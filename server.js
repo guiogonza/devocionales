@@ -1119,68 +1119,88 @@ app.get('/api/admin/activity-logs', requireAuth, (req, res) => {
     res.json({ success: true, logs, total: filteredLogs.length, actions });
 });
 
-// DELETE /api/admin/audit-logs - Eliminar todos los logs de auditoría (requiere auth + password)
+// DELETE /api/admin/audit-logs - Eliminar logs de auditoría seleccionados o todos
 app.delete('/api/admin/audit-logs', requireAuth, async (req, res) => {
-    const { password } = req.body;
-    const session = sessions[req.headers['x-admin-token']];
-    
-    if (!session) {
-        return res.status(401).json({ success: false, error: 'Sesión no válida' });
+    try {
+        const { timestamps } = req.body;
+        const token = req.headers['x-admin-token'] || req.headers['X-Admin-Token'];
+        const session = sessions[token];
+        
+        if (!session) {
+            return res.status(401).json({ success: false, error: 'Sesión no válida' });
+        }
+        
+        const users = loadAdminUsers();
+        const user = users.find(u => u.id === session.userId);
+        
+        if (!user) {
+            return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
+        }
+        
+        let count = 0;
+        if (timestamps && Array.isArray(timestamps) && timestamps.length > 0) {
+            // Eliminar solo los seleccionados
+            const originalLength = auditLogs.length;
+            auditLogs = auditLogs.filter(log => !timestamps.includes(log.timestamp));
+            count = originalLength - auditLogs.length;
+        } else {
+            // Eliminar todos
+            count = auditLogs.length;
+            auditLogs = [];
+        }
+        
+        saveAuditLog(auditLogs);
+        
+        // Registrar la acción (esto creará un nuevo log)
+        await logAudit('AUDIT_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
+        
+        res.json({ success: true, message: `${count} logs de auditoría eliminados` });
+    } catch (error) {
+        console.error('Error eliminando audit logs:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
-    
-    // Verificar contraseña del usuario
-    const users = loadAdminUsers();
-    const user = users.find(u => u.id === session.userId);
-    
-    if (!user) {
-        return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
-    }
-    
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    if (user.password !== hashedPassword) {
-        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
-    }
-    
-    const count = auditLogs.length;
-    auditLogs = [];
-    saveAuditLog(auditLogs);
-    
-    // Registrar la acción (esto creará un nuevo log)
-    await logAudit('AUDIT_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
-    
-    res.json({ success: true, message: `${count} logs de auditoría eliminados` });
 });
 
-// DELETE /api/admin/activity-logs - Eliminar todos los logs de actividad (requiere auth + password)
+// DELETE /api/admin/activity-logs - Eliminar logs de actividad seleccionados o todos
 app.delete('/api/admin/activity-logs', requireAuth, async (req, res) => {
-    const { password } = req.body;
-    const session = sessions[req.headers['x-admin-token']];
+    try {
+        const { timestamps } = req.body;
+        const token = req.headers['x-admin-token'] || req.headers['X-Admin-Token'];
+        const session = sessions[token];
     
-    if (!session) {
-        return res.status(401).json({ success: false, error: 'Sesión no válida' });
+        if (!session) {
+            return res.status(401).json({ success: false, error: 'Sesión no válida' });
+        }
+        
+        const users = loadAdminUsers();
+        const user = users.find(u => u.id === session.userId);
+        
+        if (!user) {
+            return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
+        }
+        
+        let count = 0;
+        if (timestamps && Array.isArray(timestamps) && timestamps.length > 0) {
+            // Eliminar solo los seleccionados
+            const originalLength = activityLogs.length;
+            activityLogs = activityLogs.filter(log => !timestamps.includes(log.timestamp));
+            count = originalLength - activityLogs.length;
+        } else {
+            // Eliminar todos
+            count = activityLogs.length;
+            activityLogs = [];
+        }
+        
+        saveActivityLog(activityLogs);
+        
+        // Registrar la acción en logs de auditoría
+        await logAudit('ACTIVITY_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
+        
+        res.json({ success: true, message: `${count} logs de actividad eliminados` });
+    } catch (error) {
+        console.error('Error eliminando activity logs:', error);
+        res.status(500).json({ success: false, error: 'Error interno del servidor' });
     }
-    
-    // Verificar contraseña del usuario
-    const users = loadAdminUsers();
-    const user = users.find(u => u.id === session.userId);
-    
-    if (!user) {
-        return res.status(401).json({ success: false, error: 'Usuario no encontrado' });
-    }
-    
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    if (user.password !== hashedPassword) {
-        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
-    }
-    
-    const count = activityLogs.length;
-    activityLogs = [];
-    saveActivityLog(activityLogs);
-    
-    // Registrar la acción en logs de auditoría
-    await logAudit('ACTIVITY_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
-    
-    res.json({ success: true, message: `${count} logs de actividad eliminados` });
 });
 
 // POST /api/track-play - Registrar reproducción de audio (llamado desde el cliente)
@@ -2140,7 +2160,9 @@ app.post('/api/notifications/send', async (req, res) => {
     
     res.json({ 
         success: true, 
-        message: `Notificaci├│n enviada a ${successCount} dispositivos${failCount > 0 ? `, ${failCount} fallidos` : ''}` 
+        sent: successCount,
+        failed: failCount,
+        message: `Notificación enviada a ${successCount} dispositivos${failCount > 0 ? `, ${failCount} fallidos` : ''}` 
     });
 });
 
