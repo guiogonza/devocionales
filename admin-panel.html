@@ -450,7 +450,7 @@
     <!-- Login -->
     <div class="login-container" id="loginContainer">
         <div class="login-box">
-            <h1>­ƒöÉ <span>Admin</span> Panel</h1>
+            <h1>🔒 <span>Admin</span> Panel</h1>
             <div id="loginError" class="error-message" style="display: none;"></div>
             <form id="loginForm">
                 <div class="form-group">
@@ -470,7 +470,7 @@
     <!-- Panel Principal -->
     <div class="panel-container" id="panelContainer">
         <div class="header">
-            <h1>­ƒøí´©Å Panel de Administración</h1>
+            <h1>🛠️ Panel de Administración</h1>
             <div class="header-info">
                 <span id="currentUser">Usuario: admin</span>
                 <div class="session-timer" id="sessionTimer">ÔÅ▒´©Å 5:00</div>
@@ -479,16 +479,16 @@
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('logs')">­ƒôï Logs Admin</button>
-            <button class="tab" onclick="showTab('activity')">­ƒæü´©Å Actividad Usuarios</button>
-            <button class="tab" onclick="showTab('users')">­ƒæÑ Usuarios</button>
-            <button class="tab" onclick="showTab('password')">­ƒöæ Mi Contraseña</button>
-            <button class="tab" onclick="showTab('devices')">­ƒô▒ Dispositivos</button>
+            <button class="tab active" onclick="showTab('logs')">📋 Logs Admin</button>
+            <button class="tab" onclick="showTab('activity')">👁️ Actividad Usuarios</button>
+            <button class="tab" onclick="showTab('users')">👤 Usuarios</button>
+            <button class="tab" onclick="showTab('password')">🔐 Mi Contraseña</button>
+            <button class="tab" onclick="showTab('devices')">📱 Dispositivos</button>
         </div>
         
         <!-- Tab: Logs Admin -->
         <div class="tab-content active" id="tab-logs">
-            <h2 style="margin-bottom: 20px;">­ƒôï Logs de Auditoría (Admin)</h2>
+            <h2 style="margin-bottom: 20px;">📋 Logs de Auditoría (Admin)</h2>
             
             <div class="stats" id="logStats">
                 <div class="stat-card">
@@ -526,7 +526,7 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-primary btn-small" onclick="loadLogs()">­ƒöì Filtrar</button>
+                    <button class="btn btn-primary btn-small" onclick="loadLogs()">🔍 Filtrar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
@@ -552,7 +552,7 @@
         
         <!-- Tab: Actividad de Usuarios -->
         <div class="tab-content" id="tab-activity">
-            <h2 style="margin-bottom: 20px;">­ƒæü´©Å Actividad de Usuarios</h2>
+            <h2 style="margin-bottom: 20px;">👁️ Actividad de Usuarios</h2>
             
             <div class="stats" id="activityStats">
                 <div class="stat-card">
@@ -590,7 +590,7 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-primary btn-small" onclick="loadActivityLogs()">­ƒöì Filtrar</button>
+                    <button class="btn btn-primary btn-small" onclick="loadActivityLogs()">🔍 Filtrar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
@@ -619,7 +619,7 @@
         <!-- Tab: Usuarios -->
         <div class="tab-content" id="tab-users">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>­ƒæÑ Gestión de Usuarios</h2>
+                <h2>👤 Gestión de Usuarios</h2>
                 <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ Nuevo Usuario</button>
             </div>
             
@@ -641,7 +641,7 @@
         
         <!-- Tab: Contraseña -->
         <div class="tab-content" id="tab-password">
-            <h2 style="margin-bottom: 20px;">­ƒöæ Cambiar Mi Contraseña</h2>
+            <h2 style="margin-bottom: 20px;">🔐 Cambiar Mi Contraseña</h2>
             
             <form id="passwordForm" style="max-width: 400px;">
                 <div class="form-group">
@@ -662,7 +662,7 @@
         
         <!-- Tab: Dispositivos -->
         <div class="tab-content" id="tab-devices">
-            <h2 style="margin-bottom: 20px;">­ƒô▒ Dispositivos Registrados</h2>
+            <h2 style="margin-bottom: 20px;">📱 Dispositivos Registrados</h2>
             
             <div class="stats">
                 <div class="stat-card">
@@ -1020,14 +1020,14 @@
             const badges = {
                 'LOGIN_SUCCESS': { class: 'badge-success', icon: 'Ô£à' },
                 'LOGIN_FAILED': { class: 'badge-danger', icon: 'ÔØî' },
-                'LOGOUT': { class: 'badge-info', icon: '­ƒÜ¬' },
-                'PASSWORD_CHANGED': { class: 'badge-warning', icon: '­ƒöæ' },
-                'PASSWORD_CHANGE_FAILED': { class: 'badge-danger', icon: '­ƒöÉ' },
-                'USER_CREATED': { class: 'badge-success', icon: '­ƒæñ' },
+                'LOGOUT': { class: 'badge-info', icon: '🚪' },
+                'PASSWORD_CHANGED': { class: 'badge-warning', icon: '🔐' },
+                'PASSWORD_CHANGE_FAILED': { class: 'badge-danger', icon: '🔒' },
+                'USER_CREATED': { class: 'badge-success', icon: '👑' },
                 'USER_UPDATED': { class: 'badge-info', icon: 'Ô£Å´©Å' },
-                'USER_DELETED': { class: 'badge-danger', icon: '­ƒùæ´©Å' },
-                'AUDIO_UPLOADED': { class: 'badge-success', icon: '­ƒÄÁ' },
-                'AUDIO_DELETED': { class: 'badge-danger', icon: '­ƒùæ´©Å' }
+                'USER_DELETED': { class: 'badge-danger', icon: '🖊️' },
+                'AUDIO_UPLOADED': { class: 'badge-success', icon: '🎁' },
+                'AUDIO_DELETED': { class: 'badge-danger', icon: '🖊️' }
             };
             return badges[action] || { class: 'badge-info', icon: '­ƒôØ' };
         }
@@ -1148,7 +1148,7 @@
                 'PLAY_DEVOTIONAL': { class: 'badge-success', icon: 'ÔûÂ´©Å' },
                 'SUBSCRIBE_PUSH': { class: 'badge-info', icon: '­ƒöö' },
                 'UNSUBSCRIBE_PUSH': { class: 'badge-warning', icon: '­ƒöò' },
-                'PAGE_VIEW': { class: 'badge-info', icon: '­ƒæü´©Å' }
+                'PAGE_VIEW': { class: 'badge-info', icon: '👁️' }
             };
             return badges[action] || { class: 'badge-info', icon: '­ƒôØ' };
         }
@@ -1213,7 +1213,7 @@
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-icon btn-edit" onclick="editUser('${user.id}', '${user.username}', '${user.role}')">Ô£Å´©Å</button>
-                                <button class="btn-icon btn-delete" onclick="deleteUser('${user.id}', '${user.username}')">­ƒùæ´©Å</button>
+                                <button class="btn-icon btn-delete" onclick="deleteUser('${user.id}', '${user.username}')">🖊️</button>
                             </div>
                         </td>
                     </tr>
@@ -1388,7 +1388,7 @@
                         <td>${createdAt.toLocaleDateString('es-ES')}</td>
                         <td>${lastSeen.toLocaleString('es-ES')}</td>
                         <td>
-                            <button class="btn-icon btn-delete" onclick="deleteDevice('${device.id}')">­ƒùæ´©Å</button>
+                            <button class="btn-icon btn-delete" onclick="deleteDevice('${device.id}')">🖊️</button>
                         </td>
                     </tr>
                 `;
