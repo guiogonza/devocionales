@@ -39,14 +39,13 @@ function renderDevicesList(devices, online, total) {
         return;
     }
 
-    // Header con estadÃ­sticas
     let html = `
         <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
             <div style="background: var(--primary-color); padding: 10px 15px; border-radius: 8px; color: white;">
                 <strong>${total}</strong> dispositivos
             </div>
             <div style="background: #22c55e; padding: 10px 15px; border-radius: 8px; color: white;">
-                <strong>${online}</strong> en lÃ­nea
+                <strong>${online}</strong> en linea
             </div>
         </div>
     `;
@@ -71,11 +70,11 @@ function renderDevicesList(devices, online, total) {
                         ${countryFlag}${device.country}${device.city ? ', ' + device.city : ''}
                     </div>
                     <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
-                        ${device.lastSeenText} Â· Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}
+                        ${device.lastSeenText} - Registrado: ${new Date(device.createdAt).toLocaleDateString('es-ES')}
                     </div>
                 </div>
-                <button onclick="deleteDevice('${device.id}')" style="background: #ef4444; border: none; padding: 6px 10px; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">
-                    ðŸ—‘ï¸
+                <button onclick="deleteDevice('${device.id}')" class="btn-delete-device" title="Eliminar dispositivo">
+                    Eliminar
                 </button>
             </div>
         `;
@@ -85,7 +84,7 @@ function renderDevicesList(devices, online, total) {
 }
 
 async function deleteDevice(deviceId) {
-    if (!confirm('Â¿Eliminar este dispositivo?')) return;
+    if (!confirm('Eliminar este dispositivo?')) return;
     
     try {
         const response = await fetch(`/api/notifications/device/${deviceId}`, {
@@ -120,17 +119,14 @@ async function sendNotification() {
         const response = await fetch('/api/notifications/send', {
             method: 'POST',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title, body })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            showToast(`NotificaciÃ³n enviada a ${data.sent || 0} dispositivos`, 'success');
+            showToast(`Notificacion enviada a ${data.sent || 0} dispositivos`, 'success');
             document.getElementById('notifTitle').value = '';
             document.getElementById('notifBody').value = '';
         } else {
@@ -138,7 +134,6 @@ async function sendNotification() {
         }
     } catch (error) {
         console.error('Error:', error);
-        showToast('Error al enviar notificaciÃ³n', 'error');
+        showToast('Error al enviar notificacion', 'error');
     }
 }
-

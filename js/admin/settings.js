@@ -1,5 +1,5 @@
 ﻿/**
- * Configuración del Sistema - Admin Panel
+ * Configuracion del Sistema - Admin Panel
  */
 
 function initTimezoneConfig() {
@@ -9,12 +9,9 @@ function initTimezoneConfig() {
     }
     updateServerTimeDisplay();
     setInterval(updateServerTimeDisplay, 1000);
-    
-    // Cargar configuración de sesión
-    // Session config loads after auth
 }
 
-async function loadSessionTimeout() {
+async function saveSessionTimeout() {
     if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
 
     const select = document.getElementById('sessionTimeoutSelect');
@@ -26,18 +23,14 @@ async function loadSessionTimeout() {
         const response = await fetch('/api/config/session', {
             method: 'PUT',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionTimeoutMinutes })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            showToast('Tiempo de sesión guardado: ' + sessionTimeoutMinutes + ' minutos', 'success');
-            // Actualizar el timer con el nuevo valor
+            showToast('Tiempo de sesion guardado: ' + sessionTimeoutMinutes + ' minutos', 'success');
             sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
             startSessionTimer(sessionTimeoutMs);
         } else {
@@ -45,7 +38,7 @@ async function loadSessionTimeout() {
         }
     } catch (error) {
         console.error('Error:', error);
-        showToast('Error al guardar tiempo de sesión', 'error');
+        showToast('Error al guardar tiempo de sesion', 'error');
     }
 }
 
@@ -57,6 +50,11 @@ async function loadTimezone() {
         if (response.ok) {
             const data = await response.json();
             document.getElementById('gmtSelect').value = data.gmtOffset || '0';
+            // Cargar limite de subida
+            if (data.maxUploadMB) {
+                const uploadSelect = document.getElementById('maxUploadSelect');
+                if (uploadSelect) uploadSelect.value = data.maxUploadMB.toString();
+            }
         }
     } catch (error) {
         console.error('Error cargando timezone:', error);
@@ -72,10 +70,7 @@ async function saveTimezone() {
         const response = await fetch('/api/config', {
             method: 'PUT',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ gmtOffset: parseFloat(gmtOffset) })
         });
 
@@ -89,6 +84,35 @@ async function saveTimezone() {
     } catch (error) {
         console.error('Error:', error);
         showToast('Error al guardar zona horaria', 'error');
+    }
+}
+
+async function saveMaxUpload() {
+    if (!isAuthenticated) { showToast('No autorizado', 'error'); return; }
+
+    const maxUploadMB = parseInt(document.getElementById('maxUploadSelect').value);
+    
+    try {
+        const response = await fetch('/api/config', {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ maxUploadMB })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Limite de subida guardado: ' + maxUploadMB + ' MB', 'success');
+            // Actualizar texto en UI
+            const hint = document.querySelector('.upload-hint');
+            if (hint) hint.textContent = 'Maximo ' + maxUploadMB + 'MB por archivo';
+        } else {
+            showToast(data.error || 'Error al guardar', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error al guardar limite', 'error');
     }
 }
 
@@ -114,4 +138,3 @@ function updateServerTimeDisplay() {
         });
     }
 }
-
