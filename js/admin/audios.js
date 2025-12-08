@@ -469,7 +469,6 @@ async function uploadFile() {
         const response = await fetch(CONFIG.apiEndpoint, {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
             body: formData
         });
 
@@ -769,10 +768,7 @@ async function saveEdit() {
 
             const uploadResponse = await fetch('/api/audios', {
                 method: 'POST',
-            credentials: 'include',
-            headers: {
-                    'Content-Type': 'application/json'
-                },
+                credentials: 'include',
                 body: formData
             });
 
@@ -788,9 +784,8 @@ async function saveEdit() {
             // Solo actualizar metadatos, sin nuevo archivo
             const response = await fetch(`/api/devotionals/${fileToEdit}`, {
                 method: 'PUT',
-            credentials: 'include',
-            headers: {
-                    'Content-Type': 'application/json',
+                credentials: 'include',
+                headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
