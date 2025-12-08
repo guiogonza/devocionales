@@ -3,6 +3,13 @@
  * Usa cookies httpOnly para seguridad
  */
 
+// Funcion de compatibilidad - ahora la autenticacion es por cookies
+function getAuthToken() {
+    // Con cookies httpOnly, el token se envia automaticamente
+    // Esta funcion existe por compatibilidad con codigo legacy
+    return isAuthenticated ? 'cookie-auth' : null;
+}
+
 async function login(username, password) {
     try {
         const response = await fetch('/api/admin/login', {
