@@ -32,6 +32,11 @@ self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
     
+    // Solo manejar solicitudes GET - POST, PUT, DELETE no se pueden cachear
+    if (request.method !== 'GET') {
+        return;
+    }
+    
     // NUNCA cachear respuestas de API - siempre ir a la red
     if (url.pathname.startsWith('/api/')) {
         event.respondWith(fetch(request));
