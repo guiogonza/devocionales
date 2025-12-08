@@ -110,14 +110,15 @@ function saveConfig(config) {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
         return true;
     } catch (error) {
-        console.error('Error al guardar configuraci├│n:', error);
+        console.error('Error al guardar configuracion:', error);
         return false;
     }
 }
 
 let appConfig = loadConfig();
+console.log('📋 Configuracion cargada:', JSON.stringify(appConfig));
 
-// ============ Sistema de Logs de Auditor├¡a ============
+// ============ Sistema de Logs de Auditoria ============
 const AUDIT_LOG_FILE = path.join(__dirname, 'data', 'audit_log.json');
 
 function loadAuditLog() {
