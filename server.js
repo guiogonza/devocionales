@@ -142,7 +142,6 @@ app.get('/icons/:icon', (req, res) => {
     }
     
     res.status(404).json({ error: 'Icono no encontrado' });
-    }
 });
 
 // Archivos estáticos
