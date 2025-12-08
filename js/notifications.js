@@ -67,18 +67,18 @@ class NotificationManager {
                 return null;
             }
             
-            // Verificar si ya estÃ¡ suscrito
+            // Verificar si ya esta suscrito
             let subscription = await registration.pushManager.getSubscription();
             
             if (!subscription) {
-                // Crear nueva suscripciÃ³n
+                // Crear nueva suscripcion
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
                 });
             }
 
-            // Guardar suscripciÃ³n en el servidor
+            // Guardar suscripcion en el servidor
             await this.saveSubscription(subscription);
             
             console.log('Usuario suscrito a notificaciones');
@@ -89,7 +89,7 @@ class NotificationManager {
         }
     }
 
-    // Guardar suscripciÃ³n en el servidor
+    // Guardar suscripcion en el servidor
     async saveSubscription(subscription) {
         try {
             await fetch('/api/notifications/subscribe', {
@@ -100,11 +100,11 @@ class NotificationManager {
                 body: JSON.stringify(subscription)
             });
         } catch (error) {
-            console.error('Error al guardar suscripciÃ³n:', error);
+            console.error('Error al guardar suscripcion:', error);
         }
     }
 
-    // Mostrar notificaciÃ³n local
+    // Mostrar notificacion local
     async showLocalNotification(title, options = {}) {
         if (this.permission !== 'granted') {
             return false;
@@ -167,63 +167,90 @@ class NotificationManager {
 // Exportar instancia
 const notificationManager = new NotificationManager();
 
-// Inicializar cuando el DOM estÃ© listo
+// Inicializar cuando el DOM este listo
 document.addEventListener('DOMContentLoaded', () => {
+    initBellNotification();
+});
+
+// Tambien verificar cuando la pagina vuelve a ser visible
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        updateBellStatus();
+    }
+});
+
+function initBellNotification() {
     const bell = document.getElementById('notificationBell');
-    
-    
+    if (!bell) return;
     
     // Verificar si el navegador soporta notificaciones
     if (!notificationManager.isSupported()) {
         console.log('Notificaciones no soportadas');
-        bell.querySelector('#notifBtnText').textContent = 'No disponible';
-        notifBtn.style.background = '#718096';
-        notifBtn.disabled = true;
-        notifBtn.title = 'Las notificaciones requieren HTTPS';
+        bell.classList.add('denied');
+        bell.title = 'Notificaciones no disponibles';
+        bell.style.filter = 'grayscale(100%)';
         return;
     }
     
     // Agregar estilos del modal
     addNotifModalStyles();
     
-    // Verificar estado actual del permiso
-    updateNotificationButton();
+    // Verificar estado actual
+    updateBellStatus();
     
-    // Manejar clic
-    notifBtn.addEventListener('click', async () => {
-        if (Notification.permission === 'granted') {
-            showNotificationPopup('âœ… Notificaciones Activas', 'Ya tienes las notificaciones activadas. RecibirÃ¡s avisos cuando haya nuevos devocionales.', 'success');
-            return;
-        }
-        
-        if (Notification.permission === 'denied') {
-            showNotificationPopup('âŒ Notificaciones Bloqueadas', 'Has bloqueado las notificaciones. Para activarlas, ve a la configuraciÃ³n de tu navegador.', 'error');
-            return;
-        }
-        
-        // Mostrar popup de confirmaciÃ³n
-        showActivationPopup();
-    });
-});
+    // Manejar clic en la campanita
+    bell.addEventListener('click', handleBellClick);
+}
 
-function updateNotificationButton() {
+function updateBellStatus() {
     const bell = document.getElementById('notificationBell');
+    if (!bell) return;
     
+    // Limpiar clases anteriores
+    bell.classList.remove('active', 'denied', 'inactive');
     
-    const textSpan = bell.querySelector('#notifBtnText');
-    
-    if (Notification.permission === 'granted') {
-        textSpan.textContent = 'âœ“ Activos';
-        notifBtn.style.background = '#2D6A4F';
-        notifBtn.classList.add('active');
-    } else if (Notification.permission === 'denied') {
-        textSpan.textContent = 'Bloqueados';
-        notifBtn.style.background = '#718096';
-    } else {
-        textSpan.textContent = 'Activar Recordatorios';
-        notifBtn.style.background = '#B8860B';
+    if (!notificationManager.isSupported()) {
+        bell.classList.add('denied');
+        bell.title = 'Notificaciones no disponibles en este navegador';
+        bell.style.filter = 'grayscale(100%)';
+        return;
     }
-    notifBtn.disabled = false;
+    
+    const permission = Notification.permission;
+    
+    if (permission === 'granted') {
+        bell.classList.add('active');
+        bell.title = 'Notificaciones activas';
+        bell.style.filter = 'none'; // Amarillo normal
+        bell.style.animation = 'none'; // Sin animacion si esta activo
+    } else if (permission === 'denied') {
+        bell.classList.add('denied');
+        bell.title = 'Notificaciones bloqueadas - clic para mas info';
+        bell.style.filter = 'grayscale(100%)'; // Gris
+        bell.style.animation = 'none';
+    } else {
+        bell.classList.add('inactive');
+        bell.title = 'Clic para activar notificaciones';
+        bell.style.filter = 'grayscale(100%)'; // Gris hasta que active
+        bell.style.animation = 'bellRing 2s ease-in-out infinite'; // Animacion para llamar atencion
+    }
+}
+
+function handleBellClick() {
+    const permission = Notification.permission;
+    
+    if (permission === 'granted') {
+        showNotificationPopup('Notificaciones Activas', 'Ya tienes las notificaciones activadas. Recibiras avisos cuando haya nuevos devocionales.', 'success');
+        return;
+    }
+    
+    if (permission === 'denied') {
+        showNotificationPopup('Notificaciones Bloqueadas', 'Has bloqueado las notificaciones. Para activarlas, ve a la configuracion de tu navegador y permite notificaciones para este sitio.', 'error');
+        return;
+    }
+    
+    // Mostrar popup de confirmacion para activar
+    showActivationPopup();
 }
 
 function addNotifModalStyles() {
@@ -280,12 +307,12 @@ function showActivationPopup() {
     modal.innerHTML = `
         <div class="notif-modal-overlay">
             <div class="notif-modal-content">
-                <div class="notif-modal-icon">ðŸ””</div>
-                <h3>Â¿Activar Recordatorios?</h3>
-                <p>RecibirÃ¡s una notificaciÃ³n cada vez que haya un nuevo devocional disponible.</p>
+                <div class="notif-modal-icon">🔔</div>
+                <h3>Activar Recordatorios?</h3>
+                <p>Recibiras una notificacion cada vez que haya un nuevo devocional disponible.</p>
                 <div class="notif-modal-buttons">
                     <button class="notif-btn-cancel" onclick="closeNotifModal()">Ahora no</button>
-                    <button class="notif-btn-confirm" onclick="activateNotifications()">SÃ­, activar</button>
+                    <button class="notif-btn-confirm" onclick="activateNotifications()">Si, activar</button>
                 </div>
             </div>
         </div>
@@ -312,22 +339,22 @@ async function activateNotifications() {
                 console.log('Error al suscribir (puede requerir HTTPS):', e);
             }
             
-            updateNotificationButton();
-            showNotificationPopup('âœ… Â¡Listo!', 'Las notificaciones estÃ¡n activadas. Te avisaremos cuando haya nuevos devocionales.', 'success');
+            updateBellStatus();
+            showNotificationPopup('Listo!', 'Las notificaciones estan activadas. Te avisaremos cuando haya nuevos devocionales.', 'success');
             
-            // Mostrar notificaciÃ³n de prueba
-            notificationManager.showLocalNotification('Â¡Recordatorios Activados!', {
-                body: 'RecibirÃ¡s notificaciones de nuevos devocionales.',
+            // Mostrar notificacion de prueba
+            notificationManager.showLocalNotification('Recordatorios Activados!', {
+                body: 'Recibiras notificaciones de nuevos devocionales.',
                 icon: '/icons/logo.png'
             });
         } else {
-            updateNotificationButton();
-            showNotificationPopup('âŒ Permiso Denegado', 'No podrÃ¡s recibir notificaciones. Puedes cambiar esto en la configuraciÃ³n del navegador.', 'error');
+            updateBellStatus();
+            showNotificationPopup('Permiso Denegado', 'No podras recibir notificaciones. Puedes cambiar esto en la configuracion del navegador.', 'error');
         }
     } catch (error) {
         console.error('Error al activar notificaciones:', error);
-        updateNotificationButton();
-        showNotificationPopup('âš ï¸ Error', 'OcurriÃ³ un error al activar las notificaciones.', 'error');
+        updateBellStatus();
+        showNotificationPopup('Error', 'Ocurrio un error al activar las notificaciones.', 'error');
     }
 }
 
@@ -337,7 +364,7 @@ function showNotificationPopup(title, message, type) {
     modal.innerHTML = `
         <div class="notif-modal-overlay" onclick="this.parentElement.remove()">
             <div class="notif-result-modal ${type}" onclick="event.stopPropagation()">
-                <div class="notif-modal-icon">${type === 'success' ? 'âœ…' : 'âŒ'}</div>
+                <div class="notif-modal-icon">${type === 'success' ? '✅' : '❌'}</div>
                 <h3>${title}</h3>
                 <p style="color:#718096;font-size:14px;margin:0 0 16px 0;">${message}</p>
                 <button class="notif-btn-confirm" onclick="document.getElementById('notifResultModal').remove()">Entendido</button>
