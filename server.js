@@ -14,6 +14,7 @@ const audiosRoutes = require('./server/routes/audios');
 const configRoutes = require('./server/routes/config');
 const notificationsRoutes = require('./server/routes/notifications');
 const publicRoutes = require('./server/routes/public');
+const imagesRoutes = require('./server/routes/images');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -132,6 +133,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/audios', audiosRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/images', imagesRoutes);
 app.use('/api', publicRoutes); // Rutas públicas (server-time, available-dates, devotionals, track-play)
 
 // Manejo de errores
