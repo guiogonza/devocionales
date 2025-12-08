@@ -944,3 +944,40 @@ body {
     background: #2D6A4F;
 }
 
+
+/* Campanita de notificaciones */
+.notification-bell {
+    cursor: pointer;
+    font-size: 0.7em;
+    vertical-align: middle;
+    margin-left: 8px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    animation: bellRing 2s ease-in-out infinite;
+}
+
+.notification-bell:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.notification-bell.active {
+    color: #2D6A4F;
+    opacity: 1;
+    animation: none;
+}
+
+.notification-bell.denied {
+    opacity: 0.3;
+    cursor: not-allowed;
+    animation: none;
+}
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0); }
+    10% { transform: rotate(15deg); }
+    20% { transform: rotate(-15deg); }
+    30% { transform: rotate(10deg); }
+    40% { transform: rotate(-10deg); }
+    50% { transform: rotate(0); }
+}
