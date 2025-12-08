@@ -18,6 +18,16 @@ icons/pastores.jpg
 icons/logo_backup_*.png
 icons/pastores_backup_*.jpg
 
+# Datos persistentes (se gestionan en Docker volume)
+data/devotionals.json
+data/audit_log.json
+data/activity_log.json
+data/sessions.json
+data/blocked_ips.json
+data/security_logs.json
+data/devices.json
+data/subscriptions.json
+
 # Archivos de IDE
 .vscode/
 .idea/
