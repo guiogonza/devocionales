@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Configuración del Sistema - Admin Panel
  */
 
@@ -11,10 +11,13 @@ function initTimezoneConfig() {
     setInterval(updateServerTimeDisplay, 1000);
     
     // Cargar configuración de sesión
-    loadSessionTimeout();
+    // Session config loads after auth
 }
 
 async function loadSessionTimeout() {
+    const token = getAuthToken();
+    if (!token) return;
+
     try {
         const response = await fetch('/api/config/session', {
             headers: { 'x-admin-token': getAuthToken() }
