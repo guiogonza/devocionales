@@ -929,3 +929,18 @@ body {
 .logout-btn:hover {
     background: #FED7D7;
 }
+
+.btn-notifications {
+    background: #FF6B35;
+    color: white;
+    border: none;
+}
+
+.btn-notifications:hover {
+    background: #E55A2B;
+}
+
+.btn-notifications.active {
+    background: #2D6A4F;
+}
+
