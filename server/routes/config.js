@@ -80,9 +80,8 @@ router.put('/upload', requireAuth, (req, res) => {
         logAudit('UPLOAD_LIMIT_UPDATED', { maxUploadMB: config.maxUploadMB }, req);
         res.json({ 
             success: true, 
-            message: 'Guardado. Reinicia el servidor para aplicar.', 
-            maxUploadMB: config.maxUploadMB,
-            requiresRestart: true
+            message: 'Limite actualizado', 
+            maxUploadMB: config.maxUploadMB
         });
     } else {
         res.status(500).json({ success: false, error: 'Error al guardar' });

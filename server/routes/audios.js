@@ -5,10 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const { requireAuth } = require('../auth');
 const { AUDIOS_DIR } = require('../config');
-const { getDevotionals, saveDevotionals } = require('../storage');
+const { getDevotionals, saveDevotionals, getConfig } = require('../storage');
 const { logAudit, logActivity } = require('../logs');
 
-// ConfiguraciÃ³n de Multer
+// Configuracion de Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, AUDIOS_DIR),
     filename: (req, file, cb) => {
@@ -25,15 +25,44 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-const upload = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 20 * 1024 * 1024 }
-});
+// Middleware de upload con limite dinamico desde config
+const uploadMiddleware = (req, res, next) => {
+    const config = getConfig();
+    const maxMB = config.maxUploadMB || 20;
+    const maxBytes = maxMB * 1024 * 1024;
+    
+    const upload = multer({
+        storage,
+        fileFilter,
+        limits: { fileSize: maxBytes }
+    }).single('audio');
+    
+    upload(req, res, (err) => {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(413).json({ 
+                    success: false, 
+                    error: 'El archivo excede el limite de ' + maxMB + 'MB' 
+                });
+            }
+            return res.status(400).json({ success: false, error: err.message });
+        }
+        next();
+    });
+};
 
 // Helpers
 function isValidDate(dateStr) {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+    
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    return date.getFullYear() === year &&
+           date.getMonth() === month - 1 &&
+           date.getDate() === day;
+}-\d{2}-\d{2}$/;
     if (!regex.test(dateStr)) return false;
     
     const [year, month, day] = dateStr.split('-').map(Number);

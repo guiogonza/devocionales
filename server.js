@@ -20,16 +20,10 @@ const imagesRoutes = require('./server/routes/images');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Leer limite de subida desde configuracion (default 20MB, max 50MB)
-const config = getConfig();
-const maxUploadMB = Math.min(Math.max(config.maxUploadMB || 20, 20), 50);
-const uploadLimit = maxUploadMB + 'mb';
-console.log('Limite de subida configurado: ' + maxUploadMB + 'MB');
-
-// Middleware basico
+// Middleware basico - Limite 50MB (el control real lo hace Multer dinamicamente)
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: uploadLimit }));
-app.use(express.urlencoded({ limit: uploadLimit, extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // ============ Headers de Seguridad ============

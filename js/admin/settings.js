@@ -96,7 +96,7 @@ async function saveMaxUpload() {
         const data = await response.json();
 
         if (data.success) {
-            showToast('Limite guardado: ' + maxUploadMB + 'MB. Reinicia el servidor para aplicar.', 'warning');
+            showToast('Limite guardado: ' + maxUploadMB + 'MB. Cambio aplicado.', 'warning');
             const hint = document.querySelector('.upload-hint');
             if (hint) hint.textContent = 'Maximo ' + maxUploadMB + 'MB por archivo';
         } else {
