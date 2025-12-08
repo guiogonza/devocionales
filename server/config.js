@@ -38,6 +38,24 @@ if (!fs.existsSync(DATA_DIR)) {
 if (!fs.existsSync(AUDIOS_DIR)) {
     fs.mkdirSync(AUDIOS_DIR, { recursive: true });
 }
+if (!fs.existsSync(ICONS_DIR)) {
+    fs.mkdirSync(ICONS_DIR, { recursive: true });
+}
+
+// Copiar archivos por defecto si no existen
+const logoPath = path.join(ICONS_DIR, 'logo.png');
+const logoDefaultPath = path.join(ICONS_DIR, 'logo-default.png');
+if (!fs.existsSync(logoPath) && fs.existsSync(logoDefaultPath)) {
+    fs.copyFileSync(logoDefaultPath, logoPath);
+    console.log('📷 Logo por defecto copiado');
+}
+
+const pastoresPath = path.join(ICONS_DIR, 'pastores.jpg');
+const pastoresDefaultPath = path.join(ICONS_DIR, 'pastores-default.jpg');
+if (!fs.existsSync(pastoresPath) && fs.existsSync(pastoresDefaultPath)) {
+    fs.copyFileSync(pastoresDefaultPath, pastoresPath);
+    console.log('📷 Imagen de pastores por defecto copiada');
+}
 
 // ============ Rate Limiting ============
 const RATE_LIMIT = {
