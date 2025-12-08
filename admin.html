@@ -594,6 +594,139 @@
             color: white;
         }
 
+        /* Audio Search */
+        .audio-search-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .audio-search-input {
+            width: 100%;
+            padding: 12px 16px;
+            padding-left: 44px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: var(--bg-color);
+        }
+
+        .audio-search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .audio-search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        .audio-search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-light);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .audio-search-clear:hover {
+            background: var(--danger-color);
+        }
+
+        .audio-search-clear.visible {
+            display: flex;
+        }
+
+        .audio-search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .search-suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .search-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-suggestion-item:hover {
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .search-suggestion-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-suggestion-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .search-suggestion-verse {
+            font-size: 11px;
+            color: var(--primary-color);
+            margin-top: 2px;
+        }
+
+        .audio-search-results-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: rgba(124, 58, 237, 0.05);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .audio-search-results-count.visible {
+            display: block;
+        }
+
+        @keyframes audioHighlight {
+            0%, 100% { background: var(--bg-color); }
+            50% { background: rgba(124, 58, 237, 0.15); }
+        }
+
+        .audio-item.highlighted {
+            animation: audioHighlight 0.6s ease 2;
+        }
+
         /* Modal */
         .modal-overlay {
             position: fixed;
@@ -1331,7 +1464,22 @@
                 </div>
 
                 <div class="card">
-                    <h3 class="card-title">&#128203; Audios Cargados</h3>
+                    <h3 class="card-title">&#128203; Audios Cargados <span id="audioCountBadge" style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">0</span></h3>
+                    
+                    <!-- Buscador de audios -->
+                    <div class="audio-search-container">
+                        <span class="audio-search-icon">&#128269;</span>
+                        <input type="text" 
+                               class="audio-search-input" 
+                               id="audioSearchInput" 
+                               placeholder="Buscar por titulo, fecha o versiculo..." 
+                               autocomplete="off">
+                        <button class="audio-search-clear" id="audioSearchClear" onclick="clearAudioSearch()">✕</button>
+                        <div class="audio-search-suggestions" id="audioSearchSuggestions"></div>
+                    </div>
+                    
+                    <div class="audio-search-results-count" id="audioSearchResultsCount"></div>
+                    
                     <div class="audio-list" id="audioList">
                         <p style="color: var(--text-secondary);">Cargando audios...</p>
                     </div>

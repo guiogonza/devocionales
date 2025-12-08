@@ -75,18 +75,58 @@ function renderAudioList(filterText = '') {
             </div>
         </div>
     `}).join('');
+    
+    // Actualizar contador de resultados
+    updateSearchResultsCount(sorted.length, filterText);
+}
+
+// Actualizar contador de resultados de búsqueda
+function updateSearchResultsCount(count, filterText) {
+    const resultsCount = document.getElementById('audioSearchResultsCount');
+    if (!resultsCount) return;
+    
+    if (filterText && filterText.length > 0) {
+        resultsCount.textContent = `Se encontraron ${count} audio${count !== 1 ? 's' : ''} para "${filterText}"`;
+        resultsCount.classList.add('visible');
+    } else {
+        resultsCount.classList.remove('visible');
+    }
+}
+
+// Limpiar búsqueda de audios
+function clearAudioSearch() {
+    const searchInput = document.getElementById('audioSearchInput');
+    const suggestionsContainer = document.getElementById('audioSearchSuggestions');
+    const clearBtn = document.getElementById('audioSearchClear');
+    
+    if (searchInput) searchInput.value = '';
+    if (suggestionsContainer) suggestionsContainer.style.display = 'none';
+    if (clearBtn) clearBtn.classList.remove('visible');
+    
+    currentSearchFilter = '';
+    renderAudioList();
 }
 
 // Búsqueda de audios con autocompletado
 function initAudioSearch() {
     const searchInput = document.getElementById('audioSearchInput');
     const suggestionsContainer = document.getElementById('audioSearchSuggestions');
+    const clearBtn = document.getElementById('audioSearchClear');
     
     if (!searchInput || !suggestionsContainer) return;
     
     searchInput.addEventListener('input', (e) => {
         const value = e.target.value.trim();
         currentSearchFilter = value;
+        
+        // Mostrar/ocultar botón de limpiar
+        if (clearBtn) {
+            if (value.length > 0) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
+        }
         
         if (value.length === 0) {
             suggestionsContainer.style.display = 'none';
@@ -98,19 +138,26 @@ function initAudioSearch() {
         const searchLower = value.toLowerCase();
         const matches = audioFiles.filter(audio => 
             (audio.title && audio.title.toLowerCase().includes(searchLower)) ||
-            (audio.date && audio.date.includes(searchLower))
+            (audio.date && audio.date.includes(searchLower)) ||
+            (audio.verseReference && audio.verseReference.toLowerCase().includes(searchLower))
         ).slice(0, 8);
         
         if (matches.length > 0) {
             suggestionsContainer.innerHTML = matches.map(audio => `
                 <div class="search-suggestion-item" onclick="selectAudioSuggestion('${audio.date}')">
-                    <div class="search-suggestion-title">${audio.title || 'Sin título'}</div>
+                    <div class="search-suggestion-title">${highlightMatch(audio.title || 'Sin título', value)}</div>
                     <div class="search-suggestion-date">${formatDate(audio.date)}</div>
+                    ${audio.verseReference ? `<div class="search-suggestion-verse">${audio.verseReference}</div>` : ''}
                 </div>
             `).join('');
             suggestionsContainer.style.display = 'block';
         } else {
-            suggestionsContainer.style.display = 'none';
+            suggestionsContainer.innerHTML = `
+                <div class="search-suggestion-item" style="color: var(--text-secondary); cursor: default;">
+                    No se encontraron resultados para "${value}"
+                </div>
+            `;
+            suggestionsContainer.style.display = 'block';
         }
         
         // También filtrar la lista
@@ -131,30 +178,53 @@ function initAudioSearch() {
             renderAudioList(searchInput.value.trim());
         }
         if (e.key === 'Escape') {
-            searchInput.value = '';
-            currentSearchFilter = '';
-            suggestionsContainer.style.display = 'none';
-            renderAudioList();
+            clearAudioSearch();
         }
     });
+    
+    // Focus en el input
+    searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length > 0) {
+            // Trigger input event para mostrar sugerencias
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    });
+}
+
+// Resaltar coincidencias en el texto
+function highlightMatch(text, search) {
+    if (!search) return text;
+    const regex = new RegExp(`(${escapeRegex(search)})`, 'gi');
+    return text.replace(regex, '<strong style="color: var(--primary-color);">$1</strong>');
+}
+
+// Escapar caracteres especiales de regex
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function selectAudioSuggestion(date) {
     const searchInput = document.getElementById('audioSearchInput');
     const suggestionsContainer = document.getElementById('audioSearchSuggestions');
+    const clearBtn = document.getElementById('audioSearchClear');
     const audio = audioFiles.find(a => a.date === date);
     
     if (audio) {
         searchInput.value = audio.title || date;
         currentSearchFilter = audio.title || date;
         suggestionsContainer.style.display = 'none';
-        renderAudioList(audio.title);
-        // Scroll al audio en la lista
+        if (clearBtn) clearBtn.classList.add('visible');
+        
+        // Mostrar solo este audio
+        renderAudioList(audio.title || date);
+        
+        // Scroll al audio y resaltarlo
         setTimeout(() => {
             const audioItem = document.querySelector(`.audio-item[data-date="${date}"]`);
             if (audioItem) {
                 audioItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                audioItem.style.animation = 'pulse 0.5s ease';
+                audioItem.classList.add('highlighted');
+                setTimeout(() => audioItem.classList.remove('highlighted'), 1200);
             }
         }, 100);
     }
