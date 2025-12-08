@@ -63,23 +63,59 @@ router.post('/', requireAuth, (req, res) => {
             });
         }
         
-        const imageType = req.body.type; // 'logo' o 'pastores'
+        const imageType = req.body.type; // 'logo', 'icon' o 'pastores'
         console.log('🖼️ Tipo de imagen:', imageType);
         
-        if (!['logo', 'pastores'].includes(imageType)) {
+        if (!['logo', 'icon', 'pastores'].includes(imageType)) {
             fs.unlinkSync(req.file.path);
             return res.status(400).json({
                 success: false,
-                error: 'Tipo de imagen inválido. Debe ser "logo" o "pastores"'
+                error: 'Tipo de imagen inválido. Debe ser "logo", "icon" o "pastores"'
             });
         }
         
-        // Determinar extensión y nombre final
-        const ext = imageType === 'logo' ? '.png' : '.jpg';
-        const finalName = imageType === 'logo' ? 'logo.png' : 'pastores.jpg';
-        const finalPath = path.join(ICONS_DIR, finalName);
-        
         try {
+            // Para iconos, guardar como icon-192.png e icon-512.png
+            if (imageType === 'icon') {
+                const icon192Path = path.join(ICONS_DIR, 'icon-192.png');
+                const icon512Path = path.join(ICONS_DIR, 'icon-512.png');
+                
+                // Backup de iconos anteriores si existen
+                if (fs.existsSync(icon192Path)) {
+                    const backup192 = path.join(ICONS_DIR, `icon-192_backup_${Date.now()}.png`);
+                    fs.copyFileSync(icon192Path, backup192);
+                    fs.unlinkSync(icon192Path);
+                }
+                if (fs.existsSync(icon512Path)) {
+                    const backup512 = path.join(ICONS_DIR, `icon-512_backup_${Date.now()}.png`);
+                    fs.copyFileSync(icon512Path, backup512);
+                    fs.unlinkSync(icon512Path);
+                }
+                
+                // Copiar archivo a ambos destinos
+                fs.copyFileSync(req.file.path, icon192Path);
+                fs.copyFileSync(req.file.path, icon512Path);
+                fs.unlinkSync(req.file.path);
+                
+                console.log('✅ Iconos guardados: icon-192.png, icon-512.png');
+                logAudit('IMAGE_UPLOADED', { type: 'icon', filenames: ['icon-192.png', 'icon-512.png'] }, req);
+                
+                return res.status(201).json({
+                    success: true,
+                    message: 'Iconos de la app actualizados correctamente',
+                    data: {
+                        type: 'icon',
+                        filenames: ['icon-192.png', 'icon-512.png'],
+                        updatedAt: new Date().toISOString()
+                    }
+                });
+            }
+            
+            // Para logo y pastores
+            const ext = imageType === 'logo' ? '.png' : '.jpg';
+            const finalName = imageType === 'logo' ? 'logo.png' : 'pastores.jpg';
+            const finalPath = path.join(ICONS_DIR, finalName);
+        
             // Hacer backup del archivo anterior si existe
             if (fs.existsSync(finalPath)) {
                 const backupPath = path.join(ICONS_DIR, `${imageType}_backup_${Date.now()}${ext}`);

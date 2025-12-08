@@ -853,7 +853,69 @@
             margin-bottom: 12px;
         }
 
-        /* Images Section */
+        /* Images Section - New 3-field layout */
+        .image-upload-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .current-image-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .current-image-box span {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .current-img-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .upload-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .file-name {
+            color: var(--text-secondary);
+            font-size: 13px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .image-preview-box {
+            margin-top: 16px;
+            display: none;
+            padding: 16px;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .image-preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        /* Legacy styles kept for compatibility */
         .image-type-selector {
             display: flex;
             gap: 12px;
@@ -890,17 +952,6 @@
             padding: 30px;
             text-align: center;
             cursor: pointer;
-        }
-
-        .image-preview-box {
-            margin-top: 16px;
-            display: none;
-        }
-
-        .image-preview-img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
         }
 
         /* Notifications */
@@ -1411,32 +1462,66 @@
                     <p class="content-subtitle">Gestiona las imagenes de la aplicacion</p>
                 </div>
 
+                <!-- Logo App -->
                 <div class="card">
-                    <h3 class="card-title">&#128444; Subir Imagen</h3>
-
-                    <div class="image-type-selector">
-                        <label class="image-type-option selected">
-                            <input type="radio" name="imageType" value="logo" checked>
-                            <div>&#128241; Logo App</div>
-                            <img src="icons/logo.png" class="current-image-preview" id="currentLogoPreview" onerror="this.style.display='none'">
-                        </label>
-                        <label class="image-type-option">
-                            <input type="radio" name="imageType" value="pastores">
-                            <div>&#128101; Foto Pastores</div>
-                            <img src="icons/pastores.jpg" class="current-image-preview" id="currentPastoresPreview" onerror="this.style.display='none'">
-                        </label>
+                    <h3 class="card-title">&#127912; Logo de la App</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Este logo se muestra en la pagina principal junto a la foto de pastores.</p>
+                    <div class="image-upload-row">
+                        <div class="current-image-box">
+                            <span>Actual:</span>
+                            <img src="icons/logo.png" class="current-img-thumb" id="currentLogoImg" onerror="this.src='icons/icon-192.png'">
+                        </div>
+                        <div class="upload-controls">
+                            <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp" style="display:none">
+                            <button class="btn btn-secondary" onclick="document.getElementById('logoFileInput').click()">Seleccionar archivo</button>
+                            <span class="file-name" id="logoFileName">Ningun archivo seleccionado</span>
+                        </div>
+                        <button class="btn btn-primary" id="uploadLogoBtn" onclick="uploadSpecificImage('logo')" disabled>Subir Logo</button>
                     </div>
-
-                    <div class="image-upload-zone" id="imageUploadZone">
-                        <div class="upload-icon">&#128247;</div>
-                        <p class="upload-text">Arrastra una imagen o haz clic para seleccionar</p>
-                        <p class="upload-hint">PNG, JPG, WEBP - Maximo 5MB</p>
+                    <div class="image-preview-box" id="logoPreviewContainer" style="display:none">
+                        <img src="" alt="Preview" class="image-preview-img" id="logoPreviewImg">
                     </div>
-                    <input type="file" id="imageFileInput" style="display: none;" accept="image/png,image/jpeg,image/webp">
+                </div>
 
-                    <div class="image-preview-box" id="imagePreviewContainer">
-                        <img src="" alt="Preview" class="image-preview-img" id="imagePreviewImg">
-                        <button class="btn btn-primary" id="uploadImageBtn" disabled style="margin-top: 16px; width: 100%;">Subir Imagen</button>
+                <!-- Icono App (PWA) -->
+                <div class="card">
+                    <h3 class="card-title">&#128241; Icono de la App (PWA)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Este icono se usa para la PWA instalada y notificaciones. Se redimensiona automaticamente.</p>
+                    <div class="image-upload-row">
+                        <div class="current-image-box">
+                            <span>Actual:</span>
+                            <img src="icons/icon-192.png" class="current-img-thumb" id="currentIconImg" onerror="this.style.display='none'">
+                        </div>
+                        <div class="upload-controls">
+                            <input type="file" id="iconFileInput" accept="image/png" style="display:none">
+                            <button class="btn btn-secondary" onclick="document.getElementById('iconFileInput').click()">Seleccionar archivo</button>
+                            <span class="file-name" id="iconFileName">Ningun archivo seleccionado</span>
+                        </div>
+                        <button class="btn btn-primary" id="uploadIconBtn" onclick="uploadSpecificImage('icon')" disabled>Subir Icono</button>
+                    </div>
+                    <div class="image-preview-box" id="iconPreviewContainer" style="display:none">
+                        <img src="" alt="Preview" class="image-preview-img" id="iconPreviewImg">
+                    </div>
+                </div>
+
+                <!-- Foto Pastores -->
+                <div class="card">
+                    <h3 class="card-title">&#128101; Foto de Pastores</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Esta foto se muestra en la pagina principal junto al logo.</p>
+                    <div class="image-upload-row">
+                        <div class="current-image-box">
+                            <span>Actual:</span>
+                            <img src="icons/pastores.jpg" class="current-img-thumb" id="currentPastoresImg" onerror="this.style.display='none'">
+                        </div>
+                        <div class="upload-controls">
+                            <input type="file" id="pastoresFileInput" accept="image/png,image/jpeg,image/webp" style="display:none">
+                            <button class="btn btn-secondary" onclick="document.getElementById('pastoresFileInput').click()">Seleccionar archivo</button>
+                            <span class="file-name" id="pastoresFileName">Ningun archivo seleccionado</span>
+                        </div>
+                        <button class="btn btn-primary" id="uploadPastoresBtn" onclick="uploadSpecificImage('pastores')" disabled>Subir Foto</button>
+                    </div>
+                    <div class="image-preview-box" id="pastoresPreviewContainer" style="display:none">
+                        <img src="" alt="Preview" class="image-preview-img" id="pastoresPreviewImg">
                     </div>
                 </div>
             </section>
