@@ -1,0 +1,28 @@
+# Ignorar carpetas de datos persistentes - se montan como volúmenes
+# IMPORTANTE: Esto evita que los audios se "horneen" en la imagen Docker
+audios/
+data/
+icons/
+
+# Node modules locales
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Archivos de desarrollo
+*.log
+.env.local
+.DS_Store
+Thumbs.db
+
+# Backups
+*.bak
+*.backup
+
+# Scripts de parche/fix no necesarios en producción
+add_*.js
+fix_*.js
+patch_*.js
+*_old.js

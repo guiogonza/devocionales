@@ -13,8 +13,9 @@ RUN npm install --production
 # Copiar el resto de archivos
 COPY . .
 
-# Crear directorio de audios si no existe
-RUN mkdir -p /app/audios
+# Crear directorios para datos persistentes
+# Los audios y data se montarán como volúmenes externos
+RUN mkdir -p /app/data /app/audios /app/icons
 
 # Exponer puerto 3000
 EXPOSE 3000
