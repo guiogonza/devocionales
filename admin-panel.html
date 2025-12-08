@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1549,13 +1549,15 @@
             tbody.innerHTML = devices.map(device => {
                 const createdAt = new Date(device.createdAt);
                 const lastSeen = new Date(device.lastSeen);
-                const flag = getFlagEmoji(device.countryCode);
+                const countryCode = device.countryCode || '';
+                const flagImg = countryCode && countryCode !== '??' ? 
+                    `<img src="https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png" alt="${device.country}" style="vertical-align: middle; margin-right: 5px;">` : '🌍';
                 
                 return `
                     <tr>
                         <td>${device.deviceType}</td>
                         <td><code>${device.ip}</code></td>
-                        <td>${flag} ${device.country}${device.city ? ', ' + device.city : ''}</td>
+                        <td>${flagImg} ${device.country || "Desconocido"}${device.city ? ', ' + device.city : ''}</td>
                         <td>${createdAt.toLocaleDateString('es-ES')}</td>
                         <td>${lastSeen.toLocaleString('es-ES')}</td>
                         <td>
