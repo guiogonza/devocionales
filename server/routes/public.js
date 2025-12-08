@@ -72,6 +72,7 @@ router.get('/devotionals/:date', (req, res) => {
     if (devotional) {
         res.json({
             success: true,
+            exists: true,
             data: {
                 date,
                 title: devotional.title || '',
@@ -82,7 +83,7 @@ router.get('/devotionals/:date', (req, res) => {
             }
         });
     } else {
-        res.json({ success: true, data: null });
+        res.json({ success: true, exists: false, data: null });
     }
 });
 
