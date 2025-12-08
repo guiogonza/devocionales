@@ -20,9 +20,10 @@ const imagesRoutes = require('./server/routes/images');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware básico
+// Middleware basico - Limite 20MB
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 app.use(cookieParser());
 
 // ============ Headers de Seguridad ============
