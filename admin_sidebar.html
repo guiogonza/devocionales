@@ -1506,6 +1506,28 @@
                         <button class="save-config-btn" id="saveTimezoneBtn">&#128190; Guardar Zona Horaria</button>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="config-card">
+                        <div class="config-card-title">
+                            <span>&#128229;</span> Tamano Maximo de Archivo
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">Define el tamano maximo permitido para subir archivos de audio.</p>
+                        <select id="maxUploadSelect" class="config-select">
+                            <option value="10">10 MB</option>
+                            <option value="15">15 MB</option>
+                            <option value="20" selected>20 MB (recomendado)</option>
+                            <option value="25">25 MB</option>
+                            <option value="30">30 MB</option>
+                            <option value="40">40 MB</option>
+                            <option value="50">50 MB</option>
+                        </select>
+                        <div class="config-info">
+                            <strong>Nota:</strong> Archivos mayores a este limite seran rechazados automaticamente.
+                        </div>
+                        <button class="save-config-btn" id="saveMaxUploadBtn" onclick="saveMaxUpload()">&#128190; Guardar Limite</button>
+                    </div>
+                </div>
             </section>
 
             <!-- Notifications Section -->
