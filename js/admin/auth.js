@@ -1,5 +1,6 @@
 ﻿/**
- * Autenticación del Admin Panel
+ * Autenticacion del Admin Panel
+ * Usa cookies httpOnly para seguridad
  */
 
 async function login(username, password) {
@@ -7,14 +8,14 @@ async function login(username, password) {
         const response = await fetch('/api/admin/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            authToken = data.token;
-            localStorage.setItem('adminToken', authToken);
+            isAuthenticated = true;
             localStorage.setItem('adminUsername', username);
             showAdminPanel();
             updateHeaderUsername();
@@ -32,28 +33,22 @@ async function login(username, password) {
 
 async function checkAuth() {
     console.log('Verificando autenticacion...');
-    if (!authToken) {
-        showLoginScreen();
-        return;
-    }
-
     try {
         const response = await fetch('/api/admin/verify', {
-            headers: { 'x-admin-token': authToken }
+            credentials: 'include'
         });
 
         if (response.ok) {
             const data = await response.json();
             if (data.authenticated) {
+                isAuthenticated = true;
                 showAdminPanel();
             } else {
-                localStorage.removeItem('adminToken');
-                authToken = null;
+                isAuthenticated = false;
                 showLoginScreen();
             }
         } else {
-            localStorage.removeItem('adminToken');
-            authToken = null;
+            isAuthenticated = false;
             showLoginScreen();
         }
     } catch (error) {
@@ -67,9 +62,17 @@ function showLoginScreen() {
     document.getElementById('appLayout').classList.remove('active');
 }
 
-function logout() {
-    localStorage.removeItem('adminToken');
-    authToken = null;
+async function logout() {
+    try {
+        await fetch('/api/admin/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.error('Error en logout:', error);
+    }
+    isAuthenticated = false;
+    localStorage.removeItem('adminUsername');
     showLoginScreen();
     if (sessionInterval) {
         clearInterval(sessionInterval);
@@ -90,12 +93,12 @@ function showAdminPanel() {
     initActivityListeners();
 }
 
-// Cargar tiempo de sesión del servidor y arrancar timer
+// Cargar tiempo de sesion del servidor y arrancar timer
 async function loadAndStartSessionTimer() {
     let timeoutMinutes = 20; // Default
     try {
         const response = await fetch('/api/config/session', {
-            headers: { 'x-admin-token': getAuthToken() }
+            credentials: 'include'
         });
         if (response.ok) {
             const data = await response.json();
@@ -104,7 +107,7 @@ async function loadAndStartSessionTimer() {
             }
         }
     } catch (error) {
-        console.error('Error cargando config sesión:', error);
+        console.error('Error cargando config sesion:', error);
     }
     sessionTimeoutMs = timeoutMinutes * 60 * 1000;
     startSessionTimer(sessionTimeoutMs);
@@ -119,8 +122,8 @@ function initActivityListeners() {
 }
 
 function resetSessionTimer() {
-    // Solo reiniciar si hay una sesión activa
-    if (sessionInterval && authToken) {
+    // Solo reiniciar si hay una sesion activa
+    if (sessionInterval && isAuthenticated) {
         startSessionTimer(sessionTimeoutMs);
     }
 }
@@ -167,9 +170,10 @@ function startSessionTimer(ms) {
     sessionInterval = setInterval(updateTimer, 1000);
 }
 
-function getAuthToken() {
-    if (!authToken) {
-        authToken = localStorage.getItem('adminToken');
-    }
-    return authToken;
+// Helper para hacer peticiones autenticadas (usa cookies automaticamente)
+function fetchWithAuth(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        credentials: 'include'
+    });
 }

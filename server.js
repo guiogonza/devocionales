@@ -1,5 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
 
@@ -20,8 +21,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware básico
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 // ============ Headers de Seguridad ============
 app.use((req, res, next) => {

@@ -1,6 +1,6 @@
 ﻿const express = require('express');
 const router = express.Router();
-const { requireAuth, checkRateLimit, recordLoginAttempt, getLoginAttempts, generateToken, validateToken, validateCredentials, getClientIP } = require('../auth');
+const { requireAuth, checkRateLimit, recordLoginAttempt, getLoginAttempts, generateToken, validateToken, validateCredentials, getClientIP, getSecureCookieOptions } = require('../auth');
 const { getActiveSessions, saveSessions, getSessionTimeout, getAdminConfig, saveAdminConfig, loadAdminUsers, getAuditLogs, saveAuditLog, setAuditLogs, getActivityLogs, saveActivityLog, setActivityLogs, getBlockedIps, addBlockedIp, removeBlockedIp, getSecurityLogs, addSecurityLog, saveSecurityLog } = require('../storage');
 const { logAudit } = require('../logs');
 
@@ -23,8 +23,9 @@ router.post('/login', (req, res) => {
         activeSessions.set(token, { createdAt: Date.now(), ip, username: user.username, userId: user.id });
         saveSessions();
         logAudit('LOGIN_SUCCESS', { username: user.username, role: user.role }, req);
-        console.log('ðŸ” Admin autenticado:', user.username);
-        res.json({ success: true, token, user: { username: user.username, role: user.role } });
+        console.log('Admin autenticado:', user.username);
+        res.cookie('adminToken', token, getSecureCookieOptions());
+        res.json({ success: true, user: { username: user.username, role: user.role } });
     } else {
         recordLoginAttempt(ip, false, username);
         logAudit('LOGIN_FAILED', { username, attemptedPassword: '***' }, req);
@@ -35,7 +36,7 @@ router.post('/login', (req, res) => {
 
 // POST /api/admin/logout
 router.post('/logout', (req, res) => {
-    const token = req.headers['x-admin-token'];
+    const token = req.cookies?.adminToken || req.headers['x-admin-token'];
     if (token) {
         const activeSessions = getActiveSessions();
         const session = activeSessions.get(token);
@@ -43,12 +44,14 @@ router.post('/logout', (req, res) => {
         activeSessions.delete(token);
         saveSessions();
     }
+    // Limpiar cookie
+    res.clearCookie('adminToken', { path: '/' });
     res.json({ success: true });
 });
 
 // GET /api/admin/verify
 router.get('/verify', (req, res) => {
-    const token = req.headers['x-admin-token'];
+    const token = req.cookies?.adminToken || req.headers['x-admin-token'];
     const isValid = validateToken(token);
     const activeSessions = getActiveSessions();
     const session = activeSessions.get(token);

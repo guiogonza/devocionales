@@ -1,45 +1,12 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../auth');
+const { requireAuth, getClientIP } = require('../auth');
 const { VAPID_PUBLIC_KEY, webpush, AUDIOS_DIR } = require('../config');
 const { getSubscriptions, saveSubscriptions, setSubscriptions, getDevotionals, getConfig, getAuditLogs, saveAuditLog, updateDeviceInCache, saveDevicesFromCache, getDevicesCache } = require('../storage');
 const { parseUserAgent } = require('../utils');
-const { logAudit } = require('../logs');
+const { logAudit, getGeoFromIP } = require('../logs');
 const path = require('path');
 const fs = require('fs');
-
-// Helper para obtener IP
-function getClientIP(req) {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-           req.headers['x-real-ip'] || 
-           req.connection?.remoteAddress || 
-           req.socket?.remoteAddress ||
-           'unknown';
-}
-
-// Helper para geolocalización
-async function getGeoInfo(ip) {
-    try {
-        if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip === 'unknown') {
-            return { country: 'Local', city: 'Local', countryCode: 'LO' };
-        }
-        
-        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,city,regionName`);
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            return {
-                country: data.country || 'Desconocido',
-                city: data.city || '',
-                region: data.regionName || '',
-                countryCode: data.countryCode || ''
-            };
-        }
-    } catch (error) {
-        console.error('Error obteniendo geolocalización:', error.message);
-    }
-    return { country: 'Desconocido', city: '', countryCode: '' };
-}
 
 // GET /api/notifications/vapid-public-key
 router.get('/vapid-public-key', (req, res) => {
@@ -58,7 +25,7 @@ router.post('/subscribe', async (req, res) => {
     const existingIndex = pushSubscriptions.findIndex(sub => sub.endpoint === subscription.endpoint);
     
     if (existingIndex === -1) {
-        const geoInfo = await getGeoInfo(clientIP);
+        const geoInfo = await getGeoFromIP(clientIP);
         
         subscription.id = Date.now().toString();
         subscription.userAgent = userAgent;
@@ -84,9 +51,9 @@ router.post('/subscribe', async (req, res) => {
         
         saveSubscriptions(pushSubscriptions);
         saveDevicesFromCache();
-        console.log(`✅ Nueva suscripción push desde ${geoInfo.country} (${deviceInfo.os} ${deviceInfo.osVersion}). Total:`, pushSubscriptions.length);
+        console.log(`Nueva suscripcion push desde ${geoInfo.country} (${deviceInfo.os} ${deviceInfo.osVersion}). Total:`, pushSubscriptions.length);
     } else {
-        const geoInfo = await getGeoInfo(clientIP);
+        const geoInfo = await getGeoFromIP(clientIP);
         const now = new Date().toISOString();
         
         pushSubscriptions[existingIndex].ip = clientIP;
@@ -106,7 +73,7 @@ router.post('/subscribe', async (req, res) => {
         }
         
         saveSubscriptions(pushSubscriptions);
-        console.log('ℹ️ Suscripción actualizada. Total:', pushSubscriptions.length);
+        console.log('Suscripcion actualizada. Total:', pushSubscriptions.length);
     }
     
     res.json({ success: true, message: 'Suscrito correctamente' });
@@ -148,7 +115,7 @@ router.post('/heartbeat', async (req, res) => {
     
     if (existingIndex !== -1) {
         const now = new Date().toISOString();
-        const geoInfo = await getGeoInfo(clientIP);
+        const geoInfo = await getGeoFromIP(clientIP);
         const deviceInfo = parseUserAgent(userAgent);
         
         pushSubscriptions[existingIndex].lastSeen = now;
@@ -182,11 +149,11 @@ router.post('/send', async (req, res) => {
     const { title, body } = req.body;
     
     if (!title) {
-        return res.status(400).json({ success: false, error: 'Título requerido' });
+        return res.status(400).json({ success: false, error: 'Titulo requerido' });
     }
     
     let pushSubscriptions = getSubscriptions();
-    console.log(`📢 Enviando notificación: "${title}" a ${pushSubscriptions.length} suscriptores`);
+    console.log(`Enviando notificacion: "${title}" a ${pushSubscriptions.length} suscriptores`);
     
     const payload = JSON.stringify({
         title,
@@ -204,10 +171,10 @@ router.post('/send', async (req, res) => {
         try {
             await webpush.sendNotification(subscription, payload);
             successCount++;
-            console.log(`✅ Notificación enviada a dispositivo ${index + 1}`);
+            console.log(`Notificacion enviada a dispositivo ${index + 1}`);
         } catch (error) {
             failCount++;
-            console.error(`❌ Error enviando a dispositivo ${index + 1}:`, error.message);
+            console.error(`Error enviando a dispositivo ${index + 1}:`, error.message);
             if (error.statusCode === 410 || error.statusCode === 404) {
                 failedSubscriptions.push(subscription.endpoint);
             }
@@ -220,14 +187,14 @@ router.post('/send', async (req, res) => {
         pushSubscriptions = pushSubscriptions.filter(sub => !failedSubscriptions.includes(sub.endpoint));
         setSubscriptions(pushSubscriptions);
         saveSubscriptions(pushSubscriptions);
-        console.log(`🧹 Eliminadas ${failedSubscriptions.length} suscripciones inválidas`);
+        console.log(`Eliminadas ${failedSubscriptions.length} suscripciones invalidas`);
     }
     
     res.json({ 
         success: true, 
         sent: successCount,
         failed: failCount,
-        message: `Notificación enviada a ${successCount} dispositivos${failCount > 0 ? `, ${failCount} fallidos` : ''}`
+        message: `Notificacion enviada a ${successCount} dispositivos${failCount > 0 ? `, ${failCount} fallidos` : ''}`
     });
 });
 
@@ -252,7 +219,7 @@ router.get('/devices', (req, res) => {
         let isOnline = false;
         
         if (diffMinutes < 5) {
-            lastSeenText = 'En línea';
+            lastSeenText = 'En linea';
             isOnline = true;
         } else if (diffMinutes < 60) {
             lastSeenText = `Hace ${diffMinutes} min`;
@@ -265,7 +232,7 @@ router.get('/devices', (req, res) => {
         return {
             id: sub.id || index.toString(),
             deviceType: deviceInfo.deviceType || 'Desconocido',
-            icon: deviceInfo.icon || '🌐',
+            icon: deviceInfo.icon || '',
             os: deviceInfo.os || 'Desconocido',
             osVersion: deviceInfo.osVersion || '',
             browser: deviceInfo.browser || 'Desconocido',
@@ -310,7 +277,7 @@ router.delete('/device/:id', (req, res) => {
     }
 });
 
-// ============ Sistema de Notificación Automática ============
+// Sistema de Notificacion Automatica
 let lastNotifiedDate = null;
 
 async function sendDailyDevotionalNotification() {
@@ -322,22 +289,22 @@ async function sendDailyDevotionalNotification() {
     
     const audioPath = path.join(AUDIOS_DIR, `${dateStr}.mp3`);
     if (!fs.existsSync(audioPath)) {
-        console.log(`📅 No hay devocional para hoy (${dateStr}), no se envía notificación`);
+        console.log(`No hay devocional para hoy (${dateStr}), no se envia notificacion`);
         return;
     }
     
     const devotionalsDB = getDevotionals();
     const devotional = devotionalsDB[dateStr];
-    const title = devotional?.title || '🙏 Devocional del día';
+    const title = devotional?.title || 'Devocional del dia';
     const body = 'Escucha el devocional de hoy';
     
     let pushSubscriptions = getSubscriptions();
     if (pushSubscriptions.length === 0) {
-        console.log('📅 No hay suscriptores para enviar notificación');
+        console.log('No hay suscriptores para enviar notificacion');
         return;
     }
     
-    console.log(`📢 Enviando notificación automática: "${title}" a ${pushSubscriptions.length} suscriptores`);
+    console.log(`Enviando notificacion automatica: "${title}" a ${pushSubscriptions.length} suscriptores`);
     
     const payload = JSON.stringify({
         title,
@@ -367,10 +334,10 @@ async function sendDailyDevotionalNotification() {
         pushSubscriptions = pushSubscriptions.filter(sub => !failedSubscriptions.includes(sub.endpoint));
         setSubscriptions(pushSubscriptions);
         saveSubscriptions(pushSubscriptions);
-        console.log(`🧹 Eliminadas ${failedSubscriptions.length} suscripciones inválidas`);
+        console.log(`Eliminadas ${failedSubscriptions.length} suscripciones invalidas`);
     }
     
-    console.log(`✅ Notificación automática enviada: ${successCount} exitosas, ${failCount} fallidas`);
+    console.log(`Notificacion automatica enviada: ${successCount} exitosas, ${failCount} fallidas`);
     
     const auditLogs = getAuditLogs();
     auditLogs.push({
@@ -394,14 +361,14 @@ function checkForNewDevotional() {
     if (currentHour === 0 && currentMinute < 5 && lastNotifiedDate !== todayStr) {
         const audioPath = path.join(AUDIOS_DIR, `${todayStr}.mp3`);
         if (fs.existsSync(audioPath)) {
-            console.log(`🔔 Nuevo devocional detectado para ${todayStr}, enviando notificación...`);
+            console.log(`Nuevo devocional detectado para ${todayStr}, enviando notificacion...`);
             lastNotifiedDate = todayStr;
             sendDailyDevotionalNotification();
         }
     }
 }
 
-// Iniciar verificación periódica
+// Iniciar verificacion periodica
 setInterval(checkForNewDevotional, 60 * 1000);
 
 module.exports = router;

@@ -148,7 +148,8 @@ function validateCredentials(username, password) {
 
 // ============ Middleware de Autenticacion ============
 function requireAuth(req, res, next) {
-    const token = req.headers['x-admin-token'];
+    // Primero intentar cookie httpOnly, luego header para compatibilidad
+    const token = req.cookies?.adminToken || req.headers['x-admin-token'];
     if (!validateToken(token)) {
         return res.status(401).json({ success: false, error: 'No autorizado' });
     }
@@ -161,6 +162,17 @@ function getClientIP(req) {
     return ip.split(',')[0].trim();
 }
 
+// Cookie options para seguridad
+function getSecureCookieOptions() {
+    return {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: getSessionTimeout(),
+        path: '/'
+    };
+}
+
 module.exports = {
     checkRateLimit,
     recordLoginAttempt,
@@ -169,5 +181,6 @@ module.exports = {
     validateToken,
     validateCredentials,
     requireAuth,
-    getClientIP
+    getClientIP,
+    getSecureCookieOptions
 };
