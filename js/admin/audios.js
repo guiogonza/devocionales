@@ -16,7 +16,11 @@ async function loadAudiosFromServer() {
             const result = await response.json();
             audioFiles = result.data || result || [];
             renderAudioList(currentSearchFilter);
-            document.getElementById('audioCountBadge').textContent = audioFiles.length;
+            // Actualizar ambos contadores de audios
+            const badge1 = document.getElementById('audioCountBadge');
+            const badge2 = document.getElementById('audioCountBadgeTitle');
+            if (badge1) badge1.textContent = audioFiles.length;
+            if (badge2) badge2.textContent = audioFiles.length;
             calculateStorageFromAudios();
             
             // Inicializar búsqueda solo una vez
