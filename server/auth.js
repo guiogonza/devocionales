@@ -1,12 +1,28 @@
-const crypto = require('crypto');
+﻿const crypto = require('crypto');
 const { RATE_LIMIT } = require('./config');
-const { getActiveSessions, saveSessions, getSessionTimeout, getAdminConfig } = require('./storage');
+const { getActiveSessions, saveSessions, getSessionTimeout, getAdminConfig, isIpBlocked, addBlockedIp, getBlockedIps, addSecurityLog } = require('./storage');
 
 // ============ Rate Limiting ============
 const loginAttempts = new Map();
 
 function checkRateLimit(ip) {
     const now = Date.now();
+    
+    // Primero verificar si la IP esta bloqueada permanentemente
+    if (isIpBlocked(ip)) {
+        addSecurityLog({
+            type: 'BLOCKED_IP_ATTEMPT',
+            ip,
+            timestamp: new Date().toISOString(),
+            message: 'Intento de acceso desde IP bloqueada'
+        });
+        return { 
+            allowed: false, 
+            reason: 'Esta IP ha sido bloqueada por actividad sospechosa.',
+            blocked: true
+        };
+    }
+    
     const attempts = loginAttempts.get(ip);
     
     if (!attempts) return { allowed: true };
@@ -28,9 +44,9 @@ function checkRateLimit(ip) {
     return { allowed: true };
 }
 
-function recordLoginAttempt(ip, success) {
+function recordLoginAttempt(ip, success, username = 'unknown') {
     const now = Date.now();
-    let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: now };
+    let attempts = loginAttempts.get(ip) || { count: 0, lastAttempt: now, usernames: [] };
     
     if (success) {
         loginAttempts.delete(ip);
@@ -39,13 +55,66 @@ function recordLoginAttempt(ip, success) {
     
     attempts.count++;
     attempts.lastAttempt = now;
+    if (!attempts.usernames.includes(username)) {
+        attempts.usernames.push(username);
+    }
+    
+    // Registrar intento fallido en logs de seguridad
+    addSecurityLog({
+        type: 'LOGIN_FAILED',
+        ip,
+        username,
+        timestamp: new Date().toISOString(),
+        attemptCount: attempts.count,
+        message: `Intento ${attempts.count} de ${RATE_LIMIT.maxAttempts} fallido`
+    });
     
     if (attempts.count >= RATE_LIMIT.maxAttempts) {
         attempts.blockedUntil = now + RATE_LIMIT.blockDuration;
-        console.log(`🚫 IP ${ip} bloqueada por ${RATE_LIMIT.blockDuration/60000} minutos`);
+        console.log(`IP ${ip} bloqueada temporalmente por ${RATE_LIMIT.blockDuration/60000} minutos`);
+        
+        // Registrar bloqueo temporal
+        addSecurityLog({
+            type: 'IP_TEMP_BLOCKED',
+            ip,
+            username,
+            timestamp: new Date().toISOString(),
+            duration: RATE_LIMIT.blockDuration / 60000,
+            message: `IP bloqueada temporalmente por ${RATE_LIMIT.blockDuration/60000} minutos`,
+            attemptedUsernames: attempts.usernames
+        });
+        
+        // Si es la segunda vez que se bloquea, bloquear permanentemente
+        if (attempts.previousBlocks >= 1) {
+            addBlockedIp({
+                ip,
+                reason: 'Multiples ataques de fuerza bruta detectados',
+                blockedAt: new Date().toISOString(),
+                permanent: true,
+                attemptedUsernames: attempts.usernames,
+                totalAttempts: attempts.count + (attempts.previousAttempts || 0)
+            });
+            
+            addSecurityLog({
+                type: 'IP_PERMANENT_BLOCKED',
+                ip,
+                timestamp: new Date().toISOString(),
+                message: 'IP bloqueada permanentemente por ataques repetidos',
+                attemptedUsernames: attempts.usernames
+            });
+            
+            console.log(`IP ${ip} bloqueada PERMANENTEMENTE`);
+        }
+        
+        attempts.previousBlocks = (attempts.previousBlocks || 0) + 1;
+        attempts.previousAttempts = (attempts.previousAttempts || 0) + attempts.count;
     }
     
     loginAttempts.set(ip, attempts);
+}
+
+function getLoginAttempts() {
+    return loginAttempts;
 }
 
 // ============ Tokens y Sesiones ============
@@ -77,7 +146,7 @@ function validateCredentials(username, password) {
     return user || null;
 }
 
-// ============ Middleware de Autenticación ============
+// ============ Middleware de Autenticacion ============
 function requireAuth(req, res, next) {
     const token = req.headers['x-admin-token'];
     if (!validateToken(token)) {
@@ -95,6 +164,7 @@ function getClientIP(req) {
 module.exports = {
     checkRateLimit,
     recordLoginAttempt,
+    getLoginAttempts,
     generateToken,
     validateToken,
     validateCredentials,

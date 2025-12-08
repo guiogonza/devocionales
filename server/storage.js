@@ -1,7 +1,7 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const { FILES } = require('./config');
 
-// ============ Funciones genéricas de almacenamiento ============
+// ============ Funciones genÃ©ricas de almacenamiento ============
 
 function loadJSON(file, defaultValue = {}) {
     try {
@@ -67,7 +67,7 @@ function setDevotionals(data) {
     devotionalsDB = data;
 }
 
-// ============ Configuración ============
+// ============ ConfiguraciÃ³n ============
 let appConfig = loadJSON(FILES.config, { gmtOffset: 0, sessionTimeoutMinutes: 20 });
 
 function loadConfig() {
@@ -167,7 +167,7 @@ function setRegisteredDevices(devices) {
     registeredDevices = devices;
 }
 
-// ============ Logs de Auditoría ============
+// ============ Logs de AuditorÃ­a ============
 let auditLogs = loadJSON(FILES.auditLog, []);
 
 function loadAuditLog() {
@@ -242,8 +242,70 @@ function getActiveSessions() {
 // Cargar sesiones al inicio
 loadSessions();
 
+// ============ IPs Bloqueadas ============
+let blockedIps = loadJSON(FILES.blockedIps, []);
+
+function loadBlockedIps() {
+    blockedIps = loadJSON(FILES.blockedIps, []);
+    return blockedIps;
+}
+
+function saveBlockedIps(ips = blockedIps) {
+    blockedIps = ips;
+    return saveJSON(FILES.blockedIps, ips);
+}
+
+function getBlockedIps() {
+    return blockedIps;
+}
+
+function addBlockedIp(ipData) {
+    blockedIps.push(ipData);
+    return saveBlockedIps();
+}
+
+function removeBlockedIp(ip) {
+    blockedIps = blockedIps.filter(b => b.ip !== ip);
+    return saveBlockedIps();
+}
+
+function isIpBlocked(ip) {
+    const now = Date.now();
+    const blocked = blockedIps.find(b => b.ip === ip);
+    if (!blocked) return false;
+    if (blocked.permanent) return true;
+    if (blocked.expiresAt && now > blocked.expiresAt) {
+        removeBlockedIp(ip);
+        return false;
+    }
+    return true;
+}
+
+// ============ Logs de Seguridad ============
+let securityLogs = loadJSON(FILES.securityLogs, []);
+
+function loadSecurityLogs() {
+    securityLogs = loadJSON(FILES.securityLogs, []);
+    return securityLogs;
+}
+
+function saveSecurityLog(logs = securityLogs) {
+    const trimmedLogs = logs.slice(-2000);
+    securityLogs = trimmedLogs;
+    return saveJSON(FILES.securityLogs, trimmedLogs);
+}
+
+function getSecurityLogs() {
+    return securityLogs;
+}
+
+function addSecurityLog(logEntry) {
+    securityLogs.push(logEntry);
+    saveSecurityLog();
+}
+
 module.exports = {
-    // Genéricos
+    // GenÃ©ricos
     loadJSON,
     saveJSON,
     
@@ -281,7 +343,7 @@ module.exports = {
     getRegisteredDevices,
     setRegisteredDevices,
     
-    // Logs Auditoría
+    // Logs AuditorÃ­a
     loadAuditLog,
     saveAuditLog,
     getAuditLogs,
@@ -296,5 +358,19 @@ module.exports = {
     // Sesiones
     loadSessions,
     saveSessions,
-    getActiveSessions
+    getActiveSessions,
+    // IPs Bloqueadas
+    loadBlockedIps,
+    saveBlockedIps,
+    getBlockedIps,
+    addBlockedIp,
+    removeBlockedIp,
+    isIpBlocked,
+    
+    // Logs Seguridad
+    loadSecurityLogs,
+    saveSecurityLog,
+    getSecurityLogs,
+    addSecurityLog
 };
+

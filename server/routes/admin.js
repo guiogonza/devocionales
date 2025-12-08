@@ -1,7 +1,7 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const { requireAuth, checkRateLimit, recordLoginAttempt, generateToken, validateToken, validateCredentials, getClientIP } = require('../auth');
-const { getActiveSessions, saveSessions, getSessionTimeout, getAdminConfig, saveAdminConfig, loadAdminUsers, getAuditLogs, saveAuditLog, setAuditLogs, getActivityLogs, saveActivityLog, setActivityLogs } = require('../storage');
+const { requireAuth, checkRateLimit, recordLoginAttempt, getLoginAttempts, generateToken, validateToken, validateCredentials, getClientIP } = require('../auth');
+const { getActiveSessions, saveSessions, getSessionTimeout, getAdminConfig, saveAdminConfig, loadAdminUsers, getAuditLogs, saveAuditLog, setAuditLogs, getActivityLogs, saveActivityLog, setActivityLogs, getBlockedIps, addBlockedIp, removeBlockedIp, getSecurityLogs, addSecurityLog, saveSecurityLog } = require('../storage');
 const { logAudit } = require('../logs');
 
 // POST /api/admin/login
@@ -17,18 +17,18 @@ router.post('/login', (req, res) => {
     
     const user = validateCredentials(username, password);
     if (user) {
-        recordLoginAttempt(ip, true);
+        recordLoginAttempt(ip, true, username);
         const token = generateToken();
         const activeSessions = getActiveSessions();
         activeSessions.set(token, { createdAt: Date.now(), ip, username: user.username, userId: user.id });
         saveSessions();
         logAudit('LOGIN_SUCCESS', { username: user.username, role: user.role }, req);
-        console.log('🔐 Admin autenticado:', user.username);
+        console.log('ðŸ” Admin autenticado:', user.username);
         res.json({ success: true, token, user: { username: user.username, role: user.role } });
     } else {
-        recordLoginAttempt(ip, false);
+        recordLoginAttempt(ip, false, username);
         logAudit('LOGIN_FAILED', { username, attemptedPassword: '***' }, req);
-        console.log('❌ Intento de login fallido para:', username);
+        console.log('âŒ Intento de login fallido para:', username);
         res.status(401).json({ success: false, error: 'Credenciales incorrectas' });
     }
 });
@@ -77,11 +77,11 @@ router.post('/users', requireAuth, (req, res) => {
     const { username, password, role } = req.body;
     
     if (!username || !password) {
-        return res.status(400).json({ success: false, error: 'Usuario y contraseña son requeridos' });
+        return res.status(400).json({ success: false, error: 'Usuario y contraseÃ±a son requeridos' });
     }
     
     if (password.length < 6) {
-        return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 6 caracteres' });
+        return res.status(400).json({ success: false, error: 'La contraseÃ±a debe tener al menos 6 caracteres' });
     }
     
     const adminConfig = getAdminConfig();
@@ -101,7 +101,7 @@ router.post('/users', requireAuth, (req, res) => {
     saveAdminConfig(adminConfig);
     
     logAudit('USER_CREATED', { newUsername: username, role: newUser.role }, req);
-    console.log('👤 Nuevo usuario creado:', username);
+    console.log('ðŸ‘¤ Nuevo usuario creado:', username);
     
     res.json({ success: true, message: 'Usuario creado correctamente', user: { id: newUser.id, username, role: newUser.role } });
 });
@@ -124,20 +124,20 @@ router.put('/users/:id', requireAuth, (req, res) => {
         if (adminConfig.users.find(u => u.username === username && u.id !== id)) {
             return res.status(400).json({ success: false, error: 'El nombre de usuario ya existe' });
         }
-        changes.push(`username: ${user.username} → ${username}`);
+        changes.push(`username: ${user.username} â†’ ${username}`);
         user.username = username;
     }
     
     if (password) {
         if (password.length < 6) {
-            return res.status(400).json({ success: false, error: 'La contraseña debe tener al menos 6 caracteres' });
+            return res.status(400).json({ success: false, error: 'La contraseÃ±a debe tener al menos 6 caracteres' });
         }
         changes.push('password changed');
         user.password = password;
     }
     
     if (role && role !== user.role) {
-        changes.push(`role: ${user.role} → ${role}`);
+        changes.push(`role: ${user.role} â†’ ${role}`);
         user.role = role;
     }
     
@@ -158,12 +158,12 @@ router.delete('/users/:id', requireAuth, (req, res) => {
     }
     
     if (adminConfig.users.length === 1) {
-        return res.status(400).json({ success: false, error: 'No se puede eliminar el último usuario' });
+        return res.status(400).json({ success: false, error: 'No se puede eliminar el Ãºltimo usuario' });
     }
     
     const userToDelete = adminConfig.users[userIndex];
     if (userToDelete.role === 'superadmin') {
-        return res.status(403).json({ success: false, error: 'No se puede eliminar un usuario superadmin. Solo puede cambiar su contraseña.' });
+        return res.status(403).json({ success: false, error: 'No se puede eliminar un usuario superadmin. Solo puede cambiar su contraseÃ±a.' });
     }
     
     const deletedUser = adminConfig.users[userIndex];
@@ -179,7 +179,7 @@ router.delete('/users/:id', requireAuth, (req, res) => {
     saveSessions();
     
     logAudit('USER_DELETED', { deletedUsername: deletedUser.username }, req);
-    console.log('🗑️ Usuario eliminado:', deletedUser.username);
+    console.log('ðŸ—‘ï¸ Usuario eliminado:', deletedUser.username);
     
     res.json({ success: true, message: 'Usuario eliminado correctamente' });
 });
@@ -202,21 +202,21 @@ router.post('/change-password', requireAuth, (req, res) => {
     }
     
     if (currentPassword !== user.password) {
-        logAudit('PASSWORD_CHANGE_FAILED', { username: user.username, reason: 'Contraseña actual incorrecta' }, req);
-        return res.status(401).json({ success: false, error: 'Contraseña actual incorrecta' });
+        logAudit('PASSWORD_CHANGE_FAILED', { username: user.username, reason: 'ContraseÃ±a actual incorrecta' }, req);
+        return res.status(401).json({ success: false, error: 'ContraseÃ±a actual incorrecta' });
     }
     
     if (newPassword.length < 6) {
-        return res.status(400).json({ success: false, error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+        return res.status(400).json({ success: false, error: 'La nueva contraseÃ±a debe tener al menos 6 caracteres' });
     }
     
     user.password = newPassword;
     saveAdminConfig(adminConfig);
     
     logAudit('PASSWORD_CHANGED', { username: user.username }, req);
-    console.log('🔑 Contraseña cambiada para:', user.username);
+    console.log('ðŸ”‘ ContraseÃ±a cambiada para:', user.username);
     
-    res.json({ success: true, message: 'Contraseña cambiada correctamente' });
+    res.json({ success: true, message: 'ContraseÃ±a cambiada correctamente' });
 });
 
 // GET /api/admin/audit-logs
@@ -286,7 +286,7 @@ router.delete('/audit-logs', requireAuth, async (req, res) => {
         const session = activeSessions.get(token);
         
         if (!session) {
-            return res.status(401).json({ success: false, error: 'Sesión no válida' });
+            return res.status(401).json({ success: false, error: 'SesiÃ³n no vÃ¡lida' });
         }
         
         const users = loadAdminUsers();
@@ -312,7 +312,7 @@ router.delete('/audit-logs', requireAuth, async (req, res) => {
         
         await logAudit('AUDIT_LOGS_DELETED', { deletedCount: count, deletedBy: user.username }, req);
         
-        res.json({ success: true, message: `${count} logs de auditoría eliminados` });
+        res.json({ success: true, message: `${count} logs de auditorÃ­a eliminados` });
     } catch (error) {
         console.error('Error eliminando audit logs:', error);
         res.status(500).json({ success: false, error: 'Error interno del servidor' });
@@ -328,7 +328,7 @@ router.delete('/activity-logs', requireAuth, async (req, res) => {
         const session = activeSessions.get(token);
     
         if (!session) {
-            return res.status(401).json({ success: false, error: 'Sesión no válida' });
+            return res.status(401).json({ success: false, error: 'SesiÃ³n no vÃ¡lida' });
         }
         
         const users = loadAdminUsers();
@@ -363,8 +363,109 @@ router.delete('/activity-logs', requireAuth, async (req, res) => {
 
 // POST /api/admin/send-daily-notification
 router.post('/send-daily-notification', requireAuth, async (req, res) => {
-    // Esta función será implementada en notifications.js
+    // Esta funciÃ³n serÃ¡ implementada en notifications.js
     res.json({ success: false, error: 'Use /api/notifications/send instead' });
 });
 
+
+// ============ ENDPOINTS DE SEGURIDAD ============
+
+// GET /api/admin/security/blocked-ips
+router.get('/security/blocked-ips', requireAuth, (req, res) => {
+    const blockedIps = getBlockedIps();
+    res.json({ success: true, blockedIps });
+});
+
+// POST /api/admin/security/block-ip
+router.post('/security/block-ip', requireAuth, (req, res) => {
+    const { ip, reason, permanent } = req.body;
+    
+    if (!ip) {
+        return res.status(400).json({ success: false, error: 'IP es requerida' });
+    }
+    
+    const blockedIps = getBlockedIps();
+    if (blockedIps.find(b => b.ip === ip)) {
+        return res.status(400).json({ success: false, error: 'Esta IP ya esta bloqueada' });
+    }
+    
+    const blockData = {
+        ip,
+        reason: reason || 'Bloqueado manualmente por admin',
+        blockedAt: new Date().toISOString(),
+        permanent: permanent !== false,
+        blockedBy: 'admin'
+    };
+    
+    addBlockedIp(blockData);
+    addSecurityLog({
+        type: 'IP_MANUAL_BLOCK',
+        ip,
+        timestamp: new Date().toISOString(),
+        reason: blockData.reason,
+        message: 'IP bloqueada manualmente por administrador'
+    });
+    logAudit('BLOCK_IP', { ip, reason: blockData.reason }, req);
+    res.json({ success: true, message: `IP ${ip} bloqueada exitosamente` });
+});
+
+// DELETE /api/admin/security/unblock-ip/:ip
+router.delete('/security/unblock-ip/:ip', requireAuth, (req, res) => {
+    const { ip } = req.params;
+    
+    const blockedIps = getBlockedIps();
+    const blocked = blockedIps.find(b => b.ip === ip);
+    
+    if (!blocked) {
+        return res.status(404).json({ success: false, error: 'IP no encontrada' });
+    }
+    
+    removeBlockedIp(ip);
+    addSecurityLog({
+        type: 'IP_UNBLOCKED',
+        ip,
+        timestamp: new Date().toISOString(),
+        message: 'IP desbloqueada por administrador'
+    });
+    logAudit('UNBLOCK_IP', { ip }, req);
+    res.json({ success: true, message: `IP ${ip} desbloqueada exitosamente` });
+});
+
+// GET /api/admin/security/logs
+router.get('/security/logs', requireAuth, (req, res) => {
+    const logs = getSecurityLogs();
+    res.json({ success: true, logs: logs.reverse() });
+});
+
+// GET /api/admin/security/active-threats
+router.get('/security/active-threats', requireAuth, (req, res) => {
+    const loginAttempts = getLoginAttempts();
+    const now = Date.now();
+    
+    const threats = [];
+    for (const [ip, data] of loginAttempts.entries()) {
+        if (data.count >= 2) {
+            threats.push({
+                ip,
+                attempts: data.count,
+                lastAttempt: new Date(data.lastAttempt).toISOString(),
+                blockedUntil: data.blockedUntil ? new Date(data.blockedUntil).toISOString() : null,
+                isBlocked: data.blockedUntil && now < data.blockedUntil,
+                usernames: data.usernames || []
+            });
+        }
+    }
+    
+    res.json({ success: true, threats: threats.sort((a, b) => b.attempts - a.attempts) });
+});
+
+// DELETE /api/admin/security/logs
+router.delete('/security/logs', requireAuth, (req, res) => {
+    saveSecurityLog([]);
+    logAudit('CLEAR_SECURITY_LOGS', {}, req);
+    res.json({ success: true, message: 'Logs de seguridad limpiados' });
+});
+
 module.exports = router;
+
+

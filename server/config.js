@@ -1,4 +1,4 @@
-const path = require('path');
+﻿const path = require('path');
 const fs = require('fs');
 const webpush = require('web-push');
 
@@ -16,10 +16,12 @@ const FILES = {
     activityLog: path.join(DATA_DIR, 'activity_log.json'),
     admin: path.join(DATA_DIR, 'admin.json'),
     devices: path.join(DATA_DIR, 'devices.json'),
-    sessions: path.join(DATA_DIR, 'sessions.json')
+    sessions: path.join(DATA_DIR, 'sessions.json'),
+    blockedIps: path.join(DATA_DIR, 'blocked_ips.json'),
+    securityLogs: path.join(DATA_DIR, 'security_logs.json')
 };
 
-// ============ Configuración VAPID para Push Notifications ============
+// ============ ConfiguraciÃ³n VAPID para Push Notifications ============
 const VAPID_PUBLIC_KEY = 'BDMM2TnLH-5Z3ucGsLZf66-ISqBrDhRdj_z7UkFLIjPfM3pwYqwNvruPuBBTtCD1NARYEEK2dI8lDZLVn3upvd4';
 const VAPID_PRIVATE_KEY = 'c3YCxPW4YAMCwh5bF63PNUvUlwv7uGoXhWR25L2PV9g';
 
@@ -54,3 +56,4 @@ module.exports = {
     RATE_LIMIT,
     webpush
 };
+
