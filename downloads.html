@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -430,6 +430,7 @@
     <audio id="audioPlayer"></audio>
 
     <script src="js/offline-storage.js"></script>
+    <script src="js/share-image.js"></script>
     <script>
         // Variables globales
         let currentPlayingDate = null;
@@ -637,7 +638,7 @@
             updatePlayButtons();
         }
 
-        // Compartir audio (enviar archivo MP3)
+                // Compartir audio (enviar archivo MP3 + imagen)
         async function shareAudio(date, title, verse) {
             const audio = await OfflineStorage.getAudio(date);
             if (!audio) {
@@ -645,18 +646,37 @@
                 return;
             }
 
+            // Obtener info completa del devocional para el texto del versiculo
+            const info = await getDevotionalInfo(date);
+            const verseText = info?.text || '';
+
             // Formatear fecha para el nombre del archivo
             const dateFormatted = formatDate(date);
             const filename = `RIO_${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}_${date}.mp3`;
-            const file = new File([audio.blob], filename, { type: 'audio/mpeg' });
+            const audioFile = new File([audio.blob], filename, { type: 'audio/mpeg' });
+
+            // Generar imagen para compartir
+            let imageFile = null;
+            try {
+                if (typeof generateShareImage === 'function') {
+                    const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
+                    const imageName = `RIO_${date}_devocional.png`;
+                    imageFile = new File([imageBlob], imageName, { type: 'image/png' });
+                }
+            } catch (error) {
+                console.warn('No se pudo generar la imagen:', error);
+            }
+
+            // Preparar archivos para compartir
+            const filesToShare = imageFile ? [imageFile, audioFile] : [audioFile];
 
             // Verificar si el navegador soporta compartir archivos
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
                 try {
                     await navigator.share({
-                        title: `🙏 ${title}`,
-                        text: `📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Meditación diaria - RIO Iglesia Cristiana`,
-                        files: [file]
+                        title: ` ${title}`,
+                        text: ` ${dateFormatted}\n ${verse}\n\n Meditación diaria - RIO Iglesia Cristiana`,
+                        files: filesToShare
                     });
                 } catch (error) {
                     if (error.name !== 'AbortError') {
