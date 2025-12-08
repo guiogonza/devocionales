@@ -146,14 +146,27 @@ router.post('/heartbeat', async (req, res) => {
 
 // POST /api/notifications/send
 router.post('/send', async (req, res) => {
-    const { title, body } = req.body;
+    const { title, body, target, targetValue } = req.body;
     
     if (!title) {
         return res.status(400).json({ success: false, error: 'Titulo requerido' });
     }
     
     let pushSubscriptions = getSubscriptions();
-    console.log(`Enviando notificacion: "${title}" a ${pushSubscriptions.length} suscriptores`);
+    let targetSubscriptions = [...pushSubscriptions];
+    
+    // Filtrar segun el target
+    if (target === 'country' && targetValue) {
+        targetSubscriptions = pushSubscriptions.filter(sub => 
+            sub.location && sub.location.country === targetValue
+        );
+        console.log(`Filtrando por pais: ${targetValue} - ${targetSubscriptions.length} dispositivos`);
+    } else if (target === 'device' && targetValue) {
+        targetSubscriptions = pushSubscriptions.filter(sub => sub.id === targetValue);
+        console.log(`Enviando a dispositivo especifico: ${targetValue}`);
+    }
+    
+    console.log(`Enviando notificacion: "${title}" a ${targetSubscriptions.length} suscriptores`);
     
     const payload = JSON.stringify({
         title,
@@ -167,7 +180,7 @@ router.post('/send', async (req, res) => {
     let failCount = 0;
     const failedSubscriptions = [];
     
-    const sendPromises = pushSubscriptions.map(async (subscription, index) => {
+    const sendPromises = targetSubscriptions.map(async (subscription, index) => {
         try {
             await webpush.sendNotification(subscription, payload);
             successCount++;
@@ -189,6 +202,15 @@ router.post('/send', async (req, res) => {
         saveSubscriptions(pushSubscriptions);
         console.log(`Eliminadas ${failedSubscriptions.length} suscripciones invalidas`);
     }
+    
+    // Log de auditoria
+    logAudit('NOTIFICATION_SENT', { 
+        title, 
+        target: target || 'all', 
+        targetValue: targetValue || null,
+        sent: successCount, 
+        failed: failCount 
+    }, req);
     
     res.json({ 
         success: true, 
