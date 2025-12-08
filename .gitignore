@@ -12,6 +12,12 @@ node_modules/
 audios/*.mp3
 !audios/README.txt
 
+# Imagenes personalizables (se gestionan desde admin)
+icons/logo.png
+icons/pastores.jpg
+icons/logo_backup_*.png
+icons/pastores_backup_*.jpg
+
 # Archivos de IDE
 .vscode/
 .idea/
