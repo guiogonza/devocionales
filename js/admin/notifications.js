@@ -104,7 +104,6 @@ async function deleteDevice(deviceId) {
         showToast('Error al eliminar', 'error');
     }
 }
-}
 
 async function sendNotification() {
     const token = getAuthToken();

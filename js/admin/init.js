@@ -65,7 +65,7 @@ function initializeEvents() {
     }
 
     // Audio upload zone
-    const dropZone = document.getElementById('audioUploadZone');
+    const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const removeFileBtn = document.getElementById('removeFileBtn');
 
