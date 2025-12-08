@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de AdministraciÃ³n - RIO Devocionales</title>
+    <title>Panel de Administración - RIO Devocionales</title>
     <link rel="icon" href="/icons/icon-192.png" type="image/png">
     <style>
         * {
@@ -261,19 +261,19 @@
         }
         
         th.sortable::after {
-            content: ' â‡…';
+            content: ' ⇅';
             opacity: 0.4;
             font-size: 12px;
         }
         
         th.sortable.asc::after {
-            content: ' â–²';
+            content: ' ▲';
             opacity: 1;
             color: #4CAF50;
         }
         
         th.sortable.desc::after {
-            content: ' â–¼';
+            content: ' ▼';
             opacity: 1;
             color: #4CAF50;
         }
@@ -480,7 +480,7 @@
     <!-- Login -->
     <div class="login-container" id="loginContainer">
         <div class="login-box">
-            <h1>ðŸ”’ <span>Admin</span> Panel</h1>
+            <h1>🔒 <span>Admin</span> Panel</h1>
             <div id="loginError" class="error-message" style="display: none;"></div>
             <form id="loginForm">
                 <div class="form-group">
@@ -488,100 +488,37 @@
                     <input type="text" id="username" placeholder="Ingresa tu usuario" required>
                 </div>
                 <div class="form-group">
-                    <label>ContraseÃ±a</label>
-                    <input type="password" id="password" placeholder="Ingresa tu contraseÃ±a" required>
+                    <label>Contraseña</label>
+                    <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Iniciar SesiÃ³n</button>
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
             </form>
-    
-        
-        <!-- Tab: Seguridad -->
-        <div class="tab-content" id="tab-security">
-            <h2 style="margin-bottom: 20px;"> Seguridad - Proteccion contra Ataques</h2>
-            
-            <div class="stats" id="securityStats">
-                <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                    <h3 id="blockedIpsCount">0</h3>
-                    <p>IPs Bloqueadas</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
-                    <h3 id="activeThreatsCount">0</h3>
-                    <p>Amenazas Activas</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
-                    <h3 id="securityLogsCount">0</h3>
-                    <p>Eventos de Seguridad</p>
-                </div>
-            </div>
-            
-            <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;"> Bloquear IP Manualmente</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="text" id="blockIpInput" placeholder="Ej: 192.168.1.100" style="flex: 1; min-width: 150px;">
-                    <input type="text" id="blockIpReason" placeholder="Razon (opcional)" style="flex: 2; min-width: 200px;">
-                    <button class="btn btn-danger" onclick="blockIpManually()">Bloquear IP</button>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: #f39c12;"> Amenazas Activas</h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>IP</th><th>Intentos</th><th>Usuarios</th><th>Ultimo</th><th>Estado</th><th>Acciones</th></tr></thead>
-                        <tbody id="threatsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: #e74c3c;"> IPs Bloqueadas</h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>IP</th><th>Razon</th><th>Fecha</th><th>Tipo</th><th>Acciones</th></tr></thead>
-                        <tbody id="blockedIpsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #3498db;"> Logs de Seguridad</h3>
-                    <button class="btn btn-secondary btn-small" onclick="clearSecurityLogs()">Limpiar</button>
-                </div>
-                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                    <table>
-                        <thead><tr><th>Fecha</th><th>Tipo</th><th>IP</th><th>Detalles</th></tr></thead>
-                        <tbody id="securityLogsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <a href="/admin.html" class="back-link">â¬…ï¸ Volver al panel de contenido</a>
+            <a href="/admin.html" class="back-link">⬅️ Volver al panel de contenido</a>
         </div>
     </div>
     
     <!-- Panel Principal -->
     <div class="panel-container" id="panelContainer">
         <div class="header">
-            <h1>ðŸ› ï¸ Panel de AdministraciÃ³n</h1>
+            <h1>🛠️ Panel de Administración</h1>
             <div class="header-info">
                 <span id="currentUser">Usuario: admin</span>
-                <div class="session-timer" id="sessionTimer">â±ï¸ 5:00</div>
-                <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar SesiÃ³n</button>
+                <div class="session-timer" id="sessionTimer">⏱️ 5:00</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Cerrar Sesión</button>
             </div>
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('logs')">ðŸ“‹ Logs Admin</button>
-            <button class="tab" onclick="showTab('activity')">ðŸ‘ï¸ Actividad Usuarios</button>
-            <button class="tab" onclick="showTab('users')">ðŸ‘¤ Usuarios</button>
-            <button class="tab" onclick="showTab('password')">ðŸ” Mi ContraseÃ±a</button>
-            <button class="tab" onclick="showTab('devices')">ðŸ“± Dispositivos</button>
+            <button class="tab active" onclick="showTab('logs')">📋 Logs Admin</button>
+            <button class="tab" onclick="showTab('activity')">👁️ Actividad Usuarios</button>
+            <button class="tab" onclick="showTab('users')">👤 Usuarios</button>
+            <button class="tab" onclick="showTab('password')">🔐 Mi Contraseña</button>
+            <button class="tab" onclick="showTab('devices')">📱 Dispositivos</button>
         </div>
         
         <!-- Tab: Logs Admin -->
         <div class="tab-content active" id="tab-logs">
-            <h2 style="margin-bottom: 20px;">ðŸ“‹ Logs de AuditorÃ­a (Admin)</h2>
+            <h2 style="margin-bottom: 20px;">📋 Logs de Auditoría (Admin)</h2>
             
             <div class="stats" id="logStats">
                 <div class="stat-card">
@@ -600,7 +537,7 @@
             
             <div class="filters">
                 <div class="filter-group">
-                    <label>AcciÃ³n</label>
+                    <label>Acción</label>
                     <select id="filterAction">
                         <option value="">Todas</option>
                     </select>
@@ -619,19 +556,19 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-primary btn-small" onclick="loadLogs()">ðŸ” Filtrar</button>
+                    <button class="btn btn-primary btn-small" onclick="loadLogs()">🔍 Filtrar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-secondary btn-small" onclick="clearFilters()">ðŸ—‘ï¸ Limpiar</button>
+                    <button class="btn btn-secondary btn-small" onclick="clearFilters()">🗑️ Limpiar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('admin', false)">âš ï¸ Eliminar Todos</button>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('admin', false)">⚠️ Eliminar Todos</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('admin', true)" id="btnDeleteSelectedAdmin" disabled>ðŸ—‘ï¸ Eliminar Seleccionados (<span id="selectedCountAdmin">0</span>)</button>
+                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('admin', true)" id="btnDeleteSelectedAdmin" disabled>🗑️ Eliminar Seleccionados (<span id="selectedCountAdmin">0</span>)</button>
                 </div>
             </div>
             
@@ -641,9 +578,9 @@
                         <tr>
                             <th><input type="checkbox" id="selectAllAdmin" onchange="toggleSelectAll('admin')"></th>
                             <th class="sortable" data-sort="timestamp" data-table="logs">Fecha/Hora</th>
-                            <th class="sortable" data-sort="action" data-table="logs">AcciÃ³n</th>
+                            <th class="sortable" data-sort="action" data-table="logs">Acción</th>
                             <th>Detalles</th>
-                            <th class="sortable" data-sort="country" data-table="logs">PaÃ­s</th>
+                            <th class="sortable" data-sort="country" data-table="logs">País</th>
                             <th class="sortable" data-sort="ip" data-table="logs">IP</th>
                         </tr>
                     </thead>
@@ -655,7 +592,7 @@
         
         <!-- Tab: Actividad de Usuarios -->
         <div class="tab-content" id="tab-activity">
-            <h2 style="margin-bottom: 20px;">ðŸ‘ï¸ Actividad de Usuarios</h2>
+            <h2 style="margin-bottom: 20px;">👁️ Actividad de Usuarios</h2>
             
             <div class="stats" id="activityStats">
                 <div class="stat-card">
@@ -668,13 +605,13 @@
                 </div>
                 <div class="stat-card">
                     <h3 id="uniqueIPs">0</h3>
-                    <p>IPs Ãºnicas</p>
+                    <p>IPs únicas</p>
                 </div>
             </div>
             
             <div class="filters">
                 <div class="filter-group">
-                    <label>AcciÃ³n</label>
+                    <label>Acción</label>
                     <select id="filterActivityAction">
                         <option value="">Todas</option>
                     </select>
@@ -693,19 +630,19 @@
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-primary btn-small" onclick="loadActivityLogs()">ðŸ” Filtrar</button>
+                    <button class="btn btn-primary btn-small" onclick="loadActivityLogs()">🔍 Filtrar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-secondary btn-small" onclick="clearActivityFilters()">ðŸ—‘ï¸ Limpiar</button>
+                    <button class="btn btn-secondary btn-small" onclick="clearActivityFilters()">🗑️ Limpiar</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('activity', false)">âš ï¸ Eliminar Todos</button>
+                    <button class="btn btn-danger btn-small" onclick="confirmDeleteLogs('activity', false)">⚠️ Eliminar Todos</button>
                 </div>
                 <div class="filter-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('activity', true)" id="btnDeleteSelectedActivity" disabled>ðŸ—‘ï¸ Eliminar Seleccionados (<span id="selectedCountActivity">0</span>)</button>
+                    <button class="btn btn-warning btn-small" onclick="confirmDeleteLogs('activity', true)" id="btnDeleteSelectedActivity" disabled>🗑️ Eliminar Seleccionados (<span id="selectedCountActivity">0</span>)</button>
                 </div>
             </div>
             
@@ -715,11 +652,11 @@
                         <tr>
                             <th><input type="checkbox" id="selectAllActivity" onchange="toggleSelectAll('activity')"></th>
                             <th class="sortable" data-sort="timestamp" data-table="activity">Fecha/Hora</th>
-                            <th class="sortable" data-sort="action" data-table="activity">AcciÃ³n</th>
+                            <th class="sortable" data-sort="action" data-table="activity">Acción</th>
                             <th>Detalles</th>
                             <th class="sortable" data-sort="os" data-table="activity">Dispositivo</th>
                             <th class="sortable" data-sort="ip" data-table="activity">IP</th>
-                            <th class="sortable" data-sort="country" data-table="activity">PaÃ­s</th>
+                            <th class="sortable" data-sort="country" data-table="activity">País</th>
                         </tr>
                     </thead>
                     <tbody id="activityTable">
@@ -731,7 +668,7 @@
         <!-- Tab: Usuarios -->
         <div class="tab-content" id="tab-users">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>ðŸ‘¤ GestiÃ³n de Usuarios</h2>
+                <h2>👤 Gestión de Usuarios</h2>
                 <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ Nuevo Usuario</button>
             </div>
             
@@ -751,30 +688,30 @@
             </div>
         </div>
         
-        <!-- Tab: ContraseÃ±a -->
+        <!-- Tab: Contraseña -->
         <div class="tab-content" id="tab-password">
-            <h2 style="margin-bottom: 20px;">ðŸ” Cambiar Mi ContraseÃ±a</h2>
+            <h2 style="margin-bottom: 20px;">🔐 Cambiar Mi Contraseña</h2>
             
             <form id="passwordForm" style="max-width: 400px;">
                 <div class="form-group">
-                    <label>ContraseÃ±a actual</label>
+                    <label>Contraseña actual</label>
                     <input type="password" id="currentPassword" required>
                 </div>
                 <div class="form-group">
-                    <label>Nueva contraseÃ±a</label>
+                    <label>Nueva contraseña</label>
                     <input type="password" id="newPassword" required minlength="6">
                 </div>
                 <div class="form-group">
-                    <label>Confirmar nueva contraseÃ±a</label>
+                    <label>Confirmar nueva contraseña</label>
                     <input type="password" id="confirmPassword" required minlength="6">
                 </div>
-                <button type="submit" class="btn btn-primary">Cambiar ContraseÃ±a</button>
+                <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
             </form>
         </div>
         
         <!-- Tab: Dispositivos -->
         <div class="tab-content" id="tab-devices">
-            <h2 style="margin-bottom: 20px;">ðŸ“± Dispositivos Registrados</h2>
+            <h2 style="margin-bottom: 20px;">📱 Dispositivos Registrados</h2>
             
             <div class="stats">
                 <div class="stat-card">
@@ -789,9 +726,9 @@
                         <tr>
                             <th class="sortable" data-sort="deviceType" data-table="devices">Dispositivo</th>
                             <th class="sortable" data-sort="ip" data-table="devices">IP</th>
-                            <th class="sortable" data-sort="country" data-table="devices">PaÃ­s</th>
+                            <th class="sortable" data-sort="country" data-table="devices">País</th>
                             <th class="sortable" data-sort="createdAt" data-table="devices">Registrado</th>
-                            <th class="sortable" data-sort="lastSeen" data-table="devices">Ãšltima actividad</th>
+                            <th class="sortable" data-sort="lastSeen" data-table="devices">Última actividad</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -801,70 +738,7 @@
             </div>
         </div>
         
-
-        
-        <!-- Tab: Seguridad -->
-        <div class="tab-content" id="tab-security">
-            <h2 style="margin-bottom: 20px;"> Seguridad - Proteccion contra Ataques</h2>
-            
-            <div class="stats" id="securityStats">
-                <div class="stat-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                    <h3 id="blockedIpsCount">0</h3>
-                    <p>IPs Bloqueadas</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);">
-                    <h3 id="activeThreatsCount">0</h3>
-                    <p>Amenazas Activas</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
-                    <h3 id="securityLogsCount">0</h3>
-                    <p>Eventos de Seguridad</p>
-                </div>
-            </div>
-            
-            <div style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;"> Bloquear IP Manualmente</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <input type="text" id="blockIpInput" placeholder="Ej: 192.168.1.100" style="flex: 1; min-width: 150px;">
-                    <input type="text" id="blockIpReason" placeholder="Razon (opcional)" style="flex: 2; min-width: 200px;">
-                    <button class="btn btn-danger" onclick="blockIpManually()">Bloquear IP</button>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: #f39c12;"> Amenazas Activas</h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>IP</th><th>Intentos</th><th>Usuarios</th><th>Ultimo</th><th>Estado</th><th>Acciones</th></tr></thead>
-                        <tbody id="threatsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: #e74c3c;"> IPs Bloqueadas</h3>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>IP</th><th>Razon</th><th>Fecha</th><th>Tipo</th><th>Acciones</th></tr></thead>
-                        <tbody id="blockedIpsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #3498db;"> Logs de Seguridad</h3>
-                    <button class="btn btn-secondary btn-small" onclick="clearSecurityLogs()">Limpiar</button>
-                </div>
-                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-                    <table>
-                        <thead><tr><th>Fecha</th><th>Tipo</th><th>IP</th><th>Detalles</th></tr></thead>
-                        <tbody id="securityLogsTable"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <a href="/admin.html" class="back-link">â¬…ï¸ Volver al panel de contenido</a>
+        <a href="/admin.html" class="back-link">⬅️ Volver al panel de contenido</a>
     </div>
     
     <!-- Modal: Crear/Editar Usuario -->
@@ -881,9 +755,9 @@
                     <input type="text" id="userUsername" required minlength="3">
                 </div>
                 <div class="form-group">
-                    <label>ContraseÃ±a</label>
+                    <label>Contraseña</label>
                     <input type="password" id="userPassword" minlength="6">
-                    <small style="color: rgba(255,255,255,0.5);">Dejar vacÃ­o para no cambiar (solo al editar)</small>
+                    <small style="color: rgba(255,255,255,0.5);">Dejar vacío para no cambiar (solo al editar)</small>
                 </div>
                 <div class="form-group">
                     <label>Rol</label>
@@ -919,7 +793,7 @@
             devices: { column: 'lastSeen', direction: 'desc' }
         };
         
-        // Verificar autenticaciÃ³n al cargar
+        // Verificar autenticación al cargar
         document.addEventListener('DOMContentLoaded', () => {
             if (authToken) {
                 verifySession();
@@ -936,7 +810,7 @@
             const table = th.dataset.table;
             const column = th.dataset.sort;
             
-            // Cambiar direcciÃ³n si es la misma columna
+            // Cambiar dirección si es la misma columna
             if (sortState[table].column === column) {
                 sortState[table].direction = sortState[table].direction === 'asc' ? 'desc' : 'asc';
             } else {
@@ -960,7 +834,7 @@
             }
         }
         
-        // FunciÃ³n de ordenamiento genÃ©rica
+        // Función de ordenamiento genérica
         function sortData(data, column, direction) {
             return [...data].sort((a, b) => {
                 let valA = a[column];
@@ -1007,14 +881,14 @@
                     localStorage.setItem('adminPanelToken', authToken);
                     showPanel(data.user);
                 } else {
-                    showError(data.error || 'Error de autenticaciÃ³n');
+                    showError(data.error || 'Error de autenticación');
                 }
             } catch (error) {
-                showError('Error de conexiÃ³n');
+                showError('Error de conexión');
             }
         });
         
-        // Verificar sesiÃ³n
+        // Verificar sesión
         async function verifySession() {
             try {
                 const response = await fetch('/api/admin/verify', {
@@ -1045,7 +919,7 @@
             startSessionTimer(5 * 60 * 1000); // 5 minutos
         }
         
-        // Timer de sesiÃ³n
+        // Timer de sesión
         function startSessionTimer(ms) {
             sessionExpiry = Date.now() + ms;
             
@@ -1057,14 +931,14 @@
                 
                 if (remaining <= 0) {
                     clearInterval(sessionInterval);
-                    alert('SesiÃ³n expirada. Por favor, inicie sesiÃ³n de nuevo.');
+                    alert('Sesión expirada. Por favor, inicie sesión de nuevo.');
                     logout();
                     return;
                 }
                 
                 const mins = Math.floor(remaining / 60000);
                 const secs = Math.floor((remaining % 60000) / 1000);
-                timerEl.textContent = `â±ï¸ ${mins}:${secs.toString().padStart(2, '0')}`;
+                timerEl.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
                 
                 if (remaining < 60000) {
                     timerEl.classList.add('warning');
@@ -1074,7 +948,7 @@
             }, 1000);
         }
         
-        // Refrescar sesiÃ³n con cada acciÃ³n
+        // Refrescar sesión con cada acción
         async function refreshSession() {
             try {
                 const response = await fetch('/api/admin/verify', {
@@ -1120,11 +994,9 @@
             document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
             
-            // Cargar datos de la pestaÃ±a
+            // Cargar datos de la pestaña
             if (tabName === 'activity') {
                 loadActivityLogs();
-            } else if (tabName === 'security') {
-                loadSecurityData();
             }
             
             refreshSession();
@@ -1175,7 +1047,7 @@
             });
         }
         
-        // Variables para almacenar selecciÃ³n
+        // Variables para almacenar selección
         let selectedAdminLogs = new Set();
         let selectedActivityLogs = new Set();
         
@@ -1209,18 +1081,18 @@
         
         function getActionBadge(action) {
             const badges = {
-                'LOGIN_SUCCESS': { class: 'badge-success', icon: 'âœ…' },
-                'LOGIN_FAILED': { class: 'badge-danger', icon: 'âŒ' },
-                'LOGOUT': { class: 'badge-info', icon: 'ðŸšª' },
-                'PASSWORD_CHANGED': { class: 'badge-warning', icon: 'ðŸ”' },
-                'PASSWORD_CHANGE_FAILED': { class: 'badge-danger', icon: 'ðŸ”’' },
-                'USER_CREATED': { class: 'badge-success', icon: 'ðŸ‘‘' },
-                'USER_UPDATED': { class: 'badge-info', icon: 'âœï¸' },
-                'USER_DELETED': { class: 'badge-danger', icon: 'ðŸ—‘ï¸' },
-                'AUDIO_UPLOADED': { class: 'badge-success', icon: 'ðŸŽµ' },
-                'AUDIO_DELETED': { class: 'badge-danger', icon: 'ðŸ—‘ï¸' }
+                'LOGIN_SUCCESS': { class: 'badge-success', icon: '✅' },
+                'LOGIN_FAILED': { class: 'badge-danger', icon: '❌' },
+                'LOGOUT': { class: 'badge-info', icon: '🚪' },
+                'PASSWORD_CHANGED': { class: 'badge-warning', icon: '🔐' },
+                'PASSWORD_CHANGE_FAILED': { class: 'badge-danger', icon: '🔒' },
+                'USER_CREATED': { class: 'badge-success', icon: '👑' },
+                'USER_UPDATED': { class: 'badge-info', icon: '✏️' },
+                'USER_DELETED': { class: 'badge-danger', icon: '🗑️' },
+                'AUDIO_UPLOADED': { class: 'badge-success', icon: '🎵' },
+                'AUDIO_DELETED': { class: 'badge-danger', icon: '🗑️' }
             };
-            return badges[action] || { class: 'badge-info', icon: 'ðŸ“' };
+            return badges[action] || { class: 'badge-info', icon: '📝' };
         }
         
         function updateLogStats(data) {
@@ -1297,7 +1169,7 @@
                 
                 if (typeof log.details === 'object') {
                     if (log.action === 'PLAY_DEVOTIONAL') {
-                        details = `ðŸ“… ${log.details.date} - "${log.details.title || 'Sin tÃ­tulo'}"`;
+                        details = `📅 ${log.details.date} - "${log.details.title || 'Sin título'}"`;
                     } else {
                         details = JSON.stringify(log.details);
                     }
@@ -1305,14 +1177,14 @@
                     details = log.details;
                 }
                 
-                // PaÃ­s con bandera (imagen igual que logs admin)
+                // País con bandera (imagen igual que logs admin)
                 const country = log.country || 'Desconocido';
                 const countryCode = log.countryCode || '';
                 const countryFlag = countryCode && countryCode !== '??' ? 
                     `<img src="https://flagcdn.com/16x12/${countryCode.toLowerCase()}.png" alt="${country}" style="vertical-align: middle; margin-right: 5px;">` : '';
                 
                 // Sistema operativo
-                const osIcon = log.osIcon || 'â”';
+                const osIcon = log.osIcon || '❔';
                 const os = log.os || 'Desconocido';
                 
                 return `
@@ -1331,9 +1203,9 @@
             document.getElementById('selectAllActivity').checked = false;
         }
         
-        // FunciÃ³n para obtener emoji de bandera por cÃ³digo de paÃ­s
+        // Función para obtener emoji de bandera por código de país
         function getFlagEmoji(countryCode) {
-            if (!countryCode || countryCode.length !== 2) return 'Â­Æ’Ã®Ã‰';
+            if (!countryCode || countryCode.length !== 2) return '­ƒîÉ';
             const codePoints = countryCode
                 .toUpperCase()
                 .split('')
@@ -1343,12 +1215,12 @@
         
         function getActivityBadge(action) {
             const badges = {
-                'PLAY_DEVOTIONAL': { class: 'badge-success', icon: 'â–¶ï¸' },
-                'SUBSCRIBE_PUSH': { class: 'badge-info', icon: 'ðŸ””' },
-                'UNSUBSCRIBE_PUSH': { class: 'badge-warning', icon: 'ðŸ”•' },
-                'PAGE_VIEW': { class: 'badge-info', icon: 'ðŸ‘ï¸' }
+                'PLAY_DEVOTIONAL': { class: 'badge-success', icon: '▶️' },
+                'SUBSCRIBE_PUSH': { class: 'badge-info', icon: '🔔' },
+                'UNSUBSCRIBE_PUSH': { class: 'badge-warning', icon: '🔕' },
+                'PAGE_VIEW': { class: 'badge-info', icon: '👁️' }
             };
-            return badges[action] || { class: 'badge-info', icon: 'ðŸ“' };
+            return badges[action] || { class: 'badge-info', icon: '📝' };
         }
         
         function updateActivityStats(data) {
@@ -1360,7 +1232,7 @@
             ).length;
             document.getElementById('todayPlays').textContent = todayPlays;
             
-            // IPs Ãºnicas
+            // IPs únicas
             const uniqueIPs = new Set(data.logs.map(log => log.ip)).size;
             document.getElementById('uniqueIPs').textContent = uniqueIPs;
         }
@@ -1380,7 +1252,7 @@
             loadActivityLogs();
         }
         
-        // ============ SELECCIÃ“N DE LOGS ============
+        // ============ SELECCIÓN DE LOGS ============
         function toggleLogSelection(type, timestamp) {
             const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
             
@@ -1423,23 +1295,23 @@
         // ============ ELIMINAR LOGS ============
         function confirmDeleteLogs(type, selectedOnly) {
             const selectedSet = type === 'admin' ? selectedAdminLogs : selectedActivityLogs;
-            const typeName = type === 'admin' ? 'auditorÃ­a (admin)' : 'actividad de usuarios';
+            const typeName = type === 'admin' ? 'auditoría (admin)' : 'actividad de usuarios';
             
             let message;
             if (selectedOnly) {
                 if (selectedSet.size === 0) {
-                    alert('âš ï¸ No hay logs seleccionados');
+                    alert('⚠️ No hay logs seleccionados');
                     return;
                 }
-                message = `âš ï¸ Â¿Eliminar ${selectedSet.size} logs seleccionados de ${typeName}?`;
+                message = `⚠️ ¿Eliminar ${selectedSet.size} logs seleccionados de ${typeName}?`;
             } else {
-                message = `âš ï¸ Â¿EstÃ¡s seguro de eliminar TODOS los logs de ${typeName}?\n\nEsta acciÃ³n no se puede deshacer.`;
+                message = `⚠️ ¿Estás seguro de eliminar TODOS los logs de ${typeName}?\n\nEsta acción no se puede deshacer.`;
             }
             
             const confirmed = confirm(message);
             
             if (confirmed) {
-                const password = prompt('Por seguridad, ingresa tu contraseÃ±a para confirmar:');
+                const password = prompt('Por seguridad, ingresa tu contraseña para confirmar:');
                 if (password) {
                     deleteLogs(type, password, selectedOnly ? Array.from(selectedSet) : null);
                 }
@@ -1462,7 +1334,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(`âœ… ${data.message}`);
+                    alert(`✅ ${data.message}`);
                     // Limpiar selecciones
                     if (type === 'admin') {
                         selectedAdminLogs.clear();
@@ -1473,11 +1345,11 @@
                     }
                     updateSelectedCount(type);
                 } else {
-                    alert(`âŒ Error: ${data.error}`);
+                    alert(`❌ Error: ${data.error}`);
                 }
             } catch (error) {
                 console.error('Error eliminando logs:', error);
-                alert('âŒ Error de conexiÃ³n al eliminar logs');
+                alert('❌ Error de conexión al eliminar logs');
             }
         }
         
@@ -1511,8 +1383,8 @@
                         <td>${date.toLocaleDateString('es-ES')}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-icon btn-edit" onclick="editUser('${user.id}', '${user.username}', '${user.role}')">âœï¸</button>
-                                <button class="btn-icon btn-delete" onclick="deleteUser('${user.id}', '${user.username}')">ðŸ–Šï¸</button>
+                                <button class="btn-icon btn-edit" onclick="editUser('${user.id}', '${user.username}', '${user.role}')">✏️</button>
+                                <button class="btn-icon btn-delete" onclick="deleteUser('${user.id}', '${user.username}')">🖊️</button>
                             </div>
                         </td>
                     </tr>
@@ -1589,7 +1461,7 @@
         
         // Eliminar usuario
         async function deleteUser(id, username) {
-            if (!confirm(`â”¬â”EstÃ¡ seguro de eliminar al usuario "${username}"?`)) return;
+            if (!confirm(`┬┐Está seguro de eliminar al usuario "${username}"?`)) return;
             
             try {
                 const response = await fetch(`/api/admin/users/${id}`, {
@@ -1613,7 +1485,7 @@
             refreshSession();
         }
         
-        // Cambiar contraseÃ±a
+        // Cambiar contraseña
         document.getElementById('passwordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1622,7 +1494,7 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             
             if (newPassword !== confirmPassword) {
-                alert('Las contraseÃ±as no coinciden');
+                alert('Las contraseñas no coinciden');
                 return;
             }
             
@@ -1646,7 +1518,7 @@
                     alert(data.error);
                 }
             } catch (error) {
-                alert('Error al cambiar contraseÃ±a');
+                alert('Error al cambiar contraseña');
             }
             
             refreshSession();
@@ -1679,7 +1551,7 @@
                 const lastSeen = new Date(device.lastSeen);
                 const countryCode = device.countryCode || '';
                 const flagImg = countryCode && countryCode !== '??' ? 
-                    `<img src="https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png" alt="${device.country}" style="vertical-align: middle; margin-right: 5px;">` : 'ðŸŒ';
+                    `<img src="https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png" alt="${device.country}" style="vertical-align: middle; margin-right: 5px;">` : '🌍';
                 
                 return `
                     <tr>
@@ -1689,7 +1561,7 @@
                         <td>${createdAt.toLocaleDateString('es-ES')}</td>
                         <td>${lastSeen.toLocaleString('es-ES')}</td>
                         <td>
-                            <button class="btn-icon btn-delete" onclick="deleteDevice('${device.id}')">ðŸ–Šï¸</button>
+                            <button class="btn-icon btn-delete" onclick="deleteDevice('${device.id}')">🖊️</button>
                         </td>
                     </tr>
                 `;
@@ -1701,7 +1573,7 @@
         }
         
         function getFlagEmoji(countryCode) {
-            if (!countryCode || countryCode === '??' || countryCode.length !== 2) return 'Â­Æ’Ã®Ã‰';
+            if (!countryCode || countryCode === '??' || countryCode.length !== 2) return '­ƒîÉ';
             const codePoints = countryCode
                 .toUpperCase()
                 .split('')
@@ -1710,7 +1582,7 @@
         }
         
         async function deleteDevice(id) {
-            if (!confirm('â”¬â”Eliminar este dispositivo?')) return;
+            if (!confirm('┬┐Eliminar este dispositivo?')) return;
             
             try {
                 const response = await fetch(`/api/notifications/device/${id}`, {
@@ -1731,154 +1603,6 @@
             
             refreshSession();
         }
-
-        // ============ FUNCIONES DE SEGURIDAD ============
-        let securityLogsData = [];
-        let blockedIpsData = [];
-        let threatsData = [];
-        
-        async function loadSecurityData() {
-            await Promise.all([loadBlockedIps(), loadActiveThreats(), loadSecurityLogs()]);
-        }
-        
-        async function loadBlockedIps() {
-            try {
-                const response = await fetch('/api/admin/security/blocked-ips', { headers: { 'X-Admin-Token': authToken } });
-                const data = await response.json();
-                if (data.success) {
-                    blockedIpsData = data.blockedIps;
-                    document.getElementById('blockedIpsCount').textContent = blockedIpsData.length;
-                    renderBlockedIps();
-                }
-            } catch (error) { console.error('Error:', error); }
-        }
-        
-        async function loadActiveThreats() {
-            try {
-                const response = await fetch('/api/admin/security/active-threats', { headers: { 'X-Admin-Token': authToken } });
-                const data = await response.json();
-                if (data.success) {
-                    threatsData = data.threats;
-                    document.getElementById('activeThreatsCount').textContent = threatsData.length;
-                    renderThreats();
-                }
-            } catch (error) { console.error('Error:', error); }
-        }
-        
-        async function loadSecurityLogs() {
-            try {
-                const response = await fetch('/api/admin/security/logs', { headers: { 'X-Admin-Token': authToken } });
-                const data = await response.json();
-                if (data.success) {
-                    securityLogsData = data.logs;
-                    document.getElementById('securityLogsCount').textContent = securityLogsData.length;
-                    renderSecurityLogs(securityLogsData);
-                }
-            } catch (error) { console.error('Error:', error); }
-        }
-        
-        function renderBlockedIps() {
-            const tbody = document.getElementById('blockedIpsTable');
-            if (blockedIpsData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay IPs bloqueadas</td></tr>';
-                return;
-            }
-            tbody.innerHTML = blockedIpsData.map(ip => `
-                <tr>
-                    <td><code style="color: #e74c3c;">${ip.ip}</code></td>
-                    <td>${ip.reason || 'N/A'}</td>
-                    <td>${new Date(ip.blockedAt).toLocaleString('es-ES')}</td>
-                    <td>${ip.permanent ? ' Permanente' : ' Temporal'}</td>
-                    <td><button class="btn btn-small" style="background: #27ae60;" onclick="unblockIp('${ip.ip}')">Desbloquear</button></td>
-                </tr>
-            `).join('');
-        }
-        
-        function renderThreats() {
-            const tbody = document.getElementById('threatsTable');
-            if (threatsData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #27ae60;"> Sin amenazas</td></tr>';
-                return;
-            }
-            tbody.innerHTML = threatsData.map(t => `
-                <tr>
-                    <td><code style="color: #f39c12;">${t.ip}</code></td>
-                    <td style="color: ${t.attempts >= 5 ? '#e74c3c' : '#f39c12'}; font-weight: bold;">${t.attempts}</td>
-                    <td>${t.usernames.join(', ') || 'N/A'}</td>
-                    <td>${new Date(t.lastAttempt).toLocaleString('es-ES')}</td>
-                    <td style="color: ${t.isBlocked ? '#e74c3c' : '#f39c12'};">${t.isBlocked ? ' Bloqueado' : ' Vigilancia'}</td>
-                    <td><button class="btn btn-small btn-danger" onclick="blockIpFromThreat('${t.ip}')">Bloquear</button></td>
-                </tr>
-            `).join('');
-        }
-        
-        function renderSecurityLogs(logs) {
-            const tbody = document.getElementById('securityLogsTable');
-            if (logs.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Sin logs</td></tr>'; return; }
-            const colors = { 'LOGIN_FAILED': '#f39c12', 'IP_TEMP_BLOCKED': '#e67e22', 'IP_PERMANENT_BLOCKED': '#e74c3c', 'IP_MANUAL_BLOCK': '#c0392b', 'IP_UNBLOCKED': '#27ae60', 'BLOCKED_IP_ATTEMPT': '#9b59b6' };
-            tbody.innerHTML = logs.slice(0, 100).map(log => `
-                <tr>
-                    <td>${new Date(log.timestamp).toLocaleString('es-ES')}</td>
-                    <td style="color: ${colors[log.type] || '#95a5a6'}; font-weight: bold;">${log.type}</td>
-                    <td><code>${log.ip || 'N/A'}</code></td>
-                    <td>${log.message || ''} ${log.username ? '('+log.username+')' : ''}</td>
-                </tr>
-            `).join('');
-        }
-        
-        async function blockIpManually() {
-            const ip = document.getElementById('blockIpInput').value.trim();
-            const reason = document.getElementById('blockIpReason').value.trim();
-            if (!ip) { alert('Ingresa una IP'); return; }
-            if (!confirm(`Bloquear IP ${ip}?`)) return;
-            try {
-                const response = await fetch('/api/admin/security/block-ip', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': authToken },
-                    body: JSON.stringify({ ip, reason: reason || 'Bloqueo manual' })
-                });
-                const data = await response.json();
-                if (data.success) { alert(data.message); document.getElementById('blockIpInput').value = ''; document.getElementById('blockIpReason').value = ''; loadSecurityData(); }
-                else { alert(data.error); }
-            } catch (error) { alert('Error'); }
-            refreshSession();
-        }
-        
-        async function blockIpFromThreat(ip) {
-            if (!confirm(`Bloquear IP ${ip}?`)) return;
-            try {
-                const response = await fetch('/api/admin/security/block-ip', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': authToken },
-                    body: JSON.stringify({ ip, reason: 'Bloqueado desde amenazas activas' })
-                });
-                const data = await response.json();
-                if (data.success) { alert(data.message); loadSecurityData(); } else { alert(data.error); }
-            } catch (error) { alert('Error'); }
-            refreshSession();
-        }
-        
-        async function unblockIp(ip) {
-            if (!confirm(`Desbloquear IP ${ip}?`)) return;
-            try {
-                const response = await fetch(`/api/admin/security/unblock-ip/${encodeURIComponent(ip)}`, {
-                    method: 'DELETE', headers: { 'X-Admin-Token': authToken }
-                });
-                const data = await response.json();
-                if (data.success) { alert(data.message); loadSecurityData(); } else { alert(data.error); }
-            } catch (error) { alert('Error'); }
-            refreshSession();
-        }
-        
-        async function clearSecurityLogs() {
-            if (!confirm('Limpiar todos los logs de seguridad?')) return;
-            try {
-                const response = await fetch('/api/admin/security/logs', { method: 'DELETE', headers: { 'X-Admin-Token': authToken } });
-                const data = await response.json();
-                if (data.success) { alert('Logs limpiados'); loadSecurityLogs(); } else { alert(data.error); }
-            } catch (error) { alert('Error'); }
-            refreshSession();
-        }
     </script>
 </body>
 </html>
-
-
