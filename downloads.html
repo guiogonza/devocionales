@@ -83,51 +83,128 @@
             border-radius: 12px;
             padding: 1rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .download-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .download-date-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            min-width: 90px;
+            text-align: center;
+            white-space: nowrap;
         }
         
         .download-info {
             flex: 1;
+            min-width: 0;
         }
         
-        .download-date {
+        .download-title {
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.25rem;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+        
+        .download-verse {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        
+        .download-verse-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.4;
+            padding: 8px 10px;
+            background: rgba(45, 106, 79, 0.08);
+            border-left: 3px solid var(--primary-color);
+            border-radius: 0 6px 6px 0;
+            margin-bottom: 8px;
         }
         
         .download-meta {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
         }
         
         .download-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0,0,0,0.08);
         }
         
         .action-btn {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 0.5rem;
+            flex: 1;
+            min-width: 70px;
+            padding: 10px 12px;
             border-radius: 8px;
-            transition: background 0.2s;
-        }
-        
-        .action-btn:hover {
-            background: rgba(0,0,0,0.05);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
         }
         
         .action-btn.play {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .action-btn.play:hover {
+            background: #245a42;
+        }
+        
+        .action-btn.play.playing {
+            background: #D97706;
+        }
+        
+        .action-btn.share {
+            background: rgba(45, 106, 79, 0.1);
             color: var(--primary-color);
         }
         
+        .action-btn.share:hover {
+            background: rgba(45, 106, 79, 0.2);
+        }
+        
+        .action-btn.download {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+        }
+        
+        .action-btn.download:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+        
         .action-btn.delete {
+            background: rgba(220, 38, 38, 0.1);
             color: #DC2626;
+            flex: 0;
+            min-width: 50px;
+        }
+        
+        .action-btn.delete:hover {
+            background: rgba(220, 38, 38, 0.2);
         }
         
         .empty-state {
@@ -152,7 +229,7 @@
             font-weight: 600;
         }
         
-        /* Audio player en descargas */
+        /* Mini reproductor */
         .mini-player {
             position: fixed;
             bottom: 0;
@@ -160,22 +237,16 @@
             right: 0;
             background: var(--primary-color);
             color: white;
-            padding: 1rem;
+            padding: 12px 16px;
             display: none;
             align-items: center;
-            gap: 1rem;
+            gap: 12px;
             box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
         }
         
         .mini-player.active {
             display: flex;
-        }
-        
-        .mini-player-info {
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
         .mini-player-btn {
@@ -187,6 +258,25 @@
             border-radius: 50%;
             font-size: 1.2rem;
             cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .mini-player-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .mini-player-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .mini-player-date {
+            font-size: 0.75rem;
+            opacity: 0.8;
         }
         
         .mini-player-close {
@@ -195,6 +285,33 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* Padding inferior para el mini player */
+        .main-content {
+            padding-bottom: 80px;
         }
     </style>
 </head>
@@ -218,7 +335,7 @@
             </div>
 
             <div class="downloads-list" id="downloadsList">
-                <!-- Los items se cargarán dinámicamente -->
+                <p style="color: var(--text-secondary); text-align: center;">Cargando...</p>
             </div>
 
             <div class="empty-state" id="emptyState" style="display: none;">
@@ -232,9 +349,15 @@
     <!-- Mini reproductor -->
     <div class="mini-player" id="miniPlayer">
         <button class="mini-player-btn" id="miniPlayBtn">▶</button>
-        <div class="mini-player-info" id="miniPlayerInfo">-</div>
+        <div class="mini-player-info">
+            <div class="mini-player-title" id="miniPlayerTitle">-</div>
+            <div class="mini-player-date" id="miniPlayerDate">-</div>
+        </div>
         <button class="mini-player-close" id="miniPlayerClose">×</button>
     </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
     <audio id="audioPlayer"></audio>
 
@@ -243,11 +366,21 @@
         // Variables globales
         let currentPlayingDate = null;
         let isPlaying = false;
+        let devotionalsCache = {};
         const audioPlayer = document.getElementById('audioPlayer');
         const miniPlayer = document.getElementById('miniPlayer');
         const miniPlayBtn = document.getElementById('miniPlayBtn');
-        const miniPlayerInfo = document.getElementById('miniPlayerInfo');
+        const miniPlayerTitle = document.getElementById('miniPlayerTitle');
+        const miniPlayerDate = document.getElementById('miniPlayerDate');
         const miniPlayerClose = document.getElementById('miniPlayerClose');
+        const toast = document.getElementById('toast');
+
+        // Mostrar toast
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
 
         // Formatear tamaño de archivo
         function formatSize(bytes) {
@@ -259,8 +392,35 @@
         // Formatear fecha para mostrar
         function formatDate(dateStr) {
             const date = new Date(dateStr + 'T12:00:00');
-            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
             return date.toLocaleDateString('es-ES', options);
+        }
+
+        // Formatear fecha corta para badge
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr + 'T12:00:00');
+            const options = { day: 'numeric', month: 'short' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+
+        // Obtener info del devocional desde API
+        async function getDevotionalInfo(date) {
+            if (devotionalsCache[date]) {
+                return devotionalsCache[date];
+            }
+            
+            try {
+                const response = await fetch(`/api/devotionals/${date}`);
+                const result = await response.json();
+                if (result.success && result.data) {
+                    devotionalsCache[date] = result.data;
+                    return result.data;
+                }
+            } catch (e) {
+                console.error('Error obteniendo info del devocional:', e);
+            }
+            
+            return null;
         }
 
         // Cargar lista de descargas
@@ -292,34 +452,80 @@
             downloadCount.textContent = audios.length;
             storageUsed.textContent = formatSize(totalSize);
 
+            // Obtener info de devocionales
+            const devotionalInfos = await Promise.all(
+                audios.map(audio => getDevotionalInfo(audio.date))
+            );
+
             // Renderizar lista
-            downloadsList.innerHTML = audios.map(audio => `
+            downloadsList.innerHTML = audios.map((audio, index) => {
+                const info = devotionalInfos[index];
+                const title = info?.title || 'Devocional';
+                const verse = info?.verseReference || '';
+                const verseText = info?.verseText || '';
+                const escapedTitle = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const escapedVerse = verse.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                return `
                 <div class="download-item" data-date="${audio.date}">
-                    <div class="download-info">
-                        <div class="download-date">${formatDate(audio.date)}</div>
-                        <div class="download-meta">
-                            ${formatSize(audio.size)} · Descargado: ${new Date(audio.downloadedAt).toLocaleDateString('es-ES')}
+                    <div class="download-header">
+                        <div class="download-date-badge">${formatDateShort(audio.date)}</div>
+                        <div class="download-info">
+                            <div class="download-title">${title}</div>
+                            ${verse ? `<div class="download-verse">📖 ${verse}</div>` : ''}
+                            ${verseText ? `<div class="download-verse-text">"${verseText}"</div>` : ''}
+                            <div class="download-meta">
+                                ${formatSize(audio.size)} · Descargado: ${new Date(audio.downloadedAt).toLocaleDateString('es-ES')}
+                            </div>
                         </div>
                     </div>
                     <div class="download-actions">
                         <button class="action-btn play" onclick="playAudio('${audio.date}')" title="Reproducir">
-                            ▶
+                            <span class="play-icon">▶</span> Reproducir
+                        </button>
+                        <button class="action-btn share" onclick="shareAudio('${audio.date}', '${escapedTitle}', '${escapedVerse}')" title="Compartir">
+                            🔗 Compartir
+                        </button>
+                        <button class="action-btn download" onclick="saveAudioFile('${audio.date}')" title="Guardar archivo">
+                            📥 Guardar
                         </button>
                         <button class="action-btn delete" onclick="deleteAudio('${audio.date}')" title="Eliminar">
                             🗑️
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+
+            // Actualizar estado visual del botón play si hay algo reproduciéndose
+            if (currentPlayingDate) {
+                updatePlayButtons();
+            }
+        }
+
+        // Actualizar botones de play
+        function updatePlayButtons() {
+            document.querySelectorAll('.download-item').forEach(item => {
+                const btn = item.querySelector('.action-btn.play');
+                const icon = btn.querySelector('.play-icon');
+                if (item.dataset.date === currentPlayingDate && isPlaying) {
+                    icon.textContent = '⏸';
+                    btn.classList.add('playing');
+                } else {
+                    icon.textContent = '▶';
+                    btn.classList.remove('playing');
+                }
+            });
         }
 
         // Reproducir audio offline
         async function playAudio(date) {
             const audio = await OfflineStorage.getAudio(date);
             if (!audio) {
-                alert('Audio no encontrado');
+                showToast('Audio no encontrado');
                 return;
             }
+
+            const info = await getDevotionalInfo(date);
 
             // Si es el mismo audio, toggle play/pause
             if (currentPlayingDate === date) {
@@ -332,6 +538,7 @@
                     miniPlayBtn.textContent = '⏸';
                     isPlaying = true;
                 }
+                updatePlayButtons();
                 return;
             }
 
@@ -342,19 +549,72 @@
             audioPlayer.play();
             
             miniPlayer.classList.add('active');
-            miniPlayerInfo.textContent = formatDate(date);
+            miniPlayerTitle.textContent = info?.title || 'Devocional';
+            miniPlayerDate.textContent = formatDate(date);
             miniPlayBtn.textContent = '⏸';
             isPlaying = true;
 
-            // Actualizar botones visuales
-            document.querySelectorAll('.download-item').forEach(item => {
-                const btn = item.querySelector('.action-btn.play');
-                if (item.dataset.date === date) {
-                    btn.textContent = '⏸';
-                } else {
-                    btn.textContent = '▶';
+            updatePlayButtons();
+        }
+
+        // Compartir audio
+        async function shareAudio(date, title, verse) {
+            const shareUrl = `${window.location.origin}/?date=${date}`;
+            const shareData = {
+                title: 'Meditación Diaria - RIO Iglesia',
+                text: `🙏 ${title}\n📖 ${verse}\n\nEscucha el devocional:`,
+                url: shareUrl
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        fallbackShare(shareUrl);
+                    }
                 }
-            });
+            } else {
+                fallbackShare(shareUrl);
+            }
+        }
+
+        // Compartir alternativo
+        function fallbackShare(url) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url)
+                    .then(() => showToast('¡Enlace copiado al portapapeles!'))
+                    .catch(() => prompt('Copia este enlace:', url));
+            } else {
+                prompt('Copia este enlace:', url);
+            }
+        }
+
+        // Guardar archivo de audio
+        async function saveAudioFile(date) {
+            const audio = await OfflineStorage.getAudio(date);
+            if (!audio) {
+                showToast('Audio no encontrado');
+                return;
+            }
+
+            const info = await getDevotionalInfo(date);
+            const title = info?.title || 'devocional';
+            const filename = `${date}_${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}.mp3`;
+
+            // Crear enlace de descarga
+            const url = OfflineStorage.createObjectURL(audio.blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Liberar URL después de un momento
+            setTimeout(() => OfflineStorage.revokeObjectURL(url), 1000);
+            
+            showToast('¡Descargando archivo de audio!');
         }
 
         // Eliminar audio
@@ -372,6 +632,7 @@
                 isPlaying = false;
             }
 
+            showToast('Audio eliminado');
             loadDownloads();
         }
 
@@ -390,6 +651,7 @@
             currentPlayingDate = null;
             isPlaying = false;
 
+            showToast('Todos los audios eliminados');
             loadDownloads();
         }
 
@@ -408,19 +670,13 @@
             miniPlayer.classList.remove('active');
             currentPlayingDate = null;
             isPlaying = false;
-            
-            document.querySelectorAll('.action-btn.play').forEach(btn => {
-                btn.textContent = '▶';
-            });
+            updatePlayButtons();
         });
 
         audioPlayer.addEventListener('ended', () => {
             miniPlayBtn.textContent = '▶';
             isPlaying = false;
-            
-            document.querySelectorAll('.action-btn.play').forEach(btn => {
-                btn.textContent = '▶';
-            });
+            updatePlayButtons();
         });
 
         // Inicializar
