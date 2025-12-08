@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
@@ -8,7 +8,7 @@ const { AUDIOS_DIR } = require('../config');
 const { getDevotionals, saveDevotionals } = require('../storage');
 const { logAudit, logActivity } = require('../logs');
 
-// Configuración de Multer
+// ConfiguraciÃ³n de Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, AUDIOS_DIR),
     filename: (req, file, cb) => {
@@ -28,7 +28,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 50 * 1024 * 1024 }
+    limits: { fileSize: 20 * 1024 * 1024 }
 });
 
 // Helpers
@@ -92,7 +92,7 @@ router.get('/:date', (req, res) => {
     const { date } = req.params;
     
     if (!isValidDate(date)) {
-        return res.status(400).json({ success: false, error: 'Formato de fecha inválido' });
+        return res.status(400).json({ success: false, error: 'Formato de fecha invÃ¡lido' });
     }
     
     const filename = `${date}.mp3`;
@@ -124,7 +124,7 @@ router.get('/:date', (req, res) => {
 // POST /api/audios
 router.post('/', requireAuth, upload.single('audio'), (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No se recibió ningún archivo' });
+        return res.status(400).json({ success: false, error: 'No se recibiÃ³ ningÃºn archivo' });
     }
     
     const { title, verseReference, verseText, replaceExisting } = req.body;
@@ -140,17 +140,17 @@ router.post('/', requireAuth, upload.single('audio'), (req, res) => {
     
     if (!isValidDate(date)) {
         fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, error: 'Fecha inválida en el nombre del archivo' });
+        return res.status(400).json({ success: false, error: 'Fecha invÃ¡lida en el nombre del archivo' });
     }
     
-    // Validar que no sea más de 30 días en el futuro
+    // Validar que no sea mÃ¡s de 30 dÃ­as en el futuro
     const today = new Date();
     const audioDate = new Date(date);
     const diffDays = Math.ceil((audioDate - today) / (1000 * 60 * 60 * 24));
     
     if (diffDays > 30) {
         fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, error: 'No se pueden subir audios para más de 30 días en el futuro' });
+        return res.status(400).json({ success: false, error: 'No se pueden subir audios para mÃ¡s de 30 dÃ­as en el futuro' });
     }
     
     const finalPath = path.join(AUDIOS_DIR, `${date}.mp3`);
@@ -181,7 +181,7 @@ router.post('/', requireAuth, upload.single('audio'), (req, res) => {
     saveDevotionals(devotionalsDB);
     
     logAudit('AUDIO_UPLOADED', { date, title, verseReference }, req);
-    console.log('✅ Audio subido:', date);
+    console.log('âœ… Audio subido:', date);
     
     res.json({
         success: true,
@@ -195,7 +195,7 @@ router.delete('/:date', requireAuth, (req, res) => {
     const { date } = req.params;
     
     if (!isValidDate(date)) {
-        return res.status(400).json({ success: false, error: 'Formato de fecha inválido' });
+        return res.status(400).json({ success: false, error: 'Formato de fecha invÃ¡lido' });
     }
     
     const filePath = path.join(AUDIOS_DIR, `${date}.mp3`);
@@ -214,7 +214,7 @@ router.delete('/:date', requireAuth, (req, res) => {
     }
     
     logAudit('AUDIO_DELETED', { date }, req);
-    console.log('🗑️ Audio eliminado:', date);
+    console.log('ðŸ—‘ï¸ Audio eliminado:', date);
     
     res.json({ success: true, message: 'Audio eliminado correctamente' });
 });
@@ -227,7 +227,7 @@ router.post('/track-play', async (req, res) => {
         return res.json({ success: false, error: 'Fecha requerida' });
     }
     
-    await logActivity('PLAY_DEVOTIONAL', { date, title: title || 'Sin título' }, req);
+    await logActivity('PLAY_DEVOTIONAL', { date, title: title || 'Sin tÃ­tulo' }, req);
     res.json({ success: true });
 });
 
