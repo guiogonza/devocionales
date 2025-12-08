@@ -637,30 +637,54 @@
             updatePlayButtons();
         }
 
-        // Compartir audio
+        // Compartir audio (enviar archivo MP3)
         async function shareAudio(date, title, verse) {
-            const shareUrl = `${window.location.origin}/?date=${date}`;
-            const shareData = {
-                title: 'Meditación Diaria - RIO Iglesia',
-                text: `🙏 ${title}\n📖 ${verse}\n\nEscucha el devocional:`,
-                url: shareUrl
-            };
+            const audio = await OfflineStorage.getAudio(date);
+            if (!audio) {
+                showToast('Audio no encontrado');
+                return;
+            }
 
-            if (navigator.share) {
+            const filename = `${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}.mp3`;
+            const file = new File([audio.blob], filename, { type: 'audio/mpeg' });
+
+            // Verificar si el navegador soporta compartir archivos
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
-                    await navigator.share(shareData);
+                    await navigator.share({
+                        title: `🙏 ${title}`,
+                        text: `📖 ${verse}\n\nMeditación diaria - RIO Iglesia`,
+                        files: [file]
+                    });
                 } catch (error) {
                     if (error.name !== 'AbortError') {
-                        fallbackShare(shareUrl);
+                        // Si falla compartir archivo, intentar con enlace
+                        fallbackShareLink(date, title, verse);
                     }
                 }
             } else {
-                fallbackShare(shareUrl);
+                // Navegador no soporta compartir archivos, usar enlace
+                fallbackShareLink(date, title, verse);
             }
         }
 
-        // Compartir alternativo
-        function fallbackShare(url) {
+        // Compartir alternativo con enlace
+        function fallbackShareLink(date, title, verse) {
+            const shareUrl = `${window.location.origin}/?date=${date}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Meditación Diaria - RIO Iglesia',
+                    text: `🙏 ${title}\n📖 ${verse}\n\nEscucha el devocional:`,
+                    url: shareUrl
+                }).catch(() => copyToClipboard(shareUrl));
+            } else {
+                copyToClipboard(shareUrl);
+            }
+        }
+
+        // Copiar al portapapeles
+        function copyToClipboard(url) {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(url)
                     .then(() => showToast('¡Enlace copiado al portapapeles!'))
