@@ -9,7 +9,8 @@ node_modules/
 .env.local
 
 # Archivos grandes de audio (se gestionan por separado)
-# audios/*.mp3
+audios/*.mp3
+!audios/README.txt
 
 # Archivos de IDE
 .vscode/
