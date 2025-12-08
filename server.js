@@ -22,9 +22,23 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware basico - Limite 50MB (el control real lo hace Multer dinamicamente)
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
+
+// Parser JSON solo para rutas que NO son upload de archivos
+app.use((req, res, next) => {
+    // Excluir /api/audios POST (uploads multipart/form-data)
+    if (req.path === '/api/audios' && req.method === 'POST') {
+        return next();
+    }
+    express.json({ limit: '50mb' })(req, res, next);
+});
+
+app.use((req, res, next) => {
+    if (req.path === '/api/audios' && req.method === 'POST') {
+        return next();
+    }
+    express.urlencoded({ limit: '50mb', extended: true })(req, res, next);
+});
 
 // ============ Headers de Seguridad ============
 app.use((req, res, next) => {
