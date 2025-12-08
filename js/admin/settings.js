@@ -50,11 +50,6 @@ async function loadTimezone() {
         if (response.ok) {
             const data = await response.json();
             document.getElementById('gmtSelect').value = data.gmtOffset || '0';
-            // Cargar limite de subida
-            if (data.maxUploadMB) {
-                const uploadSelect = document.getElementById('maxUploadSelect');
-                if (uploadSelect) uploadSelect.value = data.maxUploadMB.toString();
-            }
         }
     } catch (error) {
         console.error('Error cargando timezone:', error);
@@ -93,7 +88,7 @@ async function saveMaxUpload() {
     const maxUploadMB = parseInt(document.getElementById('maxUploadSelect').value);
     
     try {
-        const response = await fetch('/api/config', {
+        const response = await fetch('/api/config/upload', {
             method: 'PUT',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -104,7 +99,6 @@ async function saveMaxUpload() {
 
         if (data.success) {
             showToast('Limite de subida guardado: ' + maxUploadMB + ' MB', 'success');
-            // Actualizar texto en UI
             const hint = document.querySelector('.upload-hint');
             if (hint) hint.textContent = 'Maximo ' + maxUploadMB + 'MB por archivo';
         } else {
@@ -113,6 +107,23 @@ async function saveMaxUpload() {
     } catch (error) {
         console.error('Error:', error);
         showToast('Error al guardar limite', 'error');
+    }
+}
+
+async function loadMaxUpload() {
+    try {
+        const response = await fetch('/api/config/upload', {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const uploadSelect = document.getElementById('maxUploadSelect');
+            if (uploadSelect && data.maxUploadMB) {
+                uploadSelect.value = data.maxUploadMB.toString();
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando limite de subida:', error);
     }
 }
 

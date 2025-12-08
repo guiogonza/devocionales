@@ -94,6 +94,7 @@ function showAdminPanel() {
     loadSubscriberCount();
     loadDevicesList();
     loadTimezone();
+    loadMaxUpload();
     loadBibleBooks();
     updateHeaderUsername();
     loadAndStartSessionTimer();
