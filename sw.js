@@ -32,6 +32,11 @@ self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
     
+    // Ignorar URLs que no sean http/https (chrome-extension, etc)
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+    
     // Solo manejar solicitudes GET - POST, PUT, DELETE no se pueden cachear
     if (request.method !== 'GET') {
         return;

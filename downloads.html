@@ -237,16 +237,22 @@
             right: 0;
             background: var(--primary-color);
             color: white;
-            padding: 12px 16px;
+            padding: 10px 16px 12px;
             display: none;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            gap: 8px;
             box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
             z-index: 100;
         }
         
         .mini-player.active {
             display: flex;
+        }
+        
+        .mini-player-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
         .mini-player-btn {
@@ -287,6 +293,58 @@
             cursor: pointer;
             padding: 4px;
             flex-shrink: 0;
+        }
+        
+        .mini-player-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .mini-player-time {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .mini-player-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .mini-player-bar-fill {
+            height: 100%;
+            background: white;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .mini-player-seek {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .mini-player-seek::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
         }
         
         /* Toast */
@@ -348,12 +406,22 @@
 
     <!-- Mini reproductor -->
     <div class="mini-player" id="miniPlayer">
-        <button class="mini-player-btn" id="miniPlayBtn">▶</button>
-        <div class="mini-player-info">
-            <div class="mini-player-title" id="miniPlayerTitle">-</div>
-            <div class="mini-player-date" id="miniPlayerDate">-</div>
+        <div class="mini-player-top">
+            <button class="mini-player-btn" id="miniPlayBtn">▶</button>
+            <div class="mini-player-info">
+                <div class="mini-player-title" id="miniPlayerTitle">-</div>
+                <div class="mini-player-date" id="miniPlayerDate">-</div>
+            </div>
+            <button class="mini-player-close" id="miniPlayerClose">×</button>
         </div>
-        <button class="mini-player-close" id="miniPlayerClose">×</button>
+        <div class="mini-player-progress">
+            <span class="mini-player-time" id="miniCurrentTime">0:00</span>
+            <div class="mini-player-bar">
+                <div class="mini-player-bar-fill" id="miniProgressFill"></div>
+                <input type="range" class="mini-player-seek" id="miniSeekBar" value="0" min="0" max="100">
+            </div>
+            <span class="mini-player-time" id="miniDuration">0:00</span>
+        </div>
     </div>
 
     <!-- Toast -->
@@ -373,7 +441,19 @@
         const miniPlayerTitle = document.getElementById('miniPlayerTitle');
         const miniPlayerDate = document.getElementById('miniPlayerDate');
         const miniPlayerClose = document.getElementById('miniPlayerClose');
+        const miniCurrentTime = document.getElementById('miniCurrentTime');
+        const miniDuration = document.getElementById('miniDuration');
+        const miniProgressFill = document.getElementById('miniProgressFill');
+        const miniSeekBar = document.getElementById('miniSeekBar');
         const toast = document.getElementById('toast');
+
+        // Formatear tiempo en mm:ss
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
         // Mostrar toast
         function showToast(message) {
@@ -671,13 +751,45 @@
             currentPlayingDate = null;
             isPlaying = false;
             updatePlayButtons();
+            resetProgress();
         });
 
         audioPlayer.addEventListener('ended', () => {
             miniPlayBtn.textContent = '▶';
             isPlaying = false;
             updatePlayButtons();
+            resetProgress();
         });
+
+        // Actualizar progreso del audio
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                miniProgressFill.style.width = progress + '%';
+                miniSeekBar.value = progress;
+                miniCurrentTime.textContent = formatTime(audioPlayer.currentTime);
+            }
+        });
+
+        // Cuando se carga la duración del audio
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            miniDuration.textContent = formatTime(audioPlayer.duration);
+        });
+
+        // Seek bar - cambiar posición del audio
+        miniSeekBar.addEventListener('input', (e) => {
+            const seekTime = (e.target.value / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = seekTime;
+            miniProgressFill.style.width = e.target.value + '%';
+        });
+
+        // Resetear progreso
+        function resetProgress() {
+            miniCurrentTime.textContent = '0:00';
+            miniDuration.textContent = '0:00';
+            miniProgressFill.style.width = '0%';
+            miniSeekBar.value = 0;
+        }
 
         // Inicializar
         loadDownloads();
