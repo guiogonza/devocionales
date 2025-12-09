@@ -1542,6 +1542,51 @@
 
                     <div class="notif-form">
                         <div>
+                            <label class="notif-label">Enviar a:</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px;" class="send-target-option">
+                                    <input type="radio" name="sendTarget" value="all" checked onchange="updateSendTarget()">
+                                    <span>&#127758; Todos</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px;" class="send-target-option">
+                                    <input type="radio" name="sendTarget" value="country" onchange="updateSendTarget()">
+                                    <span>&#127988; Por Pais</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px;" class="send-target-option">
+                                    <input type="radio" name="sendTarget" value="os" onchange="updateSendTarget()">
+                                    <span>&#128187; Por Sistema</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 8px;" class="send-target-option">
+                                    <input type="radio" name="sendTarget" value="device" onchange="updateSendTarget()">
+                                    <span>&#128241; Dispositivo</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="countrySelector" style="display: none; margin-bottom: 15px;">
+                            <label class="notif-label">Seleccionar Pais:</label>
+                            <select id="countrySelect" class="form-input" onchange="updateFilterCount()">
+                                <option value="">Cargando paises...</option>
+                            </select>
+                            <span id="countryDeviceCount" style="color: var(--text-secondary); font-size: 13px; margin-top: 5px; display: block;"></span>
+                        </div>
+                        
+                        <div id="osSelector" style="display: none; margin-bottom: 15px;">
+                            <label class="notif-label">Seleccionar Sistema Operativo:</label>
+                            <select id="osSelect" class="form-input" onchange="updateFilterCount()">
+                                <option value="">Cargando sistemas...</option>
+                            </select>
+                            <span id="osDeviceCount" style="color: var(--text-secondary); font-size: 13px; margin-top: 5px; display: block;"></span>
+                        </div>
+                        
+                        <div id="deviceSelector" style="display: none; margin-bottom: 15px;">
+                            <label class="notif-label">Seleccionar Dispositivo:</label>
+                            <select id="deviceSelect" class="form-input">
+                                <option value="">Cargando dispositivos...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
                             <label class="notif-label">Titulo:</label>
                             <input type="text" id="notifTitle" class="form-input" placeholder="Nuevo devocional disponible">
                         </div>
@@ -1559,7 +1604,21 @@
                 </div>
 
                 <div class="card">
-                    <h3 class="card-title">&#128241; Dispositivos Registrados</h3>
+                    <h3 class="card-title">&#127758; Dispositivos por Pais</h3>
+                    <div id="countrySummary" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <p style="color: var(--text-secondary);">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">&#128187; Dispositivos por Sistema Operativo</h3>
+                    <div id="osSummary" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <p style="color: var(--text-secondary);">Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">&#128241; Todos los Dispositivos</h3>
                     <div class="devices-list" id="devicesList">
                         <p style="color: var(--text-secondary);">Cargando...</p>
                     </div>
