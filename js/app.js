@@ -46,15 +46,9 @@ async function initHeartbeat(registration) {
                     });
                 }
             });
-            // Actualizar también al recuperar el foco de la ventana
+            // Recargar toda la página al volver a estar activa o en foco
             window.addEventListener('focus', () => {
-                sendHeartbeat(subscription.endpoint);
-                loadAvailableDates().then(() => {
-                    if (availableDates.length > 0) {
-                        const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
-                        loadDevotional(new Date(latestAvailable + 'T12:00:00'));
-                    }
-                });
+                location.reload();
             });
         }
     } catch (error) {
