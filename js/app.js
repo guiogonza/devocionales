@@ -35,6 +35,13 @@ async function initHeartbeat(registration) {
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     sendHeartbeat(subscription.endpoint);
+                        // Actualizar calendario y devocionales al volver a primer plano
+                        loadAvailableDates().then(() => {
+                            if (availableDates.length > 0) {
+                                const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
+                                loadDevotional(new Date(latestAvailable + 'T12:00:00'));
+                            }
+                        });
                 }
             });
         }
@@ -356,44 +363,80 @@ function seekAudio(e) {
     }
 }
 
-// Compartir usando Web Share API nativa
+// Compartir usando Web Share API nativa con imagen generada
 async function shareDevotional() {
     const dateStr = formatDateForFile(currentDate);
     const shareUrl = `${window.location.origin}/?date=${dateStr}`;
-    const shareData = {
-        title: 'Meditaci├│n Diaria - RIO Iglesia',
-        text: `­ƒÖÅ ${elements.devotionalTitle.textContent}\n­ƒôû ${elements.verseReference.textContent}\n\nEscucha el devocional de hoy:`,
-        url: shareUrl
-    };
     
-    // Usar Web Share API nativa si est├í disponible
+    const title = elements.devotionalTitle.textContent || 'Meditación Diaria';
+    const verse = elements.verseReference.textContent || '';
+    // Obtener el texto del versículo del elemento correcto
+    const verseText = elements.devotionalText ? elements.devotionalText.textContent.replace(/^"|"$/g, '') : '';
+    const dateFormatted = elements.currentDate.textContent || '';
+    
+    // Texto para compartir - SOLO el link para que aparezca debajo de la imagen
+    const shareTextWithImage = shareUrl;
+    // Texto completo para cuando no hay imagen
+    const shareTextNoImage = `🙏 ${title}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
+    
+    // Intentar generar imagen para compartir
+    let imageFile = null;
+    try {
+        if (typeof generateShareImage === 'function') {
+            const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
+            const imageName = `RIO_${dateStr}_devocional.png`;
+            imageFile = new File([imageBlob], imageName, { type: 'image/png' });
+        }
+    } catch (error) {
+        console.warn('No se pudo generar la imagen:', error);
+    }
+    
+    // Intento 1: Compartir imagen + solo el link (el link aparecerá debajo de la imagen)
+    if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+        try {
+            await navigator.share({
+                text: shareTextWithImage,
+                files: [imageFile]
+            });
+            console.log('Compartido con imagen');
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.warn('Error compartiendo con imagen:', error);
+        }
+    }
+    
+    // Intento 2: Compartir solo texto + link
     if (navigator.share) {
         try {
-            await navigator.share(shareData);
-            console.log('Ô£à Compartido exitosamente');
+            await navigator.share({
+                title: 'Meditación Diaria - RIO Iglesia',
+                text: shareTextNoImage
+            });
+            console.log('Compartido sin imagen');
+            return;
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                console.error('Error al compartir:', error);
-            }
+            if (error.name === 'AbortError') return;
+            console.warn('Error compartiendo link:', error);
         }
-    } else {
-        // Fallback para navegadores sin Web Share API
-        fallbackShare(shareUrl);
     }
+    
+    // Fallback: copiar al portapapeles
+    fallbackShare(shareTextNoImage);
 }
 
 // Compartir alternativo (copiar al portapapeles)
-function fallbackShare(url) {
+function fallbackShare(text) {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(url)
+        navigator.clipboard.writeText(text)
             .then(() => {
                 showToast('¡Enlace copiado al portapapeles!');
             })
             .catch(() => {
-                prompt('Copia este enlace:', url);
+                prompt('Copia este texto:', text);
             });
     } else {
-        prompt('Copia este enlace:', url);
+        prompt('Copia este texto:', text);
     }
 }
 
@@ -1022,9 +1065,15 @@ function showNotificationBanner() {
     
     document.getElementById('notifAccept').addEventListener('click', async () => {
         banner.remove();
+        if (Notification.permission === 'denied') {
+            showToast('Has bloqueado las notificaciones. Para activarlas, ve a la configuración de tu navegador y permite notificaciones para este sitio.');
+            return;
+        }
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
             await subscribeToNotifications();
+        } else if (permission === 'denied') {
+            showToast('Has bloqueado las notificaciones. Para activarlas, ve a la configuración de tu navegador y permite notificaciones para este sitio.');
         }
     });
     

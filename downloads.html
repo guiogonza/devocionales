@@ -652,6 +652,9 @@
 
             // Formatear fecha para el nombre del archivo
             const dateFormatted = formatDate(date);
+            const shareUrl = `${window.location.origin}/?date=${date}`;
+            const shareText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`;
+            
             const filename = `RIO_${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}_${date}.mp3`;
             const audioFile = new File([audio.blob], filename, { type: 'audio/mpeg' });
 
@@ -667,53 +670,89 @@
                 console.warn('No se pudo generar la imagen:', error);
             }
 
-            // Preparar archivos para compartir
+            // Intentar compartir en orden de preferencia
+            // 1. Imagen + MP3
+            // 2. Solo imagen + link
+            // 3. Solo texto + link
+            // 4. Copiar al portapapeles
+            
             const filesToShare = imageFile ? [imageFile, audioFile] : [audioFile];
 
-            // Verificar si el navegador soporta compartir archivos
+            // Intento 1: Imagen + MP3
             if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
                 try {
                     await navigator.share({
-                        title: ` ${title}`,
-                        text: ` ${dateFormatted}\n ${verse}\n\n Meditación diaria - RIO Iglesia Cristiana`,
+                        title: title,
+                        text: shareText,
                         files: filesToShare
                     });
+                    return;
                 } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        // Si falla compartir archivo, intentar con enlace
-                        fallbackShareLink(date, title, verse);
-                    }
+                    if (error.name === 'AbortError') return;
+                    console.warn('Error compartiendo archivos:', error);
                 }
-            } else {
-                // Navegador no soporta compartir archivos, usar enlace
-                fallbackShareLink(date, title, verse);
             }
+            
+            // Intento 2: Solo imagen + link
+            if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+                try {
+                    await navigator.share({
+                        title: title,
+                        text: shareText,
+                        url: shareUrl,
+                        files: [imageFile]
+                    });
+                    return;
+                } catch (error) {
+                    if (error.name === 'AbortError') return;
+                    console.warn('Error compartiendo imagen:', error);
+                }
+            }
+            
+            // Intento 3: Solo texto + link (sin archivos)
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Meditación Diaria - RIO Iglesia',
+                        text: shareText,
+                        url: shareUrl
+                    });
+                    return;
+                } catch (error) {
+                    if (error.name === 'AbortError') return;
+                    console.warn('Error compartiendo link:', error);
+                }
+            }
+            
+            // Intento 4: Copiar al portapapeles
+            copyToClipboard(`${shareText}\n${shareUrl}`);
         }
 
         // Compartir alternativo con enlace
         function fallbackShareLink(date, title, verse) {
             const shareUrl = `${window.location.origin}/?date=${date}`;
             const dateFormatted = formatDate(date);
+            const shareText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`;
             
             if (navigator.share) {
                 navigator.share({
                     title: 'Meditación Diaria - RIO Iglesia',
-                    text: `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`,
+                    text: shareText,
                     url: shareUrl
-                }).catch(() => copyToClipboard(shareUrl));
+                }).catch(() => copyToClipboard(`${shareText}\n${shareUrl}`));
             } else {
-                copyToClipboard(shareUrl);
+                copyToClipboard(`${shareText}\n${shareUrl}`);
             }
         }
 
         // Copiar al portapapeles
-        function copyToClipboard(url) {
+        function copyToClipboard(text) {
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(url)
+                navigator.clipboard.writeText(text)
                     .then(() => showToast('¡Enlace copiado al portapapeles!'))
-                    .catch(() => prompt('Copia este enlace:', url));
+                    .catch(() => prompt('Copia este texto:', text));
             } else {
-                prompt('Copia este enlace:', url);
+                prompt('Copia este texto:', text);
             }
         }
 

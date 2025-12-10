@@ -74,6 +74,7 @@ function renderAudioList(filterText = '') {
                 <div class="audio-meta">${formatFileSize(audio.size || 0)}</div>
             </div>
             <div class="audio-actions">
+                <button class="action-btn share" onclick="event.stopPropagation(); shareAudioFromAdmin('${audio.date}', '${(audio.title || '').replace(/'/g, "\\'")}', '${(audio.verseReference || '').replace(/'/g, "\\'")}', '${(audio.verseText || '').replace(/'/g, "\\'")}')" title="Compartir">&#128279;</button>
                 <button class="action-btn edit" onclick="event.stopPropagation(); loadAudioForEdit('${audio.date}')" title="Editar">&#9998;</button>
                 <button class="action-btn delete" onclick="event.stopPropagation(); showDeleteModal('${audio.date}')" title="Eliminar">&#128465;</button>
             </div>
@@ -884,6 +885,72 @@ function updateStorageDisplay(usedMB, limitMB) {
         fill.style.background = 'var(--warning-color)';
     } else {
         fill.style.background = 'var(--primary-light)';
+    }
+}
+
+// Compartir audio desde admin (imagen + link)
+async function shareAudioFromAdmin(date, title, verse, verseText) {
+    const dateFormatted = formatDate(date);
+    const shareUrl = `${window.location.origin}/?date=${date}`;
+    
+    // Generar imagen para compartir
+    let imageFile = null;
+    try {
+        if (typeof generateShareImage === 'function') {
+            const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
+            const imageName = `RIO_${date}_devocional.png`;
+            imageFile = new File([imageBlob], imageName, { type: 'image/png' });
+        }
+    } catch (error) {
+        console.warn('No se pudo generar la imagen:', error);
+    }
+    
+    const shareText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`;
+    
+    // Si tenemos imagen y el navegador soporta compartir archivos
+    if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+        try {
+            await navigator.share({
+                title: `Meditación Diaria - ${title}`,
+                text: shareText,
+                url: shareUrl,
+                files: [imageFile]
+            });
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.warn('Error al compartir con imagen:', error);
+        }
+    }
+    
+    // Fallback: compartir solo texto y link
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: `Meditación Diaria - ${title}`,
+                text: shareText,
+                url: shareUrl
+            });
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                copyShareLink(shareUrl, title, dateFormatted, verse);
+            }
+        }
+    } else {
+        copyShareLink(shareUrl, title, dateFormatted, verse);
+    }
+}
+
+// Copiar link al portapapeles
+function copyShareLink(url, title, dateFormatted, verse) {
+    const fullText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${url}`;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(fullText)
+            .then(() => showToast('¡Link copiado al portapapeles!'))
+            .catch(() => prompt('Copia este texto:', fullText));
+    } else {
+        prompt('Copia este texto:', fullText);
     }
 }
 
