@@ -46,9 +46,19 @@ async function initHeartbeat(registration) {
                     });
                 }
             });
-            // Recargar toda la página al volver a estar activa o en foco
+            // Recargar toda la página al volver a estar activa, en foco o pageshow (Safari/iOS)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    location.reload();
+                }
+            });
             window.addEventListener('focus', () => {
                 location.reload();
+            });
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    location.reload();
+                }
             });
         }
     } catch (error) {
