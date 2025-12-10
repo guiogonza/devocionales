@@ -23,6 +23,12 @@ self.addEventListener('activate', event => {
             );
         }).then(() => {
             return self.clients.claim();
+        }).then(async () => {
+            // Forzar recarga de todas las apps abiertas
+            const clientsList = await self.clients.matchAll({ type: 'window' });
+            for (const client of clientsList) {
+                client.navigate(client.url);
+            }
         })
     );
 });
