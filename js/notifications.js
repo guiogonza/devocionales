@@ -308,11 +308,11 @@ function showActivationPopup() {
         <div class="notif-modal-overlay">
             <div class="notif-modal-content">
                 <div class="notif-modal-icon">🔔</div>
-                <h3>Activar Recordatorios?</h3>
-                <p>Recibiras una notificacion cada vez que haya un nuevo devocional disponible.</p>
+                <h3>Activar notificaciones?</h3>
+                <p>Recibe recordatorios diarios del devocional.</p>
                 <div class="notif-modal-buttons">
+                    <button class="notif-btn-confirm" onclick="activateNotifications()">Sí, activar</button>
                     <button class="notif-btn-cancel" onclick="closeNotifModal()">Ahora no</button>
-                    <button class="notif-btn-confirm" onclick="activateNotifications()">Si, activar</button>
                 </div>
             </div>
         </div>
