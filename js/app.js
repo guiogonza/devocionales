@@ -35,14 +35,24 @@ async function initHeartbeat(registration) {
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     sendHeartbeat(subscription.endpoint);
-                        // Actualizar calendario y devocionales al volver a primer plano
-                        loadAvailableDates().then(() => {
-                            if (availableDates.length > 0) {
-                                const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
-                                loadDevotional(new Date(latestAvailable + 'T12:00:00'));
-                            }
-                        });
+                    // Actualizar calendario y devocionales al volver a primer plano
+                    loadAvailableDates().then(() => {
+                        if (availableDates.length > 0) {
+                            const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
+                            loadDevotional(new Date(latestAvailable + 'T12:00:00'));
+                        }
+                    });
                 }
+            });
+            // Actualizar también al recuperar el foco de la ventana
+            window.addEventListener('focus', () => {
+                sendHeartbeat(subscription.endpoint);
+                loadAvailableDates().then(() => {
+                    if (availableDates.length > 0) {
+                        const latestAvailable = availableDates.sort((a, b) => b.localeCompare(a))[0];
+                        loadDevotional(new Date(latestAvailable + 'T12:00:00'));
+                    }
+                });
             });
         }
     } catch (error) {
