@@ -36,7 +36,9 @@
                 <img src="icons/logo.png" alt="RIO Iglesia Cristiana" class="logo">
                 <img src="icons/pastores.jpg" alt="Pastores" class="pastores-img" id="pastoresImg" onerror="this.style.display='none'">
             </div>
-            <h1 class="title">Meditación diaria <span class="notification-bell" id="notificationBell" title="Notificaciones">🔔</span></h1>
+            <h1 class="title">Meditación diaria <span class="notification-bell" id="notificationBell" title="Notificaciones">🔔</span>
+                <span id="appVersionHeader" style="font-size:12px; color:var(--text-secondary); margin-left:6px; vertical-align:middle;"></span>
+            </h1>
             <p class="date" id="currentDate"></p>
             
             <div class="calendar-section-header">
@@ -159,6 +161,12 @@
                 document.getElementById('appVersion').textContent = 'desconocida';
             }
         });
+        // Mostrar versión junto a la campana
+        document.addEventListener('DOMContentLoaded', function() {
+            var v = window.APP_VERSION || (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'desconocida');
+            var el = document.getElementById('appVersionHeader');
+            if (el) el.textContent = v;
+        });
         // Registrar Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -171,6 +179,12 @@
                     });
             });
         }
+        // Forzar actualización al volver a primer plano
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') location.reload();
+        });
+        window.addEventListener('focus', function() { location.reload(); });
+        window.addEventListener('pageshow', function(e) { if (e.persisted) location.reload(); });
     </script>
 </body>
 </html>
