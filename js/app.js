@@ -5,6 +5,8 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
+const APP_VERSION = '1.0.0'; // Cambia este valor en cada actualización
+
 // Service Worker registration
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')

@@ -140,11 +140,25 @@
         <audio id="audioPlayer" preload="auto" playsinline webkit-playsinline></audio>
     </div>
 
+    <footer class="app-footer" style="text-align:center; color: var(--text-secondary); font-size: 13px; margin: 24px 0 8px 0;">
+        Versión de la app: <span id="appVersion"></span>
+    </footer>
+
     <script src="js/offline-storage.js"></script>
     <script src="js/share-image.js"></script>
     <script src="js/app.js"></script>
     <script src="js/notifications.js"></script>
     <script>
+        // Mostrar versión en el footer
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.APP_VERSION) {
+                document.getElementById('appVersion').textContent = window.APP_VERSION;
+            } else if (typeof APP_VERSION !== 'undefined') {
+                document.getElementById('appVersion').textContent = APP_VERSION;
+            } else {
+                document.getElementById('appVersion').textContent = 'desconocida';
+            }
+        });
         // Registrar Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
