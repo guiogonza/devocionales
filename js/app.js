@@ -46,20 +46,22 @@ async function initHeartbeat(registration) {
                     });
                 }
             });
-            // Recargar toda la página al volver a estar activa, en foco o pageshow (Safari/iOS)
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    location.reload();
+            // Recargar la página al pasar a primer plano
+            function setupAutoReloadOnForeground() {
+                function reloadIfActive() {
+                    if (document.visibilityState === 'visible') {
+                        location.reload();
+                    }
                 }
-            });
-            window.addEventListener('focus', () => {
-                location.reload();
-            });
-            window.addEventListener('pageshow', (event) => {
-                if (event.persisted) {
-                    location.reload();
-                }
-            });
+                document.addEventListener('visibilitychange', reloadIfActive);
+                window.addEventListener('focus', reloadIfActive);
+                window.addEventListener('pageshow', (event) => {
+                    if (event.persisted) {
+                        location.reload();
+                    }
+                });
+            }
+            setupAutoReloadOnForeground();
         }
     } catch (error) {
         console.log('Error en heartbeat:', error);
@@ -407,11 +409,12 @@ async function shareDevotional() {
         console.warn('No se pudo generar la imagen:', error);
     }
     
-    // Intento 1: Compartir imagen + solo el link (el link aparecerá debajo de la imagen)
+    // Intento 1: Compartir imagen + link
     if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
         try {
             await navigator.share({
-                text: shareTextWithImage,
+                title: '🙏 Meditación Diaria - RIO Iglesia',
+                text: `${title}\n${verse}\n\n${shareUrl}`,
                 files: [imageFile]
             });
             console.log('Compartido con imagen');
@@ -768,8 +771,6 @@ function renderCalendar() {
     // Navegaci├│n: siempre permitir ir hacia atr├ís, no permitir ir al futuro
     if (prevBtn) {
         prevBtn.disabled = false; // Siempre permitir navegar hacia atr├ís
-    }
-    
     if (nextBtn) {
         const nextMonth = new Date(year, month + 1, 1);
         nextBtn.disabled = nextMonth > todayDate;
