@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.0.7'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.0.9'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -395,47 +395,14 @@ async function shareDevotional() {
     
     console.log('Compartir:', { title, verse, shareUrl });
     
-    // Texto para compartir - SOLO el link para que aparezca debajo de la imagen
-    const shareTextWithImage = shareUrl;
-    // Texto completo para cuando no hay imagen
-    const shareTextNoImage = `🙏 ${title}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
-    
-    // Intentar generar imagen para compartir
-    let imageFile = null;
-    try {
-        if (typeof generateShareImage === 'function') {
-            const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
-            const imageName = `RIO_${dateStr}_devocional.png`;
-            imageFile = new File([imageBlob], imageName, { type: 'image/png' });
-            console.log('Imagen generada:', imageName);
-        }
-    } catch (error) {
-        console.warn('No se pudo generar la imagen:', error);
-    }
-    
-    // Intento 1: Compartir imagen + link
-    if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-        try {
-            await navigator.share({
-                text: shareUrl,
-                files: [imageFile]
-            });
-            console.log('Compartido con imagen');
-            return;
-        } catch (error) {
-            if (error.name === 'AbortError') return;
-            console.warn('Error compartiendo con imagen:', error);
-        }
-    }
-    
-    // Intento 2: Compartir solo texto + link
+    // Compartir solo el link
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'Meditación Diaria - RIO Iglesia',
-                text: shareTextNoImage
+                title: title,
+                text: `🙏 ${title}\n📖 ${verse}\n\n${shareUrl}`
             });
-            console.log('Compartido sin imagen');
+            console.log('Link compartido');
             return;
         } catch (error) {
             if (error.name === 'AbortError') return;
@@ -444,7 +411,8 @@ async function shareDevotional() {
     }
     
     // Fallback: copiar al portapapeles
-    fallbackShare(shareTextNoImage);
+    const fallbackText = `🙏 ${title}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
+    fallbackShare(fallbackText);
 }
 
 // Compartir alternativo (copiar al portapapeles)

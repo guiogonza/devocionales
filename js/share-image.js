@@ -29,7 +29,7 @@ function wrapText(ctx, text, maxWidth, fontSize) {
 }
 
 // Generar imagen para compartir con titulo y versiculo
-async function generateShareImage(title, verse, verseText, dateFormatted) {
+async function generateShareImage(title, verse, verseText, dateFormatted, shareUrl) {
     return new Promise((resolve, reject) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -118,7 +118,14 @@ async function generateShareImage(title, verse, verseText, dateFormatted) {
             
             ctx.font = '600 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.fillText('RIO Iglesia Cristiana', canvas.width / 2, canvas.height - 70);
+            ctx.fillText('RIO Iglesia Cristiana', canvas.width / 2, canvas.height - 100);
+            
+            // Agregar link
+            if (shareUrl) {
+                ctx.font = '500 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#95D5B2';
+                ctx.fillText(shareUrl, canvas.width / 2, canvas.height - 60);
+            }
             
             canvas.toBlob((blob) => {
                 if (blob) {
