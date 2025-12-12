@@ -383,6 +383,7 @@ function seekAudio(e) {
 
 // Compartir usando Web Share API nativa con imagen generada
 async function shareDevotional() {
+    console.log('shareDevotional llamado');
     const dateStr = formatDateForFile(currentDate);
     const shareUrl = `${window.location.origin}/?date=${dateStr}`;
     
@@ -391,6 +392,8 @@ async function shareDevotional() {
     // Obtener el texto del versículo del elemento correcto
     const verseText = elements.devotionalText ? elements.devotionalText.textContent.replace(/^"|"$/g, '') : '';
     const dateFormatted = elements.currentDate.textContent || '';
+    
+    console.log('Compartir:', { title, verse, shareUrl });
     
     // Texto para compartir - SOLO el link para que aparezca debajo de la imagen
     const shareTextWithImage = shareUrl;
@@ -404,6 +407,7 @@ async function shareDevotional() {
             const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
             const imageName = `RIO_${dateStr}_devocional.png`;
             imageFile = new File([imageBlob], imageName, { type: 'image/png' });
+            console.log('Imagen generada:', imageName);
         }
     } catch (error) {
         console.warn('No se pudo generar la imagen:', error);
