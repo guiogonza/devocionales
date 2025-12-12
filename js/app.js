@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.0.6'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.0.7'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -417,8 +417,7 @@ async function shareDevotional() {
     if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
         try {
             await navigator.share({
-                title: '🙏 Meditación Diaria - RIO Iglesia',
-                text: `${title}\n${verse}\n\n${shareUrl}`,
+                text: shareUrl,
                 files: [imageFile]
             });
             console.log('Compartido con imagen');
@@ -1307,4 +1306,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
     checkiOSInstallPrompt();
 });
-}
