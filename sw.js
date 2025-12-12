@@ -1,4 +1,4 @@
-const CACHE_NAME = 'devocionales-v27';
+const CACHE_NAME = 'devocionales-v28';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
 // Instalación del Service Worker

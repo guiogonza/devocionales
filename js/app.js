@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.0.5'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.0.6'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -821,6 +821,8 @@ function getDateFromURL() {
 
 // Inicializar eventos
 function initializeEvents() {
+    console.log('🔧 Inicializando event listeners...');
+    
     // Reproductor
     elements.playButton.addEventListener('click', togglePlay);
     elements.progressBar.addEventListener('input', seekAudio);
@@ -862,12 +864,15 @@ function initializeEvents() {
     
     // Compartir
     elements.shareButton.addEventListener('click', shareDevotional);
+    console.log('✅ Event listener de Compartir registrado');
     
     // Descargar
     elements.downloadButton.addEventListener('click', downloadAudio);
+    console.log('✅ Event listener de Descargar registrado');
     
     // Historial
     elements.historyButton.addEventListener('click', showHistory);
+    console.log('✅ Event listener de Historial registrado');
     elements.closeHistory.addEventListener('click', closeHistoryModal);
     elements.historyModal.addEventListener('click', (e) => {
         if (e.target === elements.historyModal) {
@@ -938,6 +943,7 @@ function formatDateShort(dateStr) {
 
 // Inicializar aplicaci├│n
 async function initApp() {
+    console.log('🚀 Iniciando aplicación...');
     initializeEvents();
     
     // Configurar fecha del servidor primero
