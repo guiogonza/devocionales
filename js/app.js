@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.0.9'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.0'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
