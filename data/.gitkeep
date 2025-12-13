@@ -1,0 +1,2 @@
+# Este directorio contiene datos persistentes gestionados por la aplicación
+# Los archivos JSON aquí NO deben estar en Git (ver .gitignore)
