@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.1.0'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.1'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -46,22 +46,20 @@ async function initHeartbeat(registration) {
                     });
                 }
             });
-            // Recargar la página al pasar a primer plano
-            function setupAutoReloadOnForeground() {
-                function reloadIfActive() {
-                    if (document.visibilityState === 'visible') {
-                        location.reload();
-                    }
+            // Recargar toda la página al volver a estar activa, en foco o pageshow (Safari/iOS)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    location.reload();
                 }
-                document.addEventListener('visibilitychange', reloadIfActive);
-                window.addEventListener('focus', reloadIfActive);
-                window.addEventListener('pageshow', (event) => {
-                    if (event.persisted) {
-                        location.reload();
-                    }
-                });
-            }
-            setupAutoReloadOnForeground();
+            });
+            window.addEventListener('focus', () => {
+                location.reload();
+            });
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    location.reload();
+                }
+            });
         }
     } catch (error) {
         console.log('Error en heartbeat:', error);
@@ -383,26 +381,23 @@ function seekAudio(e) {
 
 // Compartir usando Web Share API nativa con imagen generada
 async function shareDevotional() {
-    console.log('shareDevotional llamado');
     const dateStr = formatDateForFile(currentDate);
     const shareUrl = `${window.location.origin}/?date=${dateStr}`;
     
     const title = elements.devotionalTitle.textContent || 'Meditación Diaria';
     const verse = elements.verseReference.textContent || '';
-    // Obtener el texto del versículo del elemento correcto
-    const verseText = elements.devotionalText ? elements.devotionalText.textContent.replace(/^"|"$/g, '') : '';
-    const dateFormatted = elements.currentDate.textContent || '';
     
-    console.log('Compartir:', { title, verse, shareUrl });
+    // Texto completo para compartir
+    const shareText = `🙏 ${title}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
     
-    // Compartir solo el link
+    // Compartir solo texto + link
     if (navigator.share) {
         try {
             await navigator.share({
-                title: title,
-                text: `🙏 ${title}\n📖 ${verse}\n\n${shareUrl}`
+                title: 'Meditación Diaria - RIO Iglesia',
+                text: shareText
             });
-            console.log('Link compartido');
+            console.log('Compartido correctamente');
             return;
         } catch (error) {
             if (error.name === 'AbortError') return;
@@ -411,8 +406,7 @@ async function shareDevotional() {
     }
     
     // Fallback: copiar al portapapeles
-    const fallbackText = `🙏 ${title}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
-    fallbackShare(fallbackText);
+    fallbackShare(shareText);
 }
 
 // Compartir alternativo (copiar al portapapeles)
@@ -742,6 +736,8 @@ function renderCalendar() {
     // Navegaci├│n: siempre permitir ir hacia atr├ís, no permitir ir al futuro
     if (prevBtn) {
         prevBtn.disabled = false; // Siempre permitir navegar hacia atr├ís
+    }
+    
     if (nextBtn) {
         const nextMonth = new Date(year, month + 1, 1);
         nextBtn.disabled = nextMonth > todayDate;
@@ -788,8 +784,6 @@ function getDateFromURL() {
 
 // Inicializar eventos
 function initializeEvents() {
-    console.log('🔧 Inicializando event listeners...');
-    
     // Reproductor
     elements.playButton.addEventListener('click', togglePlay);
     elements.progressBar.addEventListener('input', seekAudio);
@@ -831,15 +825,12 @@ function initializeEvents() {
     
     // Compartir
     elements.shareButton.addEventListener('click', shareDevotional);
-    console.log('✅ Event listener de Compartir registrado');
     
     // Descargar
     elements.downloadButton.addEventListener('click', downloadAudio);
-    console.log('✅ Event listener de Descargar registrado');
     
     // Historial
     elements.historyButton.addEventListener('click', showHistory);
-    console.log('✅ Event listener de Historial registrado');
     elements.closeHistory.addEventListener('click', closeHistoryModal);
     elements.historyModal.addEventListener('click', (e) => {
         if (e.target === elements.historyModal) {
@@ -910,7 +901,6 @@ function formatDateShort(dateStr) {
 
 // Inicializar aplicaci├│n
 async function initApp() {
-    console.log('🚀 Iniciando aplicación...');
     initializeEvents();
     
     // Configurar fecha del servidor primero
