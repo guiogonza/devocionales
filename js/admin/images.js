@@ -1,115 +1,132 @@
 ﻿/**
  * Gestión de Imágenes - Admin Panel
- * 3 campos separados: Logo, Icono, Pastores
+ * Selector de tipo (radio) + zona de upload unificada
  */
 
-// Archivos seleccionados para cada tipo
-let selectedFiles = {
-    logo: null,
-    icon: null,
-    pastores: null
-};
+let selectedImageFile = null;
+let selectedImageType = 'logo';
 
 function initImageUpload() {
-    // Configurar cada input de archivo
-    setupImageInput('logo', 'logoFileInput', 'logoFileName', 'logoPreviewContainer', 'logoPreviewImg', 'uploadLogoBtn');
-    setupImageInput('icon', 'iconFileInput', 'iconFileName', 'iconPreviewContainer', 'iconPreviewImg', 'uploadIconBtn');
-    setupImageInput('pastores', 'pastoresFileInput', 'pastoresFileName', 'pastoresPreviewContainer', 'pastoresPreviewImg', 'uploadPastoresBtn');
-}
+    const uploadZone = document.getElementById('imageUploadZone');
+    const fileInput = document.getElementById('imageFileInput');
+    const uploadBtn = document.getElementById('uploadImageBtn');
+    const radioButtons = document.querySelectorAll('input[name="imageType"]');
 
-function setupImageInput(type, inputId, fileNameId, previewContainerId, previewImgId, uploadBtnId) {
-    const fileInput = document.getElementById(inputId);
-    
-    if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleImageSelect(type, e.target.files[0], fileNameId, previewContainerId, previewImgId, uploadBtnId);
-            }
+    if (!uploadZone || !fileInput) {
+        console.log('Elementos de imagen no encontrados');
+        return;
+    }
+
+    // Evento para cambiar tipo de imagen
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            selectedImageType = e.target.value;
+            // Actualizar clase visual
+            document.querySelectorAll('.image-type-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            e.target.closest('.image-type-option').classList.add('selected');
+            
+            // Limpiar selección previa
+            clearImageSelection();
         });
+    });
+
+    // Click en zona de upload
+    uploadZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag & Drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleImageFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Selección de archivo
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleImageFile(e.target.files[0]);
+        }
+    });
+
+    // Botón de subir
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', uploadImage);
     }
 }
 
-function handleImageSelect(type, file, fileNameId, previewContainerId, previewImgId, uploadBtnId) {
+function handleImageFile(file) {
+    // Validar que sea imagen
+    if (!file.type.startsWith('image/')) {
+        showToast('Solo se permiten archivos de imagen', 'error');
+        return;
+    }
+
     // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
         showToast('La imagen no puede superar 5MB', 'error');
         return;
     }
 
-    // Validar formato para iconos (solo PNG)
-    if (type === 'icon' && !file.type.includes('png')) {
-        showToast('El icono debe ser formato PNG', 'error');
-        return;
-    }
-
-    // Guardar archivo seleccionado
-    selectedFiles[type] = file;
-
-    // Mostrar nombre final al que será guardado
-    const finalNames = {
-        logo: 'logo.png',
-        icon: 'icon-192.png / icon-512.png',
-        pastores: 'pastores.jpg'
-    };
-    document.getElementById(fileNameId).textContent = `${file.name} → ${finalNames[type]}`;
+    selectedImageFile = file;
 
     // Mostrar preview
     const reader = new FileReader();
     reader.onload = (e) => {
-        document.getElementById(previewImgId).src = e.target.result;
-        document.getElementById(previewContainerId).style.display = 'block';
-        document.getElementById(uploadBtnId).disabled = false;
+        const previewImg = document.getElementById('imagePreviewImg');
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const uploadBtn = document.getElementById('uploadImageBtn');
+
+        if (previewImg) previewImg.src = e.target.result;
+        if (previewContainer) previewContainer.style.display = 'block';
+        if (uploadBtn) uploadBtn.disabled = false;
     };
     reader.readAsDataURL(file);
 }
 
-async function uploadSpecificImage(type) {
-    const file = selectedFiles[type];
-    if (!file) {
+function clearImageSelection() {
+    selectedImageFile = null;
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const uploadBtn = document.getElementById('uploadImageBtn');
+    const fileInput = document.getElementById('imageFileInput');
+
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (uploadBtn) uploadBtn.disabled = true;
+    if (fileInput) fileInput.value = '';
+}
+
+async function uploadImage() {
+    if (!selectedImageFile) {
         showToast('Selecciona un archivo primero', 'error');
         return;
     }
 
-    if (!isAuthenticated) { 
-        showToast('No autorizado', 'error'); 
-        logout(); 
-        return; 
+    if (!isAuthenticated) {
+        showToast('No autorizado', 'error');
+        logout();
+        return;
     }
 
-    // Elementos según el tipo
-    const elements = {
-        logo: {
-            btn: 'uploadLogoBtn',
-            preview: 'logoPreviewContainer',
-            input: 'logoFileInput',
-            fileName: 'logoFileName',
-            currentImg: 'currentLogoImg'
-        },
-        icon: {
-            btn: 'uploadIconBtn',
-            preview: 'iconPreviewContainer',
-            input: 'iconFileInput',
-            fileName: 'iconFileName',
-            currentImg: 'currentIconImg'
-        },
-        pastores: {
-            btn: 'uploadPastoresBtn',
-            preview: 'pastoresPreviewContainer',
-            input: 'pastoresFileInput',
-            fileName: 'pastoresFileName',
-            currentImg: 'currentPastoresImg'
-        }
-    };
-
-    const elem = elements[type];
-    const uploadBtn = document.getElementById(elem.btn);
-
+    const uploadBtn = document.getElementById('uploadImageBtn');
     uploadBtn.disabled = true;
     uploadBtn.textContent = 'Subiendo...';
 
     const formData = new FormData();
-    formData.append('image', file);
-    formData.append('type', type);
+    formData.append('image', selectedImageFile);
+    formData.append('type', selectedImageType);
 
     try {
         const response = await fetch('/api/images', {
@@ -121,23 +138,26 @@ async function uploadSpecificImage(type) {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`${type === 'logo' ? 'Logo' : type === 'icon' ? 'Icono' : 'Foto'} subido correctamente`, 'success');
-            
-            // Limpiar selección
-            selectedFiles[type] = null;
-            document.getElementById(elem.preview).style.display = 'none';
-            document.getElementById(elem.input).value = '';
-            document.getElementById(elem.fileName).textContent = 'Ningun archivo seleccionado';
-            
-            // Refrescar imagen actual con cache-bust
+            const typeNames = {
+                logo: 'Logo',
+                pastores: 'Foto de Pastores'
+            };
+            showToast(`${typeNames[selectedImageType]} subido correctamente`, 'success');
+
+            // Refrescar preview actual con cache-bust
             const timestamp = Date.now();
-            if (type === 'logo') {
-                document.getElementById(elem.currentImg).src = 'icons/logo.png?' + timestamp;
-            } else if (type === 'icon') {
-                document.getElementById(elem.currentImg).src = 'icons/icon-192.png?' + timestamp;
-            } else {
-                document.getElementById(elem.currentImg).src = 'icons/pastores.jpg?' + timestamp;
+            const previewId = selectedImageType === 'logo' ? 'currentLogoPreview' : 'currentPastoresPreview';
+            const previewImg = document.getElementById(previewId);
+            if (previewImg) {
+                const newSrc = selectedImageType === 'logo' 
+                    ? `icons/logo.png?t=${timestamp}` 
+                    : `icons/pastores.jpg?t=${timestamp}`;
+                previewImg.src = newSrc;
+                previewImg.style.display = 'block';
             }
+
+            // Limpiar selección
+            clearImageSelection();
         } else {
             showToast(data.error || 'Error al subir imagen', 'error');
         }
@@ -145,7 +165,7 @@ async function uploadSpecificImage(type) {
         console.error('Error:', error);
         showToast('Error al subir la imagen', 'error');
     } finally {
-        uploadBtn.disabled = true;  // Se deshabilita hasta seleccionar nuevo archivo
-        uploadBtn.textContent = type === 'logo' ? 'Subir Logo' : type === 'icon' ? 'Subir Icono' : 'Subir Foto';
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Subir Imagen';
     }
 }
