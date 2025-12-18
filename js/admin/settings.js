@@ -124,24 +124,23 @@ async function loadMaxUpload() {
 }
 
 function updateServerTimeDisplay() {
-    const gmtSelect = document.getElementById('gmtSelect');
-    if (!gmtSelect) return;
+    const display = document.getElementById('serverTimeDisplay');
+    if (!display) return;
     
-    const gmtOffset = parseFloat(gmtSelect.value) || 0;
+    const gmtSelect = document.getElementById('gmtSelect');
+    const gmtOffset = gmtSelect ? (parseFloat(gmtSelect.value) || 0) : -5; // Default GMT-5 Colombia
+    
     const now = new Date();
     const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
     const serverTime = new Date(utc + (gmtOffset * 3600000));
     
-    const display = document.getElementById('serverTimeDisplay');
-    if (display) {
-        display.textContent = serverTime.toLocaleString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
+    display.textContent = serverTime.toLocaleString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 }
