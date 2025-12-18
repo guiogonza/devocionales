@@ -176,7 +176,7 @@ self.addEventListener('push', event => {
         };
         
         event.waitUntil(
-            self.registration.showNotification(data.title || 'Meditación Diaria', options)
+            self.registration.showNotification(data.title || 'Spiritfly', options)
         );
     }
 });

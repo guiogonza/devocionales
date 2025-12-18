@@ -452,7 +452,7 @@ async function shareDevotional() {
     const dateStr = formatDateForFile(currentDate);
     const shareUrl = `${window.location.origin}/?date=${dateStr}`;
     
-    const title = elements.devotionalTitle.textContent || 'Meditación Diaria';
+    const title = elements.devotionalTitle.textContent || 'Spiritfly';
     const verse = elements.verseReference.textContent || '';
     
     // Texto completo para compartir
@@ -462,7 +462,7 @@ async function shareDevotional() {
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'Meditación Diaria - RIO Iglesia',
+                title: 'Spiritfly',
                 text: shareText
             });
             console.log('Compartido correctamente');

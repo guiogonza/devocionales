@@ -1,7 +1,7 @@
 {
-    "name": "RIO Iglesia Cristiana - Meditación Diaria",
-    "short_name": "RIO Devocionales",
-    "description": "Aplicación de meditaciones y devocionales diarios con audio - RIO Iglesia Cristiana",
+    "name": "Spiritfly - Meditación Diaria",
+    "short_name": "Spiritfly",
+    "description": "Aplicación de meditaciones y devocionales diarios con audio",
     "start_url": "/",
     "id": "/",
     "display": "standalone",
