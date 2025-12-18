@@ -1029,15 +1029,15 @@ function showNotificationBanner() {
             }
         </style>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 24px;">­ƒöö</span>
+            <span style="font-size: 24px;">&#128276;</span>
             <div>
-                <strong>┬┐Activar notificaciones?</strong>
+                <strong>&#191;Activar notificaciones?</strong>
                 <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9;">Recibe recordatorios diarios del devocional</p>
             </div>
         </div>
         <div style="display: flex; gap: 10px;">
             <button id="notifAccept" style="flex: 1; background: white; color: #2D6A4F; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                S├¡, activar
+                Si, activar
             </button>
             <button id="notifDismiss" style="flex: 1; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;">
                 Ahora no
