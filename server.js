@@ -144,7 +144,17 @@ app.get('/icons/:icon', (req, res) => {
         };
         const contentType = mimeTypes[ext] || 'application/octet-stream';
         res.setHeader('Content-Type', contentType);
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+        
+        // Logo y pastores: no cachear para que se actualicen al subir nuevas
+        // Otros iconos PWA: cachear por 1 hora
+        const noCacheIcons = ['logo.png', 'pastores.jpg'];
+        if (noCacheIcons.includes(iconName)) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        } else {
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
         return fs.createReadStream(iconPath).pipe(res);
     }
     
