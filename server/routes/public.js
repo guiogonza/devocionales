@@ -6,6 +6,17 @@ const { getDevotionals, saveDevotionals, getConfig } = require('../storage');
 const { logActivity, logAudit } = require('../logs');
 const { requireAuth } = require('../auth');
 
+// Versión actual de la app (debe coincidir con APP_VERSION en app.js)
+const CURRENT_VERSION = '1.1.2';
+
+// GET /api/version - Versión actual de la app
+router.get('/version', (req, res) => {
+    res.json({
+        success: true,
+        version: CURRENT_VERSION
+    });
+});
+
 // Helper para obtener fecha según GMT configurado
 function getTodayGMT() {
     const config = getConfig();

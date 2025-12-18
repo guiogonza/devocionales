@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.1.1'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.2'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -14,10 +14,78 @@ if ('serviceWorker' in navigator) {
             console.log('Service Worker registrado');
             // Iniciar heartbeat si hay suscripción push
             initHeartbeat(registration);
+            // Verificar actualizaciones
+            checkForUpdates();
         })
         .catch(err => {
             console.log('Error registrando SW:', err);
         });
+}
+
+// Verificar si hay nueva versión disponible
+async function checkForUpdates() {
+    try {
+        const response = await fetch('/api/version');
+        const data = await response.json();
+        if (data.version && data.version !== APP_VERSION) {
+            showUpdateBanner(data.version);
+        }
+    } catch (error) {
+        console.log('No se pudo verificar actualizaciones');
+    }
+}
+
+// Mostrar banner de actualización
+function showUpdateBanner(newVersion) {
+    // No mostrar si ya lo cerró en esta sesión
+    if (sessionStorage.getItem('updateDismissed')) return;
+    
+    const banner = document.createElement('div');
+    banner.id = 'updateBanner';
+    banner.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #2D6A4F, #40916C);
+        color: white;
+        padding: 12px 20px;
+        z-index: 10001;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    `;
+    banner.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">&#128640;</span>
+            <span>Nueva version ${newVersion} disponible</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="updateNow" style="background: white; color: #2D6A4F; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                Actualizar
+            </button>
+            <button id="updateLater" style="background: transparent; color: white; border: 1px solid white; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+                &#10005;
+            </button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+    
+    document.getElementById('updateNow').addEventListener('click', () => {
+        // Limpiar cache del SW y recargar
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+        }
+        window.location.reload(true);
+    });
+    
+    document.getElementById('updateLater').addEventListener('click', () => {
+        banner.remove();
+        sessionStorage.setItem('updateDismissed', 'true');
+    });
 }
 
 // Heartbeat para mantener estado online del dispositivo
