@@ -74,9 +74,9 @@ function handleImageFile(file) {
         return;
     }
 
-    // Validar tamaño (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('La imagen no puede superar 5MB', 'error');
+    // Validar tamaño (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('La imagen no puede superar 10MB', 'error');
         return;
     }
 
@@ -139,18 +139,28 @@ async function uploadImage() {
         if (data.success) {
             const typeNames = {
                 logo: 'Logo',
+                icon: 'Icono PWA',
                 pastores: 'Foto de Pastores'
             };
             showToast(`${typeNames[selectedImageType]} subido correctamente`, 'success');
 
             // Refrescar preview actual con cache-bust
             const timestamp = Date.now();
-            const previewId = selectedImageType === 'logo' ? 'currentLogoPreview' : 'currentPastoresPreview';
+            let previewId, newSrc;
+            
+            if (selectedImageType === 'logo') {
+                previewId = 'currentLogoPreview';
+                newSrc = `icons/logo.png?t=${timestamp}`;
+            } else if (selectedImageType === 'icon') {
+                previewId = 'currentIconPreview';
+                newSrc = `icons/icon-192.png?t=${timestamp}`;
+            } else {
+                previewId = 'currentPastoresPreview';
+                newSrc = `icons/pastores.jpg?t=${timestamp}`;
+            }
+            
             const previewImg = document.getElementById(previewId);
             if (previewImg) {
-                const newSrc = selectedImageType === 'logo' 
-                    ? `icons/logo.png?t=${timestamp}` 
-                    : `icons/pastores.jpg?t=${timestamp}`;
                 previewImg.src = newSrc;
                 previewImg.style.display = 'block';
             }

@@ -1431,6 +1431,11 @@
                             <img src="icons/logo.png" class="current-image-preview" id="currentLogoPreview" onerror="this.style.display='none'">
                         </label>
                         <label class="image-type-option">
+                            <input type="radio" name="imageType" value="icon">
+                            <div>&#128276; Icono PWA</div>
+                            <img src="icons/icon-192.png" class="current-image-preview" id="currentIconPreview" onerror="this.style.display='none'">
+                        </label>
+                        <label class="image-type-option">
                             <input type="radio" name="imageType" value="pastores">
                             <div>&#128101; Foto Pastores</div>
                             <img src="icons/pastores.jpg" class="current-image-preview" id="currentPastoresPreview" onerror="this.style.display='none'">
@@ -1440,7 +1445,7 @@
                     <div class="image-upload-zone" id="imageUploadZone">
                         <div class="upload-icon">&#128247;</div>
                         <p class="upload-text">Arrastra una imagen o haz clic para seleccionar</p>
-                        <p class="upload-hint">PNG, JPG, WEBP - Maximo 5MB</p>
+                        <p class="upload-hint">PNG, JPG, WEBP - Maximo 10MB</p>
                     </div>
                     <input type="file" id="imageFileInput" style="display: none;" accept="image/png,image/jpeg,image/webp">
 
