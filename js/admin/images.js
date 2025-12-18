@@ -3,8 +3,7 @@
  * Selector de tipo (radio) + zona de upload unificada
  */
 
-let selectedImageFile = null;
-let selectedImageType = 'logo';
+// Variables globales están en config.js: selectedImageFile, selectedImageType
 
 function initImageUpload() {
     const uploadZone = document.getElementById('imageUploadZone');
