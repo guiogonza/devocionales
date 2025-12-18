@@ -80,15 +80,11 @@ router.post('/', requireAuth, (req, res) => {
                 const icon192Path = path.join(ICONS_DIR, 'icon-192.png');
                 const icon512Path = path.join(ICONS_DIR, 'icon-512.png');
                 
-                // Backup de iconos anteriores si existen
+                // Eliminar iconos anteriores si existen
                 if (fs.existsSync(icon192Path)) {
-                    const backup192 = path.join(ICONS_DIR, `icon-192_backup_${Date.now()}.png`);
-                    fs.copyFileSync(icon192Path, backup192);
                     fs.unlinkSync(icon192Path);
                 }
                 if (fs.existsSync(icon512Path)) {
-                    const backup512 = path.join(ICONS_DIR, `icon-512_backup_${Date.now()}.png`);
-                    fs.copyFileSync(icon512Path, backup512);
                     fs.unlinkSync(icon512Path);
                 }
                 
@@ -116,10 +112,8 @@ router.post('/', requireAuth, (req, res) => {
             const finalName = imageType === 'logo' ? 'logo.png' : 'pastores.jpg';
             const finalPath = path.join(ICONS_DIR, finalName);
         
-            // Hacer backup del archivo anterior si existe
+            // Eliminar archivo anterior si existe (sin backup)
             if (fs.existsSync(finalPath)) {
-                const backupPath = path.join(ICONS_DIR, `${imageType}_backup_${Date.now()}${ext}`);
-                fs.copyFileSync(finalPath, backupPath);
                 fs.unlinkSync(finalPath);
             }
             

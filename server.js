@@ -145,13 +145,13 @@ app.get('/icons/:icon', (req, res) => {
         const contentType = mimeTypes[ext] || 'application/octet-stream';
         res.setHeader('Content-Type', contentType);
         
-        // Logo y pastores: no cachear para que se actualicen al subir nuevas
-        // Otros iconos PWA: cachear por 1 hora
-        const noCacheIcons = ['logo.png', 'pastores.jpg'];
+        // Logo, pastores e iconos PWA editables: no cachear
+        const noCacheIcons = ['logo.png', 'pastores.jpg', 'icon-192.png', 'icon-512.png'];
         if (noCacheIcons.includes(iconName)) {
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
             res.setHeader('Pragma', 'no-cache');
             res.setHeader('Expires', '0');
+            res.setHeader('ETag', Date.now().toString()); // ETag único para cada request
         } else {
             res.setHeader('Cache-Control', 'public, max-age=3600');
         }
