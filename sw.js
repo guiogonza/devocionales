@@ -1,4 +1,4 @@
-const CACHE_NAME = 'devocionales-v34';
+const CACHE_NAME = 'devocionales-v35';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
 // Instalación del Service Worker
@@ -176,7 +176,7 @@ self.addEventListener('push', event => {
         };
         
         event.waitUntil(
-            self.registration.showNotification(data.title || 'Spiritfly', options)
+            self.registration.showNotification(data.title || 'SpiritFly', options)
         );
     }
 });

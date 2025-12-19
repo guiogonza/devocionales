@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.1.2'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.3'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -452,7 +452,7 @@ async function shareDevotional() {
     const dateStr = formatDateForFile(currentDate);
     const shareUrl = `${window.location.origin}/?date=${dateStr}`;
     
-    const title = elements.devotionalTitle.textContent || 'Spiritfly';
+    const title = elements.devotionalTitle.textContent || 'SpiritFly';
     const verse = elements.verseReference.textContent || '';
     
     // Texto completo para compartir
@@ -462,7 +462,7 @@ async function shareDevotional() {
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'Spiritfly',
+                title: 'SpiritFly',
                 text: shareText
             });
             console.log('Compartido correctamente');
@@ -1191,15 +1191,32 @@ function urlBase64ToUint8Array(base64String) {
 document.addEventListener('DOMContentLoaded', initApp);
 
 // Manejar instalación de PWA
-// Manejar instalación de PWA
 let deferredPrompt = null;
 
-// Verificar si la app ya está instalada
+// Verificar si la app ya está instalada (solo modos nativos, sin localStorage)
 function isAppInstalled() {
+    // Modo standalone (Android/Desktop PWA)
     if (window.matchMedia('(display-mode: standalone)').matches) return true;
+    // iOS Safari PWA
     if (window.navigator.standalone === true) return true;
-    if (localStorage.getItem('appInstalled') === 'true') return true;
+    // NO usar localStorage como indicador - puede dar falsos positivos
     return false;
+}
+
+// Verificar si el banner fue cerrado recientemente (expira en 7 días)
+function isInstallBannerDismissed() {
+    const dismissed = localStorage.getItem('installBannerDismissed');
+    if (!dismissed) return false;
+    
+    const dismissedTime = parseInt(dismissed);
+    const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+    
+    // Si pasaron más de 7 días, permitir mostrar de nuevo
+    if (daysSinceDismissed > 7) {
+        localStorage.removeItem('installBannerDismissed');
+        return false;
+    }
+    return true;
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -1220,7 +1237,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 function showInstallBanner() {
     if (isAppInstalled()) return;
-    if (localStorage.getItem('installBannerDismissed')) return;
+    if (isInstallBannerDismissed()) return;
     if (document.querySelector('.install-banner')) return;
 
     const banner = document.createElement('div');
@@ -1279,7 +1296,8 @@ function showInstallBanner() {
 
     dismissBtn.addEventListener('click', () => {
         banner.remove();
-        localStorage.setItem('installBannerDismissed', 'true');
+        // Guardar timestamp para que expire en 7 días
+        localStorage.setItem('installBannerDismissed', Date.now().toString());
     });
 }
 
