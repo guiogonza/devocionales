@@ -22,12 +22,26 @@ if ('serviceWorker' in navigator) {
         });
 }
 
+// Comparar versiones semánticas (retorna 1 si a > b, -1 si a < b, 0 si iguales)
+function compareVersions(a, b) {
+    const partsA = a.split('.').map(Number);
+    const partsB = b.split('.').map(Number);
+    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+        const numA = partsA[i] || 0;
+        const numB = partsB[i] || 0;
+        if (numA > numB) return 1;
+        if (numA < numB) return -1;
+    }
+    return 0;
+}
+
 // Verificar si hay nueva versión disponible
 async function checkForUpdates() {
     try {
         const response = await fetch('/api/version');
         const data = await response.json();
-        if (data.version && data.version !== APP_VERSION) {
+        // Solo mostrar banner si la versión del servidor es MAYOR que la local
+        if (data.version && compareVersions(data.version, APP_VERSION) > 0) {
             showUpdateBanner(data.version);
         }
     } catch (error) {
