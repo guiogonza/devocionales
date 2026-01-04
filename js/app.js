@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.1.3'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.4'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -86,13 +86,20 @@ function showUpdateBanner(newVersion) {
     `;
     document.body.appendChild(banner);
     
-    document.getElementById('updateNow').addEventListener('click', () => {
-        // Limpiar cache del SW y recargar
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-            });
+    document.getElementById('updateNow').addEventListener('click', async () => {
+        // 1. Desregistrar Service Worker
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
         }
+        // 2. Limpiar todos los caches
+        if ('caches' in window) {
+            const names = await caches.keys();
+            await Promise.all(names.map(name => caches.delete(name)));
+        }
+        // 3. Recargar forzando desde el servidor
         window.location.reload(true);
     });
     

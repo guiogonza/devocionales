@@ -436,6 +436,7 @@
         let currentPlayingDate = null;
         let isPlaying = false;
         let devotionalsCache = {};
+        let downloadedAudiosByDate = {};
         const audioPlayer = document.getElementById('audioPlayer');
         const miniPlayer = document.getElementById('miniPlayer');
         const miniPlayBtn = document.getElementById('miniPlayBtn');
@@ -509,6 +510,7 @@
             await OfflineStorage.init();
             
             const audios = await OfflineStorage.getAllAudios();
+            downloadedAudiosByDate = Object.fromEntries(audios.map(a => [a.date, a]));
             const downloadsList = document.getElementById('downloadsList');
             const emptyState = document.getElementById('emptyState');
             const clearAllBtn = document.getElementById('clearAllBtn');
@@ -638,94 +640,98 @@
             updatePlayButtons();
         }
 
-                // Compartir audio (enviar archivo MP3 + imagen)
-        async function shareAudio(date, title, verse) {
-            const audio = await OfflineStorage.getAudio(date);
-            if (!audio) {
-                showToast('Audio no encontrado');
+        // Compartir audio (enviar archivo MP3)
+        // Nota: para que el selector de apps se abra en móviles, `navigator.share()`
+        // debe llamarse dentro del gesto del usuario (sin awaits previos).
+        function shareAudio(date, title, verse) {
+            const audio = downloadedAudiosByDate?.[date] || null;
+            if (!audio?.blob) {
+                showToast('Audio no encontrado. Recarga la página e inténtalo de nuevo.');
                 return;
             }
 
-            // Obtener info completa del devocional para el texto del versiculo
-            const info = await getDevotionalInfo(date);
-            const verseText = info?.text || '';
+            function triggerBlobDownload(blob, filename) {
+                try {
+                    const url = OfflineStorage.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => OfflineStorage.revokeObjectURL(url), 0);
+                } catch (e) {
+                    console.warn('No se pudo disparar descarga automática:', e);
+                }
+            }
 
-            // Formatear fecha para el nombre del archivo
             const dateFormatted = formatDate(date);
             const shareUrl = `${window.location.origin}/?date=${date}`;
-            const shareText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:`;
-            
-            const filename = `RIO_${title.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, '').replace(/\s+/g, '_')}_${date}.mp3`;
-            const audioFile = new File([audio.blob], filename, { type: 'audio/mpeg' });
+            const shareText = `🙏 ${title}\n📅 ${dateFormatted}\n📖 ${verse}\n\n🎧 Escucha el devocional:\n${shareUrl}`;
 
-            // Generar imagen para compartir
-            let imageFile = null;
+            const filename = `Devocional_${date}.mp3`;
+            const mimeType = audio.blob.type || 'audio/mpeg';
+            let audioFile = null;
             try {
-                if (typeof generateShareImage === 'function') {
-                    const imageBlob = await generateShareImage(title, verse, verseText, dateFormatted);
-                    const imageName = `RIO_${date}_devocional.png`;
-                    imageFile = new File([imageBlob], imageName, { type: 'image/png' });
+                if (typeof File !== 'undefined') {
+                    audioFile = new File([audio.blob], filename, { type: mimeType });
                 }
+            } catch (e) {
+                audioFile = null;
+            }
+
+            if (!navigator.share) {
+                copyToClipboard(shareText);
+                return;
+            }
+
+            // Web Share requiere contexto seguro (HTTPS o localhost).
+            if (!window.isSecureContext) {
+                showToast('Compartir requiere HTTPS. Copié el enlace al portapapeles.');
+                copyToClipboard(shareText);
+                return;
+            }
+
+            // Si el navegador declara que NO puede compartir archivos, avisa.
+            // (en iOS/Safari suele no soportar compartir MP3 como archivo).
+            if (audioFile) {
+                try {
+                    if (navigator.canShare && !navigator.canShare({ files: [audioFile] })) {
+                        showToast('Tu navegador no permite compartir el MP3. Lo guardaré para que lo compartas desde Archivos/Descargas.');
+                        triggerBlobDownload(audio.blob, filename);
+                        navigator.share({ title: title, text: shareText }).catch(() => copyToClipboard(shareText));
+                        return;
+                    }
+                } catch (e) {
+                    // Algunos navegadores tienen canShare pero fallan con ciertos tipos.
+                }
+            }
+
+            // Intento principal: compartir archivo (si tenemos File)
+            try {
+                const sharePayload = audioFile
+                    ? { title: title, text: shareText, files: [audioFile] }
+                    : { title: title, text: shareText };
+
+                navigator.share(sharePayload).catch((error) => {
+                    if (error?.name === 'AbortError') return;
+
+                    // Si el navegador no aceptó files, ayudamos al usuario guardando el MP3.
+                    if (audioFile) {
+                        showToast('No se pudo compartir el MP3 desde el navegador. Lo guardaré para compartirlo manualmente.');
+                        triggerBlobDownload(audio.blob, filename);
+                    }
+
+                    navigator.share({ title: title, text: shareText }).catch(() => copyToClipboard(shareText));
+                });
             } catch (error) {
-                console.warn('No se pudo generar la imagen:', error);
-            }
-
-            // Intentar compartir en orden de preferencia
-            // 1. Imagen + MP3
-            // 2. Solo imagen + link
-            // 3. Solo texto + link
-            // 4. Copiar al portapapeles
-            
-            const filesToShare = imageFile ? [imageFile, audioFile] : [audioFile];
-
-            // Intento 1: Imagen + MP3
-            if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
-                try {
-                    await navigator.share({
-                        title: title,
-                        text: shareText,
-                        files: filesToShare
-                    });
-                    return;
-                } catch (error) {
-                    if (error.name === 'AbortError') return;
-                    console.warn('Error compartiendo archivos:', error);
+                // Fallback defensivo
+                if (audioFile) {
+                    triggerBlobDownload(audio.blob, filename);
                 }
+                navigator.share({ title: title, text: shareText }).catch(() => copyToClipboard(shareText));
             }
-            
-            // Intento 2: Solo imagen + link
-            if (imageFile && navigator.canShare && navigator.canShare({ files: [imageFile] })) {
-                try {
-                    await navigator.share({
-                        title: title,
-                        text: shareText,
-                        url: shareUrl,
-                        files: [imageFile]
-                    });
-                    return;
-                } catch (error) {
-                    if (error.name === 'AbortError') return;
-                    console.warn('Error compartiendo imagen:', error);
-                }
-            }
-            
-            // Intento 3: Solo texto + link (sin archivos)
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'SpiritFly',
-                        text: shareText,
-                        url: shareUrl
-                    });
-                    return;
-                } catch (error) {
-                    if (error.name === 'AbortError') return;
-                    console.warn('Error compartiendo link:', error);
-                }
-            }
-            
-            // Intento 4: Copiar al portapapeles
-            copyToClipboard(`${shareText}\n${shareUrl}`);
         }
 
         // Compartir alternativo con enlace

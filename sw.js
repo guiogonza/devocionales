@@ -1,4 +1,4 @@
-const CACHE_NAME = 'devocionales-v36';
+const CACHE_NAME = 'devocionales-v40';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
 // Instalación del Service Worker
@@ -57,6 +57,12 @@ self.addEventListener('fetch', event => {
     // NUNCA cachear logo.png, pastores.jpg, icon-192.png, icon-512.png - siempre ir a la red
     const noCacheImages = ['logo.png', 'pastores.jpg', 'icon-192.png', 'icon-512.png'];
     if (noCacheImages.some(img => url.pathname.includes(img))) {
+        event.respondWith(fetch(request));
+        return;
+    }
+    
+    // NUNCA cachear downloads.html - siempre ir a la red para actualizaciones
+    if (url.pathname.includes('downloads.html')) {
         event.respondWith(fetch(request));
         return;
     }
