@@ -7,7 +7,7 @@ const { logActivity, logAudit } = require('../logs');
 const { requireAuth } = require('../auth');
 
 // Versión actual de la app (debe coincidir con APP_VERSION en app.js)
-const CURRENT_VERSION = '1.1.4';
+const CURRENT_VERSION = '1.1.5';
 
 // GET /api/version - Versión actual de la app
 router.get('/version', (req, res) => {

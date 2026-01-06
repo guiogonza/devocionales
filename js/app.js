@@ -5,7 +5,7 @@ const APP_CONFIG = {
     appUrl: window.location.origin + window.location.pathname
 };
 
-const APP_VERSION = '1.1.4'; // Cambia este valor en cada actualización
+const APP_VERSION = '1.1.5'; // Cambia este valor en cada actualización
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
@@ -1329,45 +1329,108 @@ window.addEventListener('appinstalled', () => {
     const banner = document.querySelector('.install-banner');
     if (banner) banner.remove();
 });
-function checkiOSInstallPrompt() {
-    // Detectar si es iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    // Detectar si es Safari
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    // Detectar si ya est├í instalada como PWA
-    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+// Detectar plataforma Safari
+function getSafariPlatform() {
+    const ua = navigator.userAgent;
     
-    // Si es iOS Safari y no est├í instalada
-    if (isIOS && isSafari && !isStandalone) {
-        // Verificar si el usuario ya cerr├│ el banner
-        const dismissed = localStorage.getItem('iosInstallBannerDismissed');
-        const dismissedTime = dismissed ? parseInt(dismissed) : 0;
-        const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-        
-        // Mostrar banner si nunca se cerr├│ o pasaron m├ís de 7 d├¡as
-        if (!dismissed || daysSinceDismissed > 7) {
-            setTimeout(() => {
-                const banner = document.getElementById('iosInstallBanner');
-                if (banner) {
-                    banner.style.display = 'block';
-                }
-            }, 2000); // Mostrar despu├®s de 2 segundos
-        }
+    // iOS (iPhone, iPad, iPod)
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    
+    // Safari en cualquier plataforma (excluyendo Chrome, Firefox, Edge, etc.)
+    const isSafari = /^((?!chrome|android|crios|fxios|edgios|opr).)*safari/i.test(ua);
+    
+    // macOS Safari (no iOS)
+    const isMacOS = /Macintosh|Mac OS X/.test(ua) && !isIOS;
+    
+    if (isIOS && isSafari) return 'ios';
+    if (isMacOS && isSafari) return 'macos';
+    return null;
+}
+
+function checkSafariInstallPrompt() {
+    const safariPlatform = getSafariPlatform();
+    
+    // Si no es Safari, salir
+    if (!safariPlatform) return;
+    
+    // Verificar si ya está instalada como PWA
+    const isStandalone = window.navigator.standalone === true || 
+                         window.matchMedia('(display-mode: standalone)').matches;
+    
+    if (isStandalone) return;
+    
+    // Verificar si el usuario ya cerró el banner
+    const dismissed = localStorage.getItem('safariInstallBannerDismissed');
+    const dismissedTime = dismissed ? parseInt(dismissed) : 0;
+    const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+    
+    // Mostrar banner si nunca se cerró o pasaron más de 7 días
+    if (!dismissed || daysSinceDismissed > 7) {
+        setTimeout(() => {
+            showSafariInstallBanner(safariPlatform);
+        }, 2000);
     }
 }
 
-// Cerrar banner de iOS
+function showSafariInstallBanner(platform) {
+    // Remover banner existente si hay
+    const existingBanner = document.getElementById('safariInstallBanner');
+    if (existingBanner) existingBanner.remove();
+    
+    const banner = document.createElement('div');
+    banner.id = 'safariInstallBanner';
+    banner.className = 'ios-install-banner';
+    banner.style.display = 'block';
+    
+    let instructions = '';
+    if (platform === 'ios') {
+        instructions = `
+            <span>Toca <span class="ios-share-icon">⬆</span> y luego <strong>"Agregar a Inicio"</strong></span>
+        `;
+    } else if (platform === 'macos') {
+        instructions = `
+            <span>Ve a <strong>Archivo → Agregar al Dock</strong> o usa <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>D</kbd></span>
+        `;
+    }
+    
+    banner.innerHTML = `
+        <div class="ios-install-content">
+            <img src="icons/logo.png" alt="SpiritFly" class="ios-install-icon">
+            <div class="ios-install-text">
+                <strong>Instalar SpiritFly</strong>
+                ${instructions}
+            </div>
+            <button class="ios-install-close" id="safariInstallClose">×</button>
+        </div>
+    `;
+    
+    document.body.appendChild(banner);
+    
+    document.getElementById('safariInstallClose').addEventListener('click', () => {
+        banner.remove();
+        localStorage.setItem('safariInstallBannerDismissed', Date.now().toString());
+    });
+}
+
+// Alias para compatibilidad
+function checkiOSInstallPrompt() {
+    checkSafariInstallPrompt();
+}
+
+// Inicializar detección de Safari para instalación
 document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('iosInstallClose');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+    // Compatibilidad con banner HTML antiguo si existe
+    const oldCloseBtn = document.getElementById('iosInstallClose');
+    if (oldCloseBtn) {
+        oldCloseBtn.addEventListener('click', () => {
             const banner = document.getElementById('iosInstallBanner');
             if (banner) {
                 banner.style.display = 'none';
-                localStorage.setItem('iosInstallBannerDismissed', Date.now().toString());
+                localStorage.setItem('safariInstallBannerDismissed', Date.now().toString());
             }
         });
     }
     
-    checkiOSInstallPrompt();
+    // Verificar si es Safari y mostrar banner de instalación
+    checkSafariInstallPrompt();
 });

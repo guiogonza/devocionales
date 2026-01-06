@@ -74,6 +74,17 @@
     font-weight: bold;
 }
 
+.ios-install-text kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 #bbb;
+}
+
 .ios-install-close {
     background: #f0f0f0;
     border: none;
