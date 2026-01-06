@@ -93,7 +93,11 @@ function showAdminPanel() {
     loadAudiosFromServer();
     loadSubscriberCount();
     loadDevicesList().then(() => {
+        console.log('Dispositivos cargados, inicializando gráficas...');
         initCharts();
+    }).catch(err => {
+        console.error('Error cargando dispositivos:', err);
+        initCharts(); // Intentar inicializar de todas formas para las fechas
     });
     loadTimezone();
     loadMaxUpload();
