@@ -451,10 +451,10 @@ function initCharts() {
         return;
     }
     
-    // Configurar filtros de fecha (últimos 12 meses por defecto)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 12);
+    // Configurar filtros de fecha (mes actual por defecto)
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
     document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
     document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
@@ -508,9 +508,9 @@ function applyChartFilters() {
 }
 
 function resetChartFilters() {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 12);
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
     document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
     document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
