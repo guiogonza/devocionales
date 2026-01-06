@@ -438,8 +438,10 @@ function initCharts() {
         chartDateEnd.value = endDate.toISOString().split('T')[0];
     }
     
-    // Poblar select de países
+    // Poblar selects de filtros
     populateChartCountryFilter();
+    populateChartCityFilter();
+    populateChartOSFilter();
     
     // Verificar que Chart.js esté disponible
     if (typeof Chart === 'undefined') {
@@ -476,16 +478,38 @@ function populateChartCountryFilter() {
     const select = document.getElementById('chartCountryFilter');
     if (!select) return;
     
-    const countries = [...new Set(allDevices.map(d => d.country || 'Desconocido'))].sort();
+    const countries = [...new Set(allDevices.map(d => d.country || 'Desconocido'))].sort((a, b) => a.localeCompare(b, 'es', {sensitivity: 'base'}));
     
     select.innerHTML = '<option value="">Todos los países</option>' + 
         countries.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function populateChartCityFilter() {
+    const select = document.getElementById('chartCityFilter');
+    if (!select) return;
+    
+    const cities = [...new Set(allDevices.map(d => d.city || 'Desconocida'))].sort((a, b) => a.localeCompare(b, 'es', {sensitivity: 'base'}));
+    
+    select.innerHTML = '<option value="">Todas las ciudades</option>' + 
+        cities.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function populateChartOSFilter() {
+    const select = document.getElementById('chartOSFilter');
+    if (!select) return;
+    
+    const osList = [...new Set(allDevices.map(d => d.os || 'Desconocido'))].sort((a, b) => a.localeCompare(b, 'es', {sensitivity: 'base'}));
+    
+    select.innerHTML = '<option value="">Todos los SO</option>' + 
+        osList.map(os => `<option value="${os}">${os}</option>`).join('');
 }
 
 function getFilteredDevices() {
     const startDate = document.getElementById('chartDateStart').value;
     const endDate = document.getElementById('chartDateEnd').value;
     const country = document.getElementById('chartCountryFilter').value;
+    const city = document.getElementById('chartCityFilter')?.value || '';
+    const os = document.getElementById('chartOSFilter')?.value || '';
     
     let filtered = [...allDevices];
     
@@ -504,6 +528,14 @@ function getFilteredDevices() {
         filtered = filtered.filter(d => (d.country || 'Desconocido') === country);
     }
     
+    if (city) {
+        filtered = filtered.filter(d => (d.city || 'Desconocida') === city);
+    }
+    
+    if (os) {
+        filtered = filtered.filter(d => (d.os || 'Desconocido') === os);
+    }
+    
     return filtered;
 }
 
@@ -520,6 +552,8 @@ function resetChartFilters() {
     document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
     document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
     document.getElementById('chartCountryFilter').value = '';
+    if (document.getElementById('chartCityFilter')) document.getElementById('chartCityFilter').value = '';
+    if (document.getElementById('chartOSFilter')) document.getElementById('chartOSFilter').value = '';
     
     renderAllCharts(allDevices);
 }
