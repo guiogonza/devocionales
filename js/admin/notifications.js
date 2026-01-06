@@ -727,3 +727,7 @@ function initNotificationsSection() {
     });
     updateSendTarget();
 }
+
+// Exponer funciones globalmente para onclick en HTML
+window.applyChartFilters = applyChartFilters;
+window.resetChartFilters = resetChartFilters;
