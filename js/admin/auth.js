@@ -92,7 +92,9 @@ function showAdminPanel() {
     document.getElementById('appLayout').classList.add('active');
     loadAudiosFromServer();
     loadSubscriberCount();
-    loadDevicesList();
+    loadDevicesList().then(() => {
+        initCharts();
+    });
     loadTimezone();
     loadMaxUpload();
     loadBibleBooks();
