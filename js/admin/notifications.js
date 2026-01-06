@@ -423,7 +423,33 @@ let devicesStatusChart = null;
 let devicesByOSChart = null;
 
 function initCharts() {
-    if (allDevices.length === 0) return;
+    console.log('initCharts llamado, dispositivos:', allDevices.length);
+    
+    // Verificar que Chart.js esté disponible
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js no está cargado');
+        return;
+    }
+    
+    // Verificar elementos del DOM
+    const chartElements = [
+        'devicesPerMonthChart',
+        'devicesByCountryChart', 
+        'devicesStatusChart',
+        'devicesByOSChart'
+    ];
+    
+    for (const id of chartElements) {
+        if (!document.getElementById(id)) {
+            console.log('Elemento no encontrado:', id, '- posiblemente no estamos en la sección de notificaciones');
+            return;
+        }
+    }
+    
+    if (allDevices.length === 0) {
+        console.log('No hay dispositivos para mostrar en gráficas');
+        return;
+    }
     
     // Configurar filtros de fecha (últimos 12 meses por defecto)
     const endDate = new Date();
@@ -437,6 +463,7 @@ function initCharts() {
     populateChartCountryFilter();
     
     // Renderizar gráficas
+    console.log('Renderizando gráficas con', allDevices.length, 'dispositivos');
     renderAllCharts(allDevices);
 }
 
@@ -493,15 +520,24 @@ function resetChartFilters() {
 }
 
 function renderAllCharts(devices) {
-    renderDevicesPerMonthChart(devices);
-    renderDevicesByCountryChart(devices);
-    renderDevicesStatusChart(devices);
-    renderDevicesByOSChart(devices);
+    console.log('renderAllCharts:', devices.length, 'dispositivos');
+    try {
+        renderDevicesPerMonthChart(devices);
+        renderDevicesByCountryChart(devices);
+        renderDevicesStatusChart(devices);
+        renderDevicesByOSChart(devices);
+        console.log('Todas las gráficas renderizadas correctamente');
+    } catch (error) {
+        console.error('Error renderizando gráficas:', error);
+    }
 }
 
 function renderDevicesPerMonthChart(devices) {
     const ctx = document.getElementById('devicesPerMonthChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.log('Canvas devicesPerMonthChart no encontrado');
+        return;
+    }
     
     // Destruir gráfica anterior si existe
     if (devicesPerMonthChart) {
