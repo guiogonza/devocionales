@@ -1234,6 +1234,26 @@
             color: var(--primary-color);
             font-weight: 500;
         }
+
+        /* Chart containers - fix overflow */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+        
+        .chart-container canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -1671,33 +1691,33 @@
                     <!-- Gráficas -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                         <!-- Gráfica de línea: Dispositivos por mes -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); min-height: 300px;">
+                        <div class="chart-card">
                             <h4 style="margin-bottom: 15px; color: var(--text-primary);">📈 Dispositivos Registrados por Mes</h4>
-                            <div style="position: relative; height: 250px;">
+                            <div class="chart-container">
                                 <canvas id="devicesPerMonthChart"></canvas>
                             </div>
                         </div>
                         
                         <!-- Gráfica de barras: Dispositivos por país -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); min-height: 300px;">
+                        <div class="chart-card">
                             <h4 style="margin-bottom: 15px; color: var(--text-primary);">🌍 Dispositivos por País</h4>
-                            <div style="position: relative; height: 250px;">
+                            <div class="chart-container">
                                 <canvas id="devicesByCountryChart"></canvas>
                             </div>
                         </div>
                         
                         <!-- Gráfica de barras: Online vs Offline -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); min-height: 300px;">
+                        <div class="chart-card">
                             <h4 style="margin-bottom: 15px; color: var(--text-primary);">🟢 Estado de Dispositivos</h4>
-                            <div style="position: relative; height: 250px;">
+                            <div class="chart-container">
                                 <canvas id="devicesStatusChart"></canvas>
                             </div>
                         </div>
                         
                         <!-- Gráfica de barras: Por Sistema Operativo -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); min-height: 300px;">
+                        <div class="chart-card">
                             <h4 style="margin-bottom: 15px; color: var(--text-primary);">💻 Dispositivos por Sistema Operativo</h4>
-                            <div style="position: relative; height: 250px;">
+                            <div class="chart-container">
                                 <canvas id="devicesByOSChart"></canvas>
                             </div>
                         </div>
