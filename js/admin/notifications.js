@@ -425,6 +425,22 @@ let devicesByOSChart = null;
 function initCharts() {
     console.log('initCharts llamado, dispositivos:', allDevices.length);
     
+    // Configurar filtros de fecha (mes actual por defecto) - siempre establecer
+    const chartDateStart = document.getElementById('chartDateStart');
+    const chartDateEnd = document.getElementById('chartDateEnd');
+    
+    if (chartDateStart && chartDateEnd) {
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        chartDateStart.value = startDate.toISOString().split('T')[0];
+        chartDateEnd.value = endDate.toISOString().split('T')[0];
+    }
+    
+    // Poblar select de países
+    populateChartCountryFilter();
+    
     // Verificar que Chart.js esté disponible
     if (typeof Chart === 'undefined') {
         console.error('Chart.js no está cargado');
@@ -450,17 +466,6 @@ function initCharts() {
         console.log('No hay dispositivos para mostrar en gráficas');
         return;
     }
-    
-    // Configurar filtros de fecha (mes actual por defecto)
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    
-    document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
-    document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
-    
-    // Poblar select de países
-    populateChartCountryFilter();
     
     // Renderizar gráficas
     console.log('Renderizando gráficas con', allDevices.length, 'dispositivos');
