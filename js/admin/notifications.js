@@ -33,10 +33,12 @@ async function loadDevicesList() {
             populateCountrySelect(allDevices);
             populateOSSelect(allDevices);
             populateDeviceSelect(allDevices);
+            return allDevices;
         }
     } catch (error) {
         console.error('Error:', error);
     }
+    return [];
 }
 
 function renderCountrySummary(devices) {
@@ -411,9 +413,317 @@ async function sendNotificationWithTarget(target, targetValue, title, body) {
     }
 }
 
+// ==========================================
+// GRÁFICAS DE DISPOSITIVOS
+// ==========================================
+
+let devicesPerMonthChart = null;
+let devicesByCountryChart = null;
+let devicesStatusChart = null;
+let devicesByOSChart = null;
+
+function initCharts() {
+    if (allDevices.length === 0) return;
+    
+    // Configurar filtros de fecha (últimos 12 meses por defecto)
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 12);
+    
+    document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
+    document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
+    
+    // Poblar select de países
+    populateChartCountryFilter();
+    
+    // Renderizar gráficas
+    renderAllCharts(allDevices);
+}
+
+function populateChartCountryFilter() {
+    const select = document.getElementById('chartCountryFilter');
+    if (!select) return;
+    
+    const countries = [...new Set(allDevices.map(d => d.country || 'Desconocido'))].sort();
+    
+    select.innerHTML = '<option value="">Todos los países</option>' + 
+        countries.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function getFilteredDevices() {
+    const startDate = document.getElementById('chartDateStart').value;
+    const endDate = document.getElementById('chartDateEnd').value;
+    const country = document.getElementById('chartCountryFilter').value;
+    
+    let filtered = [...allDevices];
+    
+    if (startDate) {
+        const start = new Date(startDate);
+        filtered = filtered.filter(d => new Date(d.createdAt) >= start);
+    }
+    
+    if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(d => new Date(d.createdAt) <= end);
+    }
+    
+    if (country) {
+        filtered = filtered.filter(d => (d.country || 'Desconocido') === country);
+    }
+    
+    return filtered;
+}
+
+function applyChartFilters() {
+    const filtered = getFilteredDevices();
+    renderAllCharts(filtered);
+}
+
+function resetChartFilters() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 12);
+    
+    document.getElementById('chartDateStart').value = startDate.toISOString().split('T')[0];
+    document.getElementById('chartDateEnd').value = endDate.toISOString().split('T')[0];
+    document.getElementById('chartCountryFilter').value = '';
+    
+    renderAllCharts(allDevices);
+}
+
+function renderAllCharts(devices) {
+    renderDevicesPerMonthChart(devices);
+    renderDevicesByCountryChart(devices);
+    renderDevicesStatusChart(devices);
+    renderDevicesByOSChart(devices);
+}
+
+function renderDevicesPerMonthChart(devices) {
+    const ctx = document.getElementById('devicesPerMonthChart');
+    if (!ctx) return;
+    
+    // Destruir gráfica anterior si existe
+    if (devicesPerMonthChart) {
+        devicesPerMonthChart.destroy();
+    }
+    
+    // Agrupar por mes
+    const byMonth = {};
+    devices.forEach(d => {
+        const date = new Date(d.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        byMonth[monthKey] = (byMonth[monthKey] || 0) + 1;
+    });
+    
+    // Ordenar por fecha
+    const sortedMonths = Object.keys(byMonth).sort();
+    const labels = sortedMonths.map(m => {
+        const [year, month] = m.split('-');
+        const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        return `${monthNames[parseInt(month) - 1]} ${year}`;
+    });
+    const data = sortedMonths.map(m => byMonth[m]);
+    
+    // Calcular acumulado
+    let accumulated = 0;
+    const accumulatedData = data.map(v => accumulated += v);
+    
+    devicesPerMonthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Nuevos por mes',
+                    data: data,
+                    borderColor: '#7C3AED',
+                    backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Acumulado',
+                    data: accumulatedData,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: false,
+                    tension: 0.4,
+                    borderDash: [5, 5]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderDevicesByCountryChart(devices) {
+    const ctx = document.getElementById('devicesByCountryChart');
+    if (!ctx) return;
+    
+    if (devicesByCountryChart) {
+        devicesByCountryChart.destroy();
+    }
+    
+    // Agrupar por país
+    const byCountry = {};
+    devices.forEach(d => {
+        const country = d.country || 'Desconocido';
+        byCountry[country] = (byCountry[country] || 0) + 1;
+    });
+    
+    // Ordenar por cantidad (top 10)
+    const sorted = Object.entries(byCountry)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    const labels = sorted.map(([c]) => c);
+    const data = sorted.map(([, v]) => v);
+    
+    // Colores para cada país
+    const colors = [
+        '#7C3AED', '#10B981', '#F59E0B', '#EF4444', '#3B82F6',
+        '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#6366F1'
+    ];
+    
+    devicesByCountryChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Dispositivos',
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderDevicesStatusChart(devices) {
+    const ctx = document.getElementById('devicesStatusChart');
+    if (!ctx) return;
+    
+    if (devicesStatusChart) {
+        devicesStatusChart.destroy();
+    }
+    
+    const online = devices.filter(d => d.isOnline).length;
+    const offline = devices.length - online;
+    
+    devicesStatusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['En línea', 'Desconectados'],
+            datasets: [{
+                data: [online, offline],
+                backgroundColor: ['#10B981', '#6B7280'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function renderDevicesByOSChart(devices) {
+    const ctx = document.getElementById('devicesByOSChart');
+    if (!ctx) return;
+    
+    if (devicesByOSChart) {
+        devicesByOSChart.destroy();
+    }
+    
+    // Agrupar por SO
+    const byOS = {};
+    devices.forEach(d => {
+        const os = d.os || 'Desconocido';
+        byOS[os] = (byOS[os] || 0) + 1;
+    });
+    
+    const sorted = Object.entries(byOS).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([os]) => os);
+    const data = sorted.map(([, v]) => v);
+    
+    const colors = ['#7C3AED', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899'];
+    
+    devicesByOSChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Dispositivos',
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Inicializar cuando se carga la seccion
 function initNotificationsSection() {
     loadSubscriberCount();
-    loadDevicesList();
+    loadDevicesList().then(() => {
+        initCharts();
+    });
     updateSendTarget();
 }
