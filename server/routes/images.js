@@ -152,6 +152,8 @@ router.get('/', requireAuth, (req, res) => {
     try {
         const images = [];
         const logoPath = path.join(ICONS_DIR, 'logo.png');
+        const icon192Path = path.join(ICONS_DIR, 'icon-192.png');
+        const icon512Path = path.join(ICONS_DIR, 'icon-512.png');
         const pastoresPath = path.join(ICONS_DIR, 'pastores.jpg');
         
         if (fs.existsSync(logoPath)) {
@@ -160,6 +162,29 @@ router.get('/', requireAuth, (req, res) => {
                 type: 'logo',
                 filename: 'logo.png',
                 path: '/icons/logo.png',
+                size: stats.size,
+                updatedAt: stats.mtime.toISOString()
+            });
+        }
+        
+        // Verificar iconos de la PWA
+        if (fs.existsSync(icon192Path)) {
+            const stats = fs.statSync(icon192Path);
+            images.push({
+                type: 'icon',
+                filename: 'icon-192.png',
+                path: '/icons/icon-192.png',
+                size: stats.size,
+                updatedAt: stats.mtime.toISOString()
+            });
+        }
+        
+        if (fs.existsSync(icon512Path)) {
+            const stats = fs.statSync(icon512Path);
+            images.push({
+                type: 'icon',
+                filename: 'icon-512.png',
+                path: '/icons/icon-512.png',
                 size: stats.size,
                 updatedAt: stats.mtime.toISOString()
             });
