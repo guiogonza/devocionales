@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2D6A4F">
+    <meta name="description" content="Descarga la app SpiritFly para Android">
+    <title>Descargar App - SpiritFly</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background: var(--background);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .page-header {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+        }
+
+        .page-header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Hero card */
+        .hero-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .app-icon {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
+            margin: 0 auto 1rem;
+            display: block;
+            box-shadow: 0 4px 12px rgba(45,106,79,0.3);
+        }
+
+        .app-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .app-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: rgba(45,106,79,0.1);
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(45,106,79,0.4);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .download-btn:active {
+            transform: scale(0.98);
+            background: var(--primary-dark);
+        }
+
+        .download-btn .icon {
+            font-size: 1.3rem;
+        }
+
+        .download-btn.unavailable {
+            background: #9CA3AF;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .file-info {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.8rem;
+        }
+
+        /* Steps card */
+        .steps-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .steps-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: flex-start;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-num {
+            background: var(--primary-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding-top: 0.25rem;
+        }
+
+        .step-text strong {
+            color: var(--text-primary);
+        }
+
+        /* Warning card */
+        .warning-card {
+            background: #FFF9E6;
+            border: 1px solid #F59E0B;
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .warning-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .warning-text {
+            font-size: 0.85rem;
+            color: #92400E;
+            line-height: 1.5;
+        }
+
+        /* Features */
+        .features-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .features-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .feature-list li {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: var(--primary-color);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="page-header">
+        <button class="back-btn" onclick="history.back()">&#8592;</button>
+        <h1>Descargar App</h1>
+    </header>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero-card">
+            <img src="icons/logo.png" alt="SpiritFly" class="app-icon" onerror="this.style.display='none'">
+            <div class="app-name">SpiritFly</div>
+            <div class="app-subtitle">Devocionales diarios para tu vida espiritual</div>
+            <div class="version-badge" id="versionBadge">Cargando...</div>
+
+            <a id="downloadBtn" class="download-btn" href="/apk/spiritfly.apk" download>
+                <span class="icon">&#11123;</span>
+                Descargar APK
+            </a>
+            <div class="file-info" id="fileInfo">Archivo APK para Android</div>
+        </div>
+
+        <!-- Advertencia -->
+        <div class="warning-card">
+            <span class="warning-icon">&#9888;&#65039;</span>
+            <p class="warning-text">
+                <strong>Importante:</strong> Esta es una instalación directa (fuera de Play Store).
+                Android pedirá permiso para instalar apps de fuentes desconocidas. Es seguro hacerlo.
+            </p>
+        </div>
+
+        <!-- Pasos para instalar -->
+        <div class="steps-card">
+            <div class="steps-title">&#128247; Cómo instalar</div>
+
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    Toca <strong>Descargar APK</strong> y espera que termine la descarga.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    Abre el archivo descargado desde las notificaciones o en <strong>Mis Archivos &gt; Descargas</strong>.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    Si aparece <strong>"Fuentes desconocidas"</strong>, toca <em>Configuración</em>, activa el permiso y regresa para continuar.
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-text">
+                    Toca <strong>Instalar</strong> y listo. Busca SpiritFly en tu pantalla de inicio.
+                </div>
+            </div>
+        </div>
+
+        <!-- Características -->
+        <div class="features-card">
+            <div class="features-title">&#10024; Lo que incluye la app</div>
+            <ul class="feature-list">
+                <li>Devocionales diarios con audio</li>
+                <li>Descarga audios para escuchar sin internet</li>
+                <li>Notificaciones del devocional del día</li>
+                <li>Reproduce directamente desde tu celular</li>
+                <li>Diseño rápido y ligero</li>
+            </ul>
+        </div>
+
+        <p class="footer-note">
+            Solo disponible para Android &middot; Requiere Android 7.0 o superior
+        </p>
+    </div>
+
+    <script>
+        async function checkApk() {
+            const btn = document.getElementById('downloadBtn');
+            const badge = document.getElementById('versionBadge');
+            const info = document.getElementById('fileInfo');
+
+            try {
+                const res = await fetch('/api/apk-info');
+                if (res.ok) {
+                    const data = await res.json();
+                    badge.textContent = `Versión ${data.version} · ${data.size}`;
+                    info.textContent = `APK · ${data.size} · Actualizado: ${data.updated}`;
+                    btn.classList.remove('unavailable');
+                    btn.removeAttribute('onclick');
+                } else {
+                    badge.textContent = 'APK no disponible aún';
+                    btn.classList.add('unavailable');
+                    btn.href = '#';
+                    btn.setAttribute('onclick', 'alert("El APK aún no ha sido subido. Vuelve pronto."); return false;');
+                    info.textContent = 'Próximamente disponible';
+                }
+            } catch (e) {
+                badge.textContent = 'Versión actual';
+                info.textContent = 'Archivo APK para Android';
+            }
+        }
+
+        checkApk();
+    </script>
+</body>
+</html>

@@ -92,8 +92,8 @@ async function handleAudioRequest(request) {
     try {
         const networkResponse = await fetch(request);
         
-        // Solo cachear si la respuesta es exitosa
-        if (networkResponse.ok) {
+        // Solo cachear si la respuesta es exitosa y completa (no 206 parcial)
+        if (networkResponse.ok && networkResponse.status === 200) {
             // Clonar la respuesta antes de cachear
             const responseClone = networkResponse.clone();
             cache.put(request, responseClone);

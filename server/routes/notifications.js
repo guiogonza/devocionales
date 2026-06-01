@@ -365,7 +365,8 @@ async function sendDailyDevotionalNotification() {
     }
     
     console.log(`Notificacion automatica enviada: ${successCount} exitosas, ${failCount} fallidas`);
-    
+
+
     const auditLogs = getAuditLogs();
     auditLogs.push({
         timestamp: new Date().toISOString(),

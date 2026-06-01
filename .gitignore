@@ -19,6 +19,7 @@ icons/logo_backup_*.png
 icons/pastores_backup_*.jpg
 
 # Datos persistentes (se gestionan en Docker volume)
+data/whatsapp-subscribers.json
 data/devotionals.json
 data/audit_log.json
 data/activity_log.json
@@ -28,11 +29,18 @@ data/security_logs.json
 data/devices.json
 data/subscriptions.json
 
+# Capacitor - Proyecto Android nativo (se regenera con `npx cap sync`)
+android/
+www/
+
 # Archivos de IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# APK binaries (se copian manualmente al server)
+apk/*.apk
 
 # Archivos temporales
 *.tmp

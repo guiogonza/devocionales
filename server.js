@@ -176,6 +176,28 @@ app.get('/icons/:icon', (req, res) => {
     res.status(404).json({ error: 'Icono no encontrado' });
 });
 
+// Servir APK con MIME type correcto
+app.get('/apk/:filename', (req, res) => {
+    const filename = path.basename(req.params.filename);
+    if (!filename.endsWith('.apk')) return res.status(400).json({ error: 'Archivo no válido' });
+    const apkPath = path.join(__dirname, 'apk', filename);
+    if (!fs.existsSync(apkPath)) return res.status(404).json({ error: 'APK no encontrado' });
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    fs.createReadStream(apkPath).pipe(res);
+});
+
+// Info del APK (versión, tamaño, fecha)
+app.get('/api/apk-info', (req, res) => {
+    const apkPath = path.join(__dirname, 'apk', 'spiritfly.apk');
+    if (!fs.existsSync(apkPath)) return res.status(404).json({ error: 'APK no disponible' });
+    const stat = fs.statSync(apkPath);
+    const sizeMB = (stat.size / (1024 * 1024)).toFixed(1);
+    const updated = stat.mtime.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    res.json({ version: '1.0', size: `${sizeMB} MB`, updated });
+});
+
 // Archivos estáticos
 app.use(express.static(__dirname));
 

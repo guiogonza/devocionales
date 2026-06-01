@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
 const { requireAuth } = require('../auth');
 const { AUDIOS_DIR } = require('../config');
 const { getDevotionals, saveDevotionals, getConfig } = require('../storage');
@@ -199,10 +201,48 @@ router.post('/', requireAuth, uploadMiddleware, (req, res) => {
         updatedAt: new Date().toISOString()
     };
     saveDevotionals(devotionalsDB);
-    
+
     logAudit('AUDIO_UPLOADED', { date, title, verseReference }, req);
     console.log('Audio subido:', date);
-    
+
+    // ── Notificar a rio_notificaciones para envío WhatsApp ──
+    const config = getConfig();
+    const gmtOffset = config.gmtOffset || 0;
+    const now = new Date();
+    const localTime = new Date(now.getTime() + (gmtOffset * 60 * 60 * 1000));
+    const todayStr = localTime.toISOString().split('T')[0];
+
+    if (date === todayStr) {
+        const rioHost = process.env.RIO_NOTIFICACIONES_HOST || 'localhost';
+        const rioPort = process.env.RIO_NOTIFICACIONES_PORT || '3020';
+        const appUrl  = process.env.APP_PUBLIC_URL || 'https://devocionales.rioiglesia.com';
+
+        const notifyBody = JSON.stringify({
+            date,
+            title: title || '',
+            url: `${appUrl}/?date=${date}`,
+            verseText: verseText || title || ''
+        });
+
+        const protocol = rioHost.startsWith('https') ? https : http;
+        const cleanHost = rioHost.replace(/^https?:\/\//, '');
+
+        const reqNotify = protocol.request({
+            hostname: cleanHost,
+            port: parseInt(rioPort),
+            path: '/api/notify-devotional',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(notifyBody) }
+        }, (r) => {
+            let data = '';
+            r.on('data', chunk => { data += chunk; });
+            r.on('end', () => console.log('[WhatsApp] Notificación enviada a rio_notificaciones:', data));
+        });
+        reqNotify.on('error', err => console.error('[WhatsApp] Error al notificar rio_notificaciones:', err.message));
+        reqNotify.write(notifyBody);
+        reqNotify.end();
+    }
+
     res.json({
         success: true,
         message: 'Audio subido correctamente',
