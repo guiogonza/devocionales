@@ -15,6 +15,8 @@ services:
       - ./data:/app/data
       # Montar carpeta de iconos para persistir logo e imagen de pastores
       - ./icons:/app/icons
+      # Montar carpeta de APKs para servir descargas
+      - ./apk:/app/apk
     environment:
       - NODE_ENV=production
       - PORT=3000
