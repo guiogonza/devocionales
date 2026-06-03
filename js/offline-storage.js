@@ -109,6 +109,37 @@ const OfflineStorage = {
         return audios.reduce((total, audio) => total + (audio.size || 0), 0);
     },
 
+    // Obtener resumen de almacenamiento interno del navegador/WebView
+    async getStorageSummary() {
+        const audios = await this.getAllAudios();
+        const audioBytes = audios.reduce((total, audio) => total + (audio.size || 0), 0);
+        let estimate = null;
+
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                estimate = await navigator.storage.estimate();
+            } catch (error) {
+                estimate = null;
+            }
+        }
+
+        return {
+            count: audios.length,
+            audioBytes,
+            usage: estimate?.usage || audioBytes,
+            quota: estimate?.quota || null
+        };
+    },
+
+    // Eliminar todos los audios descargados
+    async clearAllAudios() {
+        const audios = await this.getAllAudios();
+        for (const audio of audios) {
+            await this.deleteAudio(audio.date);
+        }
+        return audios.length;
+    },
+
     // Descargar audio desde servidor y guardar
     async downloadAndSave(date, onProgress = null) {
         const url = `/audios/${date}.mp3`;

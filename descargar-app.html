@@ -341,6 +341,7 @@
                 const res = await fetch('/api/apk-info');
                 if (res.ok) {
                     const data = await res.json();
+                    btn.href = data.url || '/apk/spiritfly.apk';
                     badge.textContent = `Versión ${data.version} · ${data.size}`;
                     info.textContent = `APK · ${data.size} · Actualizado: ${data.updated}`;
                     btn.classList.remove('unavailable');

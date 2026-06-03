@@ -188,14 +188,46 @@ app.get('/apk/:filename', (req, res) => {
     fs.createReadStream(apkPath).pipe(res);
 });
 
+// Ruta corta para compartir la descarga de Android
+app.get('/app', (req, res) => {
+    res.redirect(302, '/descargar-app.html');
+});
+
 // Info del APK (versión, tamaño, fecha)
 app.get('/api/apk-info', (req, res) => {
-    const apkPath = path.join(__dirname, 'apk', 'spiritfly.apk');
+    const metadataPath = path.join(__dirname, 'apk', 'version.json');
+    let metadata = {
+        version: '1.1.6',
+        versionCode: 6,
+        file: 'spiritfly.apk',
+        minAndroid: '7.0',
+        notes: ''
+    };
+
+    if (fs.existsSync(metadataPath)) {
+        try {
+            metadata = { ...metadata, ...JSON.parse(fs.readFileSync(metadataPath, 'utf8')) };
+        } catch (error) {
+            console.warn('No se pudo leer apk/version.json:', error.message);
+        }
+    }
+
+    const apkFile = path.basename(metadata.file || 'spiritfly.apk');
+    const apkPath = path.join(__dirname, 'apk', apkFile);
     if (!fs.existsSync(apkPath)) return res.status(404).json({ error: 'APK no disponible' });
     const stat = fs.statSync(apkPath);
     const sizeMB = (stat.size / (1024 * 1024)).toFixed(1);
     const updated = stat.mtime.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-    res.json({ version: '1.0', size: `${sizeMB} MB`, updated });
+    res.json({
+        ...metadata,
+        file: apkFile,
+        url: `/apk/${apkFile}`,
+        pageUrl: '/descargar-app.html',
+        shortUrl: '/app',
+        size: `${sizeMB} MB`,
+        sizeBytes: stat.size,
+        updated
+    });
 });
 
 // Archivos estáticos

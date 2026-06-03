@@ -10,6 +10,8 @@ $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 $androidDir = Join-Path $root "android"
 $apkOutDir = Join-Path $root "apk"
+$version = "1.1.6"
+$versionCode = 6
 
 Write-Host ""
 Write-Host "=== SpiritFly APK Builder ===" -ForegroundColor Cyan
@@ -27,7 +29,7 @@ if ($Release) {
     Write-Host "[2/3] Compilando APK de RELEASE..." -ForegroundColor Yellow
     .\gradlew.bat assembleRelease
     $apkSrc = Get-ChildItem -Path "app\build\outputs\apk\release\*.apk" | Select-Object -First 1
-    $destName = "spiritfly-release.apk"
+    $destName = "spiritfly.apk"
 } else {
     Write-Host "[2/3] Compilando APK de DEBUG..." -ForegroundColor Yellow
     .\gradlew.bat assembleDebug
@@ -44,11 +46,23 @@ if (-not (Test-Path $apkOutDir)) { New-Item -ItemType Directory $apkOutDir | Out
 $dest = Join-Path $apkOutDir $destName
 Copy-Item -Force $apkSrc.FullName $dest
 
+$metadata = [ordered]@{
+    version = $version
+    versionCode = $versionCode
+    file = $destName
+    minAndroid = "7.0"
+    notes = "Actualizacion de SpiritFly"
+    builtAt = (Get-Date).ToUniversalTime().ToString("o")
+    buildType = $(if ($Release) { "release" } else { "debug" })
+}
+$metadata | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $apkOutDir "version.json")
+
 $sizeMB = [math]::Round((Get-Item $dest).Length / 1MB, 1)
 Write-Host ""
 Write-Host "APK generado correctamente:" -ForegroundColor Green
 Write-Host "  Ruta:  $dest" -ForegroundColor White
 Write-Host "  Tamano: ${sizeMB} MB" -ForegroundColor White
+Write-Host "  Version: $version ($versionCode)" -ForegroundColor White
 Write-Host ""
 Write-Host "Disponible en: https://spiritfly.org/descargar-app" -ForegroundColor Cyan
 

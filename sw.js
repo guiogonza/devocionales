@@ -1,4 +1,4 @@
-const CACHE_NAME = 'devocionales-v41';
+const CACHE_NAME = 'devocionales-v42';
 const AUDIO_CACHE_NAME = 'devocionales-audio-v2';
 
 // Instalación del Service Worker
@@ -61,8 +61,14 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // NUNCA cachear downloads.html - siempre ir a la red para actualizaciones
-    if (url.pathname.includes('downloads.html')) {
+    // NUNCA cachear paginas de descarga - siempre ir a la red para actualizaciones
+    if (url.pathname.includes('downloads.html') || url.pathname.includes('descargar-app.html') || url.pathname === '/app') {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // NUNCA cachear APKs - deben descargarse directamente desde el servidor
+    if (url.pathname.startsWith('/apk/')) {
         event.respondWith(fetch(request));
         return;
     }

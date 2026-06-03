@@ -47,6 +47,71 @@ async function checkForUpdates() {
     } catch (error) {
         console.log('No se pudo verificar actualizaciones');
     }
+
+    checkForApkUpdate();
+}
+
+// Avisar cuando hay un APK publicado para usuarios en Android.
+// Sin @capacitor/app no podemos leer la version instalada; se muestra una vez por version publicada.
+async function checkForApkUpdate() {
+    try {
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (!isAndroid) return;
+
+        const response = await fetch('/api/apk-info', { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const apk = await response.json();
+        if (!apk.version || compareVersions(apk.version, APP_VERSION) <= 0) return;
+
+        const dismissedVersion = localStorage.getItem('apkUpdateDismissedVersion');
+        if (dismissedVersion === apk.version) return;
+
+        showApkUpdateBanner(apk);
+    } catch (error) {
+        console.log('No se pudo verificar el APK');
+    }
+}
+
+function showApkUpdateBanner(apk) {
+    if (document.getElementById('apkUpdateBanner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'apkUpdateBanner';
+    banner.style.cssText = `
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        background: #2D6A4F;
+        color: white;
+        padding: 14px;
+        z-index: 10002;
+        border-radius: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        max-width: 480px;
+        margin: 0 auto;
+    `;
+    banner.innerHTML = `
+        <div style="flex: 1; font-size: 14px; line-height: 1.35;">
+            <strong>Actualizacion Android disponible</strong><br>
+            Version ${apk.version} · ${apk.size || 'APK'}
+        </div>
+        <button id="apkUpdateNow" style="background: white; color: #2D6A4F; border: none; padding: 9px 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">Actualizar</button>
+        <button id="apkUpdateLater" aria-label="Cerrar" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.7); width: 36px; height: 36px; border-radius: 8px; cursor: pointer;">×</button>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('apkUpdateNow').addEventListener('click', () => {
+        window.location.href = apk.pageUrl || '/descargar-app.html';
+    });
+    document.getElementById('apkUpdateLater').addEventListener('click', () => {
+        localStorage.setItem('apkUpdateDismissedVersion', apk.version);
+        banner.remove();
+    });
 }
 
 // Mostrar banner de actualización

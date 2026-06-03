@@ -42,6 +42,12 @@ www/
 # APK binaries (se copian manualmente al server)
 apk/*.apk
 
+# Android signing secrets
+*.jks
+*.keystore
+android/**/*.jks
+android/**/*.keystore
+
 # Archivos temporales
 *.tmp
 *.temp
