@@ -46,7 +46,7 @@ router.post('/', requireAuth, (req, res) => {
                 if (err.code === 'LIMIT_FILE_SIZE') {
                     return res.status(400).json({
                         success: false,
-                        error: 'La imagen excede el tamaño máximo de 5MB'
+                        error: 'La imagen excede el tamaño máximo de 10MB'
                     });
                 }
             }

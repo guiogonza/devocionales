@@ -19,6 +19,7 @@ const imagesRoutes = require('./server/routes/images');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.disable('x-powered-by');
 
 // Middleware basico - Limite 50MB (el control real lo hace Multer dinamicamente)
 app.use(cors({ origin: true, credentials: true }));
@@ -42,7 +43,6 @@ app.use((req, res, next) => {
 
 // ============ Headers de Seguridad ============
 app.use((req, res, next) => {
-    res.removeHeader('X-Powered-By');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -90,6 +90,11 @@ app.use('/audios', (req, res, next) => {
 // ============ Streaming de Audio (iOS compatible) ============
 app.get('/audios/:filename', (req, res) => {
     const filename = req.params.filename;
+
+    if (!/^\d{4}-\d{2}-\d{2}\.mp3$/.test(filename)) {
+        return res.status(400).json({ error: 'Nombre de audio no válido' });
+    }
+
     const filePath = path.join(AUDIOS_DIR, filename);
     
     if (!fs.existsSync(filePath)) {
@@ -120,7 +125,19 @@ app.get('/audios/:filename', (req, res) => {
     if (range) {
         const parts = range.replace(/bytes=/, '').split('-');
         const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const requestedEnd = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const end = Math.min(requestedEnd, fileSize - 1);
+
+        if (!range.startsWith('bytes=') ||
+            !Number.isInteger(start) ||
+            !Number.isInteger(requestedEnd) ||
+            start < 0 ||
+            start >= fileSize ||
+            end < start) {
+            res.setHeader('Content-Range', `bytes */${fileSize}`);
+            return res.status(416).end();
+        }
+
         const chunkSize = (end - start) + 1;
         
         res.status(206);
@@ -163,14 +180,6 @@ app.get('/icons/:icon', (req, res) => {
             res.setHeader('Cache-Control', 'public, max-age=3600');
         }
         return fs.createReadStream(iconPath).pipe(res);
-    }
-    
-    // Fallback: si no existe el archivo y es icono PWA, servir desde base64
-    const pwaIcons = ['icon-192.png', 'icon-512.png', 'icon-96.png'];
-    if (pwaIcons.includes(iconName)) {
-        const img = Buffer.from(ICON_BASE64, 'base64');
-        res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': img.length });
-        return res.end(img);
     }
     
     res.status(404).json({ error: 'Icono no encontrado' });
@@ -228,6 +237,45 @@ app.get('/api/apk-info', (req, res) => {
         sizeBytes: stat.size,
         updated
     });
+});
+
+// Impedir que el servidor estático publique código, secretos y datos internos.
+const privatePrefixes = [
+    '/.claude/',
+    '/.git/',
+    '/.github/',
+    '/android/',
+    '/data/',
+    '/node_modules/',
+    '/server/'
+];
+const privateRootFiles = new Set([
+    '/.dockerignore',
+    '/.env',
+    '/.gitignore',
+    '/build-apk.ps1',
+    '/capacitor.config.ts',
+    '/docker-compose.yml',
+    '/Dockerfile',
+    '/merge_devotionals.py',
+    '/nginx_riofy.conf',
+    '/package-lock.json',
+    '/package.json',
+    '/README.md',
+    '/server.js',
+    '/spiritfly_nginx.conf'
+]);
+
+app.use((req, res, next) => {
+    const requestPath = req.path;
+    const isPrivate = privateRootFiles.has(requestPath) ||
+        privatePrefixes.some(prefix => requestPath.startsWith(prefix));
+
+    if (isPrivate) {
+        return res.status(404).end();
+    }
+
+    next();
 });
 
 // Archivos estáticos
